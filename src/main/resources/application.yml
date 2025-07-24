@@ -1,1 +1,58 @@
- 
+server:
+  port: 8080
+
+spring:
+  application:
+    name: VLIASCRM
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/vliascrm?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: root
+    password: qichengxu123
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  security:
+    user:
+      name: admin
+      password: admin
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 10s
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+logging:
+  level:
+    com.example.vliascrm: debug
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
+
+# 自定义配置
+app:
+  jwt:
+    secret: yourSecretKey
+    expiration: 604800 # 7天，单位秒
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+  file:
+    upload-dir: uploads 

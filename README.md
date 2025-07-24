@@ -52,6 +52,27 @@ VLIAS-CRM-ERP是一个全面的企业级管理系统，整合了客户关系管�
 - HTTP客户端：Axios
 - 构建工具：Vite
 
+## 技术依赖与版本信息
+
+### 核心依赖
+- Spring Boot: 3.1.5
+- Spring Security: 6.1.5
+- Spring Data JPA: 3.1.5
+- Jakarta Persistence: 3.1.0
+- Lombok: 1.18.28
+- MySQL Connector: 8.0.33
+- H2 Database: 2.2.220
+
+### 开发工具
+- JDK: 17
+- Maven: 3.9.x
+- Maven Compiler Plugin: 3.11.0
+
+### 前端依赖
+- Vue: 3.x
+- Element Plus: 2.x
+- Uni-App: 3.x
+
 ## 数据库设计
 
 系统包含19个功能模块的数据库表设计：
