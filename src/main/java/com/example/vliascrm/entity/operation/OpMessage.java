@@ -65,12 +65,6 @@ public class OpMessage extends BaseEntity {
     private Integer isRead = 0;
 
     /**
-     * 是否删除 0-未删除 1-已删除
-     */
-    @Column(name = "is_deleted", columnDefinition = "tinyint default 0")
-    private Integer isDeleted = 0;
-
-    /**
      * 创建人
      */
     @Column(name = "create_by")
