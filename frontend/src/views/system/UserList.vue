@@ -1,0 +1,468 @@
+<template>
+  <div class="user-list">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>用户管理</span>
+          <el-button type="primary" @click="handleAdd">新增用户</el-button>
+        </div>
+      </template>
+
+      <!-- 搜索区域 -->
+      <div class="search-area">
+        <el-form :inline="true" :model="searchForm" class="search-form">
+          <el-form-item label="用户名">
+            <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable />
+          </el-form-item>
+          <el-form-item label="真实姓名">
+            <el-input v-model="searchForm.realName" placeholder="请输入真实姓名" clearable />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+              <el-option label="启用" :value="1" />
+              <el-option label="禁用" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 用户列表 -->
+      <el-table :data="userList" v-loading="loading" stripe>
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="用户名" width="120" />
+        <el-table-column prop="realName" label="真实姓名" width="120" />
+        <el-table-column prop="mobile" label="手机号" width="130" />
+        <el-table-column prop="email" label="邮箱" width="180" />
+        <el-table-column prop="status" label="状态" width="80">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="lastLoginTime" label="最后登录时间" width="180">
+          <template #default="{ row }">
+            {{ row.lastLoginTime ? formatDateTime(row.lastLoginTime) : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="warning" size="small" @click="handleChangePassword(row)">改密</el-button>
+            <el-button type="info" size="small" @click="handleResetPassword(row)">重置密码</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 用户表单对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="600px"
+      @close="handleDialogClose"
+    >
+      <el-form
+        ref="userFormRef"
+        :model="userForm"
+        :rules="userRules"
+        label-width="100px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="userForm.realName" placeholder="请输入真实姓名" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="userForm.mobile" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="userForm.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="性别" prop="gender">
+          <el-radio-group v-model="userForm.gender">
+            <el-radio :label="1">男</el-radio>
+            <el-radio :label="2">女</el-radio>
+            <el-radio :label="0">未知</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="userForm.status">
+            <el-radio :label="1">启用</el-radio>
+            <el-radio :label="0">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="!userForm.id" label="密码" prop="password">
+          <el-input
+            v-model="userForm.password"
+            type="password"
+            placeholder="请输入密码"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="100px"
+      >
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            placeholder="请输入新密码"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlePasswordSubmit" :loading="submitting">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getUserList, createUser, updateUser, deleteUser, changePassword, resetPassword } from '@/api/user'
+
+// 响应式数据
+const loading = ref(false)
+const submitting = ref(false)
+const userList = ref([])
+const dialogVisible = ref(false)
+const passwordDialogVisible = ref(false)
+const dialogTitle = ref('')
+const userFormRef = ref()
+const passwordFormRef = ref()
+
+// 搜索表单
+const searchForm = reactive({
+  username: '',
+  realName: '',
+  status: ''
+})
+
+// 分页
+const pagination = reactive({
+  current: 1,
+  size: 10,
+  total: 0
+})
+
+// 用户表单
+const userForm = reactive({
+  id: null,
+  username: '',
+  realName: '',
+  mobile: '',
+  email: '',
+  gender: 0,
+  status: 1,
+  password: ''
+})
+
+// 密码表单
+const passwordForm = reactive({
+  userId: null,
+  newPassword: '',
+  confirmPassword: ''
+})
+
+// 表单验证规则
+const userRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+  ],
+  realName: [
+    { required: true, message: '请输入真实姓名', trigger: 'blur' }
+  ],
+  mobile: [
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ]
+}
+
+const passwordRules = {
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.newPassword) {
+          callback(new Error('两次输入密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  return new Date(dateTime).toLocaleString('zh-CN')
+}
+
+// 获取用户列表
+const fetchUserList = async () => {
+  loading.value = true
+  try {
+    const response = await getUserList()
+    userList.value = response.data || []
+    pagination.total = userList.value.length
+  } catch (error) {
+    ElMessage.error('获取用户列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 搜索
+const handleSearch = () => {
+  pagination.current = 1
+  fetchUserList()
+}
+
+// 重置搜索
+const handleReset = () => {
+  Object.assign(searchForm, {
+    username: '',
+    realName: '',
+    status: ''
+  })
+  handleSearch()
+}
+
+// 分页处理
+const handleSizeChange = (size) => {
+  pagination.size = size
+  fetchUserList()
+}
+
+const handleCurrentChange = (current) => {
+  pagination.current = current
+  fetchUserList()
+}
+
+// 新增用户
+const handleAdd = () => {
+  dialogTitle.value = '新增用户'
+  Object.assign(userForm, {
+    id: null,
+    username: '',
+    realName: '',
+    mobile: '',
+    email: '',
+    gender: 0,
+    status: 1,
+    password: ''
+  })
+  dialogVisible.value = true
+}
+
+// 编辑用户
+const handleEdit = (row) => {
+  dialogTitle.value = '编辑用户'
+  Object.assign(userForm, { ...row })
+  dialogVisible.value = true
+}
+
+// 删除用户
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定要删除该用户吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await deleteUser(row.id)
+    ElMessage.success('删除成功')
+    fetchUserList()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 修改密码
+const handleChangePassword = (row) => {
+  passwordForm.userId = row.id
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+  passwordDialogVisible.value = true
+}
+
+// 重置密码
+const handleResetPassword = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定要重置该用户的密码吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const response = await resetPassword(row.id)
+    ElMessage.success(`密码重置成功，新密码：${response.data.newPassword}`)
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('重置密码失败')
+    }
+  }
+}
+
+// 提交用户表单
+const handleSubmit = async () => {
+  if (!userFormRef.value) return
+  
+  try {
+    await userFormRef.value.validate()
+    submitting.value = true
+    
+    if (userForm.id) {
+      await updateUser(userForm.id, userForm)
+      ElMessage.success('更新成功')
+    } else {
+      await createUser(userForm)
+      ElMessage.success('创建成功')
+    }
+    
+    dialogVisible.value = false
+    fetchUserList()
+  } catch (error) {
+    ElMessage.error('操作失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 提交密码表单
+const handlePasswordSubmit = async () => {
+  if (!passwordFormRef.value) return
+  
+  try {
+    await passwordFormRef.value.validate()
+    submitting.value = true
+    
+    await changePassword(passwordForm.userId, {
+      newPassword: passwordForm.newPassword
+    })
+    
+    ElMessage.success('密码修改成功')
+    passwordDialogVisible.value = false
+  } catch (error) {
+    ElMessage.error('密码修改失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 关闭对话框
+const handleDialogClose = () => {
+  userFormRef.value?.resetFields()
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchUserList()
+})
+</script>
+
+<style scoped>
+.user-list {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-area {
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+</style> 

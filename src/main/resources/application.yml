@@ -6,18 +6,17 @@ spring:
     name: VLIASCRM
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/vliascrm?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/vliascrm?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
     username: root
     password: qichengxu123
   jpa:
-    database: mysql
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
   security:
     user:
       name: admin
@@ -44,6 +43,21 @@ logging:
     com.example.vliascrm: debug
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql: trace
+
+# OpenAPI/Swagger配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+    syntaxHighlight:
+      activated: true
+  packagesToScan: com.example.vliascrm.controller
+  pathsToMatch: /api/**
 
 # 自定义配置
 app:
