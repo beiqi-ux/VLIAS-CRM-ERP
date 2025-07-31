@@ -22,11 +22,27 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
     Optional<SysPermission> findByPermissionCode(String permissionCode);
 
     /**
+     * 根据权限编码查询未删除的权限
+     * @param permissionCode 权限编码
+     * @param isDeleted 是否删除
+     * @return 权限
+     */
+    Optional<SysPermission> findByPermissionCodeAndIsDeleted(String permissionCode, Boolean isDeleted);
+
+    /**
      * 检查权限编码是否存在
      * @param permissionCode 权限编码
      * @return 是否存在
      */
     boolean existsByPermissionCode(String permissionCode);
+
+    /**
+     * 检查权限编码是否存在（未删除）
+     * @param permissionCode 权限编码
+     * @param isDeleted 是否删除
+     * @return 是否存在
+     */
+    boolean existsByPermissionCodeAndIsDeleted(String permissionCode, Boolean isDeleted);
 
     /**
      * 根据角色ID查询权限列表
@@ -55,4 +71,10 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      * @return 权限列表
      */
     List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderByIdAsc(Long parentId, Integer status, Boolean isDeleted);
+
+    /**
+     * 查询所有未删除的权限
+     * @return 权限列表
+     */
+    List<SysPermission> findByIsDeletedOrderByIdAsc(Boolean isDeleted);
 } 

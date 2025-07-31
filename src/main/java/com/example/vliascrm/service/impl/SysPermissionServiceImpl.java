@@ -31,8 +31,8 @@ public class SysPermissionServiceImpl implements SysPermissionService {
     @Override
     @Transactional
     public SysPermission createPermission(PermissionDTO permissionDTO) {
-        // 检查权限编码是否已存在
-        if (permissionRepository.existsByPermissionCode(permissionDTO.getPermissionCode())) {
+        // 检查权限编码是否已存在（只检查未删除的权限）
+        if (permissionRepository.existsByPermissionCodeAndIsDeleted(permissionDTO.getPermissionCode(), false)) {
             throw new BusinessException("权限编码已存在");
         }
 
@@ -51,9 +51,9 @@ public class SysPermissionServiceImpl implements SysPermissionService {
         SysPermission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("权限不存在"));
 
-        // 如果修改了权限编码，需要检查是否存在
+        // 如果修改了权限编码，需要检查是否存在（只检查未删除的权限）
         if (!permission.getPermissionCode().equals(permissionDTO.getPermissionCode()) &&
-                permissionRepository.existsByPermissionCode(permissionDTO.getPermissionCode())) {
+                permissionRepository.existsByPermissionCodeAndIsDeleted(permissionDTO.getPermissionCode(), false)) {
             throw new BusinessException("权限编码已存在");
         }
 
@@ -97,9 +97,9 @@ public class SysPermissionServiceImpl implements SysPermissionService {
 
     @Override
     public List<PermissionDTO> getPermissionTree() {
-        // 获取所有未删除的权限
-        List<SysPermission> allPermissions = permissionRepository.findAll().stream()
-                .filter(p -> !p.getIsDeleted() && p.getStatus() == 1)
+        // 获取所有未删除且启用的权限
+        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderByIdAsc(false).stream()
+                .filter(p -> p.getStatus() == 1)
                 .collect(Collectors.toList());
 
         // 转换为DTO

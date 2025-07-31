@@ -4,6 +4,21 @@
       <el-button type="primary" @click="handleAddTopLevel">新增一级权限</el-button>
       <el-button type="success" @click="expandAll">展开全部</el-button>
       <el-button type="info" @click="collapseAll">折叠全部</el-button>
+      
+      <!-- 权限同步功能 -->
+      <el-divider direction="vertical" />
+      <el-button type="warning" @click="handleSyncPermissions" :loading="syncLoading">
+        <el-icon><Refresh /></el-icon>
+        同步权限
+      </el-button>
+      <el-button type="danger" @click="handleResetPermissions" :loading="resetLoading">
+        <el-icon><Delete /></el-icon>
+        重置权限
+      </el-button>
+      <el-button type="info" @click="handleValidateConfig">
+        <el-icon><Tools /></el-icon>
+        验证配置
+      </el-button>
     </div>
 
     <el-table
@@ -135,8 +150,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getPermissionTree, getPermissionById, createPermission, updatePermission, deletePermission } from '@/api/permission'
+import { getPermissionTree, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
+import { Refresh, Tools, Delete } from '@element-plus/icons-vue'
 
 
 // 表格数据和加载状态
@@ -168,6 +184,9 @@ const permissionRules = {
 const parentOptions = ref([])
 const menuOptions = ref([])
 
+// 权限同步加载状态
+const syncLoading = ref(false)
+const resetLoading = ref(false)
 
 
 // 初始化
@@ -312,7 +331,122 @@ const handleDelete = (row) => {
   }).catch(() => {})
 }
 
+// 权限同步功能
+const handleSyncPermissions = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要同步权限吗？此操作将根据配置文件自动创建或更新权限，请谨慎操作！',
+      '权限同步确认',
+      {
+        confirmButtonText: '确定同步',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    syncLoading.value = true
+    const response = await syncAllPermissions()
+    
+    ElMessage.success('权限同步成功')
+    
+    // 显示同步结果
+    ElMessageBox.alert(response.data, '同步结果', {
+      confirmButtonText: '确定',
+      type: 'success'
+    })
+    
+    // 刷新权限列表
+    await fetchPermissionList()
+    
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('权限同步失败:', error)
+      ElMessage.error('权限同步失败: ' + (error.response?.data?.message || error.message))
+    }
+  } finally {
+    syncLoading.value = false
+  }
+}
 
+// 验证权限配置
+const handleValidateConfig = async () => {
+  try {
+    const response = await validatePermissionConfig()
+    
+    ElMessageBox.alert(response.data, '权限配置验证结果', {
+      confirmButtonText: '确定',
+      type: 'info'
+    })
+    
+  } catch (error) {
+    console.error('验证权限配置失败:', error)
+    ElMessage.error('验证权限配置失败: ' + (error.response?.data?.message || error.message))
+  }
+}
+
+// 重置所有权限
+const handleResetPermissions = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要重置所有权限吗？\n\n⚠️ 警告：此操作将逻辑删除所有现有权限并重新创建基础权限数据！\n\n' +
+      '💡 说明：已删除权限的编码会被修改以避免冲突，新权限将使用标准编码。\n\n请谨慎操作！',
+      '权限重置确认',
+      {
+        confirmButtonText: '确定重置',
+        cancelButtonText: '取消',
+        type: 'error',
+        dangerouslyUseHTMLString: true
+      }
+    )
+    
+    resetLoading.value = true
+    const response = await resetAllPermissions()
+    
+    ElMessage.success('权限重置成功！')
+    
+    // 显示重置结果详情
+    const resultMessage = `
+      <div style="text-align: left;">
+        <h4>权限重置完成！</h4>
+        <p>${response.data}</p>
+        <br/>
+        <p><strong>已重新创建的权限模块：</strong></p>
+        <ul>
+          <li>系统管理 - 系统基础功能管理</li>
+          <li>用户管理 - 用户账户管理</li>
+          <li>角色管理 - 角色权限管理</li>
+          <li>权限管理 - 权限配置管理</li>
+          <li>菜单管理 - 系统菜单管理</li>
+          <li>组织管理 - 组织架构管理</li>
+          <li>部门管理 - 部门信息管理</li>
+          <li>岗位管理 - 岗位信息管理</li>
+          <li>字典管理 - 系统字典管理</li>
+          <li>商品管理 - 商品信息管理</li>
+          <li>品牌管理 - 商品品牌管理</li>
+          <li>分类管理 - 商品分类管理</li>
+        </ul>
+        <p>每个模块都包含查看、新增、编辑、删除等基础操作权限。</p>
+      </div>
+    `
+    
+    ElMessageBox.alert(resultMessage, '重置结果', {
+      confirmButtonText: '确定',
+      type: 'success',
+      dangerouslyUseHTMLString: true
+    })
+    
+    // 刷新权限列表
+    await fetchPermissionList()
+    
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('权限重置失败:', error)
+      ElMessage.error('权限重置失败: ' + (error.response?.data?.message || error.message))
+    }
+  } finally {
+    resetLoading.value = false
+  }
+}
 
 
 </script>

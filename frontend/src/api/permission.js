@@ -71,4 +71,62 @@ export function getAllPermissions() {
     url: '/api/sys/permissions',
     method: 'get'
   })
+}
+
+// ==================== 权限同步功能 ====================
+
+/**
+ * 同步所有权限
+ * @returns {Promise}
+ */
+export function syncAllPermissions() {
+  return request({
+    url: '/api/sys/permission-sync/sync-all',
+    method: 'post'
+  })
+}
+
+/**
+ * 同步指定模块权限
+ * @param {String} moduleCode - 模块编码
+ * @returns {Promise}
+ */
+export function syncModulePermissions(moduleCode) {
+  return request({
+    url: `/api/sys/permission-sync/sync-module/${moduleCode}`,
+    method: 'post'
+  })
+}
+
+/**
+ * 验证权限配置
+ * @returns {Promise}
+ */
+export function validatePermissionConfig() {
+  return request({
+    url: '/api/sys/permission-sync/validate-config',
+    method: 'get'
+  })
+}
+
+/**
+ * 重置所有权限
+ * @returns {Promise}
+ */
+export function resetAllPermissions() {
+  return request({
+    url: '/api/sys/permission-sync/reset-all',
+    method: 'post'
+  })
+}
+
+/**
+ * 获取权限同步功能状态
+ * @returns {Promise}
+ */
+export function getPermissionSyncStatus() {
+  return request({
+    url: '/api/sys/permission-sync/status',
+    method: 'get'
+  })
 } 

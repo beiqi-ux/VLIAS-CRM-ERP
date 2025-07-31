@@ -67,8 +67,17 @@ public class SysRoleController {
     }
 
     /**
-     * 获取所有角色
+     * 获取所有角色列表（用于下拉选择）
      * @return 角色列表
+     */
+    @GetMapping("/list")
+    public ApiResponse<List<SysRole>> getAllRolesList() {
+        return ApiResponse.success(roleService.getAllRoles());
+    }
+
+    /**
+     * 分页获取角色
+     * @return 角色分页列表
      */
     @GetMapping
     public ApiResponse<Page<SysRole>> getRoleList(

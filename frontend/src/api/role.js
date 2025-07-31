@@ -1,12 +1,12 @@
 import request from '@/utils/request'
 
 /**
- * 获取角色列表
+ * 获取角色列表（用于下拉选择）
  * @returns {Promise}
  */
 export function getRoleList() {
   return request({
-    url: '/api/sys/roles',
+    url: '/api/sys/roles/list',
     method: 'get'
   })
 }

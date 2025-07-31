@@ -71,4 +71,74 @@ app:
   file:
     upload-dir: uploads 
 
+# 权限同步配置
+vlias:
+  permission-sync:
+    enabled: true  # 启用权限同步功能
+    modules:
+      # 系统管理模块
+      - name: "系统管理"
+        code: "sys"
+        description: "系统基础功能管理"
+        sort: 1
+        operations:
+          - name: "用户管理"
+            code: "user"
+            description: "用户增删改查操作"
+            sort: 1
+          - name: "角色管理"
+            code: "role"
+            description: "角色增删改查操作"
+            sort: 2
+          - name: "权限管理"
+            code: "permission"
+            description: "权限增删改查操作"
+            sort: 3
+          - name: "菜单管理"
+            code: "menu"
+            description: "菜单增删改查操作"
+            sort: 4
+          - name: "字典管理"
+            code: "dict"
+            description: "数据字典管理操作"
+            sort: 5
+
+      # 组织架构模块
+      - name: "组织架构"
+        code: "org"
+        description: "组织架构管理"
+        sort: 2
+        operations:
+          - name: "组织管理"
+            code: "organization"
+            description: "组织机构增删改查操作"
+            sort: 1
+          - name: "部门管理"
+            code: "department"
+            description: "部门增删改查操作"
+            sort: 2
+          - name: "岗位管理"
+            code: "position"
+            description: "岗位增删改查操作"
+            sort: 3
+
+      # 商品管理模块
+      - name: "商品管理"
+        code: "product"
+        description: "商品信息管理"
+        sort: 3
+        operations:
+          - name: "商品管理"
+            code: "goods"
+            description: "商品增删改查操作"
+            sort: 1
+          - name: "分类管理"
+            code: "category"
+            description: "商品分类管理操作"
+            sort: 2
+          - name: "品牌管理"
+            code: "brand"
+            description: "商品品牌管理操作"
+            sort: 3 
+
  
