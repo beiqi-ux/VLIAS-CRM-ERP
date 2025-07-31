@@ -15,7 +15,11 @@
       style="width: 100%; margin-top: 15px"
       ref="permissionTableRef"
     >
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="id" label="ID" width="80">
+        <template #default="scope">
+          {{ $formatId(scope.row.id) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="permissionName" label="权限名称" />
       <el-table-column prop="permissionCode" label="权限编码" />
       <el-table-column prop="permissionType" label="权限类型" width="120">

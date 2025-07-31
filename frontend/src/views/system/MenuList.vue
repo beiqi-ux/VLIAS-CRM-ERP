@@ -15,7 +15,11 @@
       style="width: 100%; margin-top: 15px"
       ref="menuTableRef"
     >
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="id" label="ID" width="80">
+        <template #default="scope">
+          {{ $formatId(scope.row.id) }}
+        </template>
+      </el-table-column>
       <el-table-column label="菜单名称">
         <template #default="scope">
           <div class="menu-name">

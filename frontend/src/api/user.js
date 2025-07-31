@@ -14,6 +14,19 @@ export function getUserList(params) {
 }
 
 /**
+ * 获取用户详情列表（包含组织、部门和岗位名称）
+ * @param {Object} params - 查询参数
+ * @returns {Promise}
+ */
+export function getUserDetailList(params) {
+  return request({
+    url: '/api/sys/users/detailed',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 获取单个用户
  * @param {number} id - 用户ID
  * @returns {Promise}

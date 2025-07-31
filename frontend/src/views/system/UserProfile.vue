@@ -6,7 +6,10 @@
         <el-card class="profile-card">
           <div class="avatar-container">
             <div class="avatar-wrapper">
-              <el-avatar :size="100" :src="userInfo.avatar || '/default-avatar.png'" />
+              <el-avatar 
+                :size="100" 
+                :src="$formatImageUrl(userInfo.avatar)" 
+              />
               <div class="avatar-upload">
                 <el-upload
                   class="avatar-uploader"
@@ -59,11 +62,6 @@
               <span class="value">{{ formatDateTime(userInfo.createTime) }}</span>
             </div>
           </div>
-          
-          <div class="action-buttons">
-            <el-button type="primary" @click="handleEdit">编辑信息</el-button>
-            <el-button type="warning" @click="handleChangePassword">修改密码</el-button>
-          </div>
         </el-card>
       </el-col>
       
@@ -81,9 +79,9 @@
             <el-descriptions-item label="邮箱">{{ userInfo.email || '未设置' }}</el-descriptions-item>
             <el-descriptions-item label="手机号">{{ userInfo.mobile || '未设置' }}</el-descriptions-item>
             <el-descriptions-item label="性别">{{ getGenderText(userInfo.gender) }}</el-descriptions-item>
-            <el-descriptions-item label="组织ID">{{ userInfo.orgId || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="部门ID">{{ userInfo.deptId || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="职位ID">{{ userInfo.positionId || '未设置' }}</el-descriptions-item>
+            <el-descriptions-item label="组织">{{ userInfo.orgName || '未设置' }}</el-descriptions-item>
+            <el-descriptions-item label="部门">{{ userInfo.deptName || '未设置' }}</el-descriptions-item>
+            <el-descriptions-item label="岗位">{{ userInfo.positionName || '未设置' }}</el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="userInfo.status === 1 ? 'success' : 'danger'">
                 {{ userInfo.status === 1 ? '启用' : '禁用' }}
@@ -102,93 +100,6 @@
         </el-card>
       </el-col>
     </el-row>
-
-    <!-- 编辑信息对话框 -->
-    <el-dialog
-      v-model="editDialogVisible"
-      title="编辑个人信息"
-      width="500px"
-      @close="handleEditDialogClose"
-    >
-      <el-form
-        ref="editFormRef"
-        :model="editForm"
-        :rules="editRules"
-        label-width="100px"
-      >
-        <el-form-item label="真实姓名" prop="realName">
-          <el-input v-model="editForm.realName" placeholder="请输入真实姓名" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="mobile">
-          <el-input v-model="editForm.mobile" placeholder="请输入手机号" />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="editForm.email" placeholder="请输入邮箱" />
-        </el-form-item>
-        <el-form-item label="性别" prop="gender">
-          <el-radio-group v-model="editForm.gender">
-            <el-radio :label="1">男</el-radio>
-            <el-radio :label="2">女</el-radio>
-            <el-radio :label="0">未知</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="editDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleEditSubmit" :loading="submitting">
-            确定
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <!-- 修改密码对话框 -->
-    <el-dialog
-      v-model="passwordDialogVisible"
-      title="修改密码"
-      width="400px"
-    >
-      <el-form
-        ref="passwordFormRef"
-        :model="passwordForm"
-        :rules="passwordRules"
-        label-width="100px"
-      >
-        <el-form-item label="当前密码" prop="oldPassword">
-          <el-input
-            v-model="passwordForm.oldPassword"
-            type="password"
-            placeholder="请输入当前密码"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input
-            v-model="passwordForm.newPassword"
-            type="password"
-            placeholder="请输入新密码"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="passwordForm.confirmPassword"
-            type="password"
-            placeholder="请再次输入新密码"
-            show-password
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="passwordDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePasswordSubmit" :loading="submitting">
-            确定
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -196,69 +107,12 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import { updateUser, changePassword } from '@/api/user'
 import { Edit } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 
 // 响应式数据
 const userStore = useUserStore()
 const userInfo = ref({})
-const editDialogVisible = ref(false)
-const passwordDialogVisible = ref(false)
-const submitting = ref(false)
-const editFormRef = ref()
-const passwordFormRef = ref()
-
-// 编辑表单
-const editForm = reactive({
-  realName: '',
-  mobile: '',
-  email: '',
-  gender: 0
-})
-
-// 密码表单
-const passwordForm = reactive({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
-
-// 表单验证规则
-const editRules = {
-  realName: [
-    { required: true, message: '请输入真实姓名', trigger: 'blur' }
-  ],
-  mobile: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-  ]
-}
-
-const passwordRules = {
-  oldPassword: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' }
-  ],
-  newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== passwordForm.newPassword) {
-          callback(new Error('两次输入密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
-  ]
-}
 
 // 获取性别文本
 const getGenderText = (gender) => {
@@ -279,77 +133,14 @@ const formatDateTime = (dateTime) => {
 const fetchUserInfo = async () => {
   try {
     const response = await userStore.fetchUserInfo()
-    userInfo.value = response.data || {}
+    if (response && response.success) {
+      userInfo.value = response.data
+    } else {
+      ElMessage.error('获取用户信息失败')
+    }
   } catch (error) {
     ElMessage.error('获取用户信息失败')
   }
-}
-
-// 编辑信息
-const handleEdit = () => {
-  Object.assign(editForm, {
-    realName: userInfo.value.realName || '',
-    mobile: userInfo.value.mobile || '',
-    email: userInfo.value.email || '',
-    gender: userInfo.value.gender || 0
-  })
-  editDialogVisible.value = true
-}
-
-// 提交编辑
-const handleEditSubmit = async () => {
-  if (!editFormRef.value) return
-  
-  try {
-    await editFormRef.value.validate()
-    submitting.value = true
-    
-    await updateUser(userInfo.value.id, editForm)
-    ElMessage.success('更新成功')
-    editDialogVisible.value = false
-    fetchUserInfo()
-  } catch (error) {
-    ElMessage.error('更新失败')
-  } finally {
-    submitting.value = false
-  }
-}
-
-// 修改密码
-const handleChangePassword = () => {
-  Object.assign(passwordForm, {
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  })
-  passwordDialogVisible.value = true
-}
-
-// 提交密码修改
-const handlePasswordSubmit = async () => {
-  if (!passwordFormRef.value) return
-  
-  try {
-    await passwordFormRef.value.validate()
-    submitting.value = true
-    
-    await changePassword(userInfo.value.id, {
-      oldPassword: passwordForm.oldPassword,
-      newPassword: passwordForm.newPassword
-    })
-    
-    ElMessage.success('密码修改成功')
-    passwordDialogVisible.value = false
-  } catch (error) {
-    ElMessage.error('密码修改失败')
-  } finally {
-    submitting.value = false
-  }
-}
-
-// 关闭编辑对话框
-const handleEditDialogClose = () => {
-  editFormRef.value?.resetFields()
 }
 
 // 上传头像相关
@@ -359,14 +150,20 @@ const uploadHeaders = computed(() => {
   };
 });
 
-const handleAvatarSuccess = (response, uploadFile) => {
+const handleAvatarSuccess = async (response, uploadFile) => {
   if (response.success) {
-    userInfo.value.avatar = response.data.url;
+    // 获取头像URL
+    const avatarUrl = response.data.url;
+    
+    // 更新用户信息
+    userInfo.value.avatar = avatarUrl;
     ElMessage.success('头像更新成功');
     
-    // 更新本地存储的用户信息
-    const userStore = useUserStore();
-    userStore.updateUserAvatar(response.data.url);
+    // 更新用户存储中的头像
+    userStore.updateUserAvatar(avatarUrl);
+    
+    // 获取最新用户信息并完全刷新
+    await userStore.fetchUserInfo();
   } else {
     ElMessage.error(response.message || '头像上传失败');
   }
@@ -447,12 +244,6 @@ onMounted(() => {
 
 .info-item .value {
   color: #303133;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .dialog-footer {

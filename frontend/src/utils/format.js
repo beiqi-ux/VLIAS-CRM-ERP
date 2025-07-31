@@ -16,4 +16,29 @@ export function formatDateTime(dateTime) {
 export function formatDate(date) {
   if (!date) return '-';
   return new Date(date).toLocaleDateString('zh-CN');
+}
+
+/**
+ * 格式化ID为四位数显示（如：0001）
+ * @param {number|string} id - 原始ID
+ * @returns {string} - 格式化后的ID字符串
+ */
+export function formatId(id) {
+  if (id === undefined || id === null) return '-';
+  return String(id).padStart(4, '0');
+}
+
+/**
+ * 处理图片URL，确保可以正确访问
+ * @param {string} url - 图片URL
+ * @param {string} defaultUrl - 默认图片URL
+ * @returns {string} - 处理后的图片URL
+ */
+export function formatImageUrl(url, defaultUrl = '/default-avatar.png') {
+  if (!url) return defaultUrl;
+  if (url.startsWith('http')) return url;
+  
+  // 对于相对路径，添加服务器地址
+  const baseUrl = 'http://localhost:8080';
+  return baseUrl + url;
 } 

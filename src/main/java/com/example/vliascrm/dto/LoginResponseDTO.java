@@ -68,12 +68,57 @@ public class LoginResponseDTO {
     private Long orgId;
     
     /**
+     * 组织名称
+     */
+    private String orgName;
+    
+    /**
      * 部门ID
      */
     private Long deptId;
     
     /**
+     * 部门名称
+     */
+    private String deptName;
+    
+    /**
+     * 岗位ID
+     */
+    private Long positionId;
+    
+    /**
+     * 岗位名称
+     */
+    private String positionName;
+    
+    /**
+     * 手机号
+     */
+    private String mobile;
+    
+    /**
+     * 邮箱
+     */
+    private String email;
+    
+    /**
+     * 性别
+     */
+    private Integer gender;
+    
+    /**
+     * 用户状态：0-禁用，1-正常
+     */
+    private Integer status;
+    
+    /**
      * 上次登录时间
      */
     private LocalDateTime lastLoginTime;
+    
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 } 

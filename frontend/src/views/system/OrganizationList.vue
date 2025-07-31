@@ -32,7 +32,11 @@
 
       <!-- 组织机构列表 -->
       <el-table :data="filteredOrgList" v-loading="loading" row-key="id" default-expand-all>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="80">
+          <template #default="{ row }">
+            {{ $formatId(row.id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="orgName" label="机构名称" width="180" />
         <el-table-column prop="orgCode" label="机构编码" width="120" />
         <el-table-column prop="orgType" label="机构类型" width="120">

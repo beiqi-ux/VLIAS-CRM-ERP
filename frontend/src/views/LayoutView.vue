@@ -91,7 +91,11 @@
         <div class="header-right">
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="user-dropdown-link">
-              <el-avatar :size="32" :src="userInfo.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
+              <el-avatar 
+                :key="userInfo.avatar" 
+                :size="32" 
+                :src="$formatImageUrl(userInfo.avatar)"
+              />
               <span class="username">{{ userInfo.realName || userInfo.username }}</span>
             </span>
             <template #dropdown>
@@ -113,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
@@ -169,6 +173,14 @@ onMounted(() => {
     userStore.fetchUserInfo()
   }
 })
+
+// 监听路由变化
+watch(route, (to, from) => {
+  // 如果从个人中心页面返回，重新获取用户信息以更新头像
+  if (from.path === '/profile' && to.path !== '/profile') {
+    userStore.fetchUserInfo()
+  }
+}, { immediate: false })
 </script>
 
 <style scoped>

@@ -71,11 +71,30 @@
         style="width: 100%;"
         :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="80">
+          <template #default="{ row }">
+            {{ $formatId(row.id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="mobile" label="手机号" width="130" />
         <el-table-column prop="email" label="邮箱" width="180" />
+        <el-table-column prop="orgName" label="所属组织" width="150">
+          <template #default="{ row }">
+            {{ row.orgName || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="deptName" label="所属部门" width="150">
+          <template #default="{ row }">
+            {{ row.deptName || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="positionName" label="所属岗位" width="150">
+          <template #default="{ row }">
+            {{ row.positionName || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
@@ -182,6 +201,36 @@
             <el-radio :label="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="组织" prop="orgId">
+          <el-select v-model="userForm.orgId" placeholder="请选择组织" @change="handleOrgChange">
+            <el-option
+              v-for="org in orgOptions"
+              :key="org.id"
+              :label="org.orgName"
+              :value="org.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="部门" prop="deptId">
+          <el-select v-model="userForm.deptId" placeholder="请选择部门" @change="handleDeptChange">
+            <el-option
+              v-for="dept in deptOptions"
+              :key="dept.id"
+              :label="dept.deptName"
+              :value="dept.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="岗位" prop="positionId">
+          <el-select v-model="userForm.positionId" placeholder="请选择岗位">
+            <el-option
+              v-for="pos in positionOptions"
+              :key="pos.id"
+              :label="pos.positionName"
+              :value="pos.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item v-if="!userForm.id" label="密码" prop="password">
           <el-input
             v-model="userForm.password"
@@ -272,6 +321,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
 import { 
   getUserList, 
+  getUserDetailList,
   createUser, 
   updateUser, 
   deleteUser, 
@@ -279,6 +329,9 @@ import {
   resetPassword 
 } from '@/api/user'
 import { getRoleList, getUserRoleIds, assignUserRoles } from '@/api/role'
+import { getOrganizationList } from '@/api/organization'
+import { getDepartmentsByOrgId } from '@/api/department'
+import { getPositionsByDeptId } from '@/api/position'
 import { Edit, UserFilled, ArrowDown, Key, Refresh, Delete, User, Search, Plus } from '@element-plus/icons-vue'
 
 // 响应式数据
@@ -290,6 +343,14 @@ const passwordDialogVisible = ref(false)
 const dialogTitle = ref('')
 const userFormRef = ref()
 const passwordFormRef = ref()
+
+// 组织、部门、岗位数据
+const orgOptions = ref([])
+const deptOptions = ref([])
+const positionOptions = ref([])
+const loadingOrg = ref(false)
+const loadingDept = ref(false)
+const loadingPosition = ref(false)
 
 // 搜索表单
 const searchForm = reactive({
@@ -314,7 +375,10 @@ const userForm = reactive({
   email: '',
   gender: 0,
   status: 1,
-  password: ''
+  password: '',
+  orgId: null,
+  deptId: null,
+  positionId: null
 })
 
 // 密码表单
@@ -374,24 +438,17 @@ const passwordRules = {
 const fetchUserList = async () => {
   loading.value = true
   try {
-    // 构造查询参数
     const params = {
       page: pagination.current,
       size: pagination.size,
       username: searchForm.username || null,
       realName: searchForm.realName || null,
-      status: searchForm.status === '' ? null : searchForm.status
+      status: searchForm.status || null
     }
-    
-    const response = await getUserList(params)
-    if (response.success && response.data) {
-      userList.value = response.data.data || []
-      pagination.total = response.data.total || 0
-    } else {
-      ElMessage.error('获取用户列表失败')
-    }
+    const response = await getUserDetailList(params)
+    userList.value = response.data.data
+    pagination.total = response.data.total
   } catch (error) {
-    console.error('获取用户列表出错:', error)
     ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
@@ -436,16 +493,39 @@ const handleAdd = () => {
     email: '',
     gender: 0,
     status: 1,
-    password: ''
+    password: '',
+    orgId: null,
+    deptId: null,
+    positionId: null
   })
   dialogVisible.value = true
 }
 
 // 编辑用户
-const handleEdit = (row) => {
-  dialogTitle.value = '编辑用户'
-  Object.assign(userForm, { ...row })
-  dialogVisible.value = true
+const handleEdit = async (row) => {
+  dialogTitle.value = '编辑用户';
+  Object.assign(userForm, {
+    id: row.id,
+    username: row.username,
+    realName: row.realName,
+    mobile: row.mobile,
+    email: row.email,
+    gender: row.gender,
+    status: row.status,
+    orgId: row.orgId,
+    deptId: row.deptId,
+    positionId: row.positionId
+  });
+  
+  // 加载关联数据
+  if (row.orgId) {
+    await fetchDepartments(row.orgId);
+    if (row.deptId) {
+      await fetchPositions(row.deptId);
+    }
+  }
+  
+  dialogVisible.value = true;
 }
 
 // 删除用户
@@ -637,7 +717,74 @@ const handleDropdownCommand = async (command, row) => {
 // 页面加载时获取数据
 onMounted(() => {
   fetchUserList()
+  fetchOrganizations()
 })
+
+// 获取组织列表
+const fetchOrganizations = async () => {
+  loadingOrg.value = true
+  try {
+    const res = await getOrganizationList()
+    orgOptions.value = res.data || []
+  } catch (error) {
+    console.error('Failed to fetch organizations:', error)
+    ElMessage.error('获取组织机构失败')
+  } finally {
+    loadingOrg.value = false
+  }
+}
+
+// 获取部门列表
+const fetchDepartments = async (orgId) => {
+  if (!orgId) {
+    deptOptions.value = []
+    return
+  }
+  
+  loadingDept.value = true
+  try {
+    const res = await getDepartmentsByOrgId(orgId)
+    deptOptions.value = res.data || []
+  } catch (error) {
+    console.error('Failed to fetch departments:', error)
+    ElMessage.error('获取部门列表失败')
+  } finally {
+    loadingDept.value = false
+  }
+}
+
+// 获取岗位列表
+const fetchPositions = async (deptId) => {
+  if (!deptId) {
+    positionOptions.value = []
+    return
+  }
+  
+  loadingPosition.value = true
+  try {
+    const res = await getPositionsByDeptId(deptId)
+    positionOptions.value = res.data || []
+  } catch (error) {
+    console.error('Failed to fetch positions:', error)
+    ElMessage.error('获取岗位列表失败')
+  } finally {
+    loadingPosition.value = false
+  }
+}
+
+// 处理组织变更
+const handleOrgChange = async () => {
+  userForm.deptId = null
+  userForm.positionId = null
+  positionOptions.value = []
+  await fetchDepartments(userForm.orgId)
+}
+
+// 处理部门变更
+const handleDeptChange = async () => {
+  userForm.positionId = null
+  await fetchPositions(userForm.deptId)
+}
 </script>
 
 <style scoped>

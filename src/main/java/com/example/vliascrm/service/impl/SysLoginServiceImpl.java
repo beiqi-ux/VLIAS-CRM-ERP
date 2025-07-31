@@ -2,11 +2,17 @@ package com.example.vliascrm.service.impl;
 
 import com.example.vliascrm.dto.LoginDTO;
 import com.example.vliascrm.dto.LoginResponseDTO;
+import com.example.vliascrm.entity.OrgDepartment;
+import com.example.vliascrm.entity.OrgPosition;
+import com.example.vliascrm.entity.SysOrganization;
 import com.example.vliascrm.entity.SysRole;
 import com.example.vliascrm.entity.SysUser;
 import com.example.vliascrm.exception.BusinessException;
 import com.example.vliascrm.repository.SysUserRepository;
+import com.example.vliascrm.service.OrgDepartmentService;
+import com.example.vliascrm.service.OrgPositionService;
 import com.example.vliascrm.service.SysLoginService;
+import com.example.vliascrm.service.SysOrganizationService;
 import com.example.vliascrm.service.SysRoleService;
 import com.example.vliascrm.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +40,9 @@ public class SysLoginServiceImpl implements SysLoginService {
     private final JwtUtil jwtUtil;
     private final SysUserRepository sysUserRepository;
     private final SysRoleService roleService;
+    private final SysOrganizationService organizationService;
+    private final OrgDepartmentService departmentService;
+    private final OrgPositionService positionService;
 
     @Value("${app.jwt.expiration}")
     private Long expiration;
@@ -107,6 +116,33 @@ public class SysLoginServiceImpl implements SysLoginService {
         // 重新查询最新数据
         SysUser latestUser = sysUserRepository.findById(user.getId())
                 .orElseThrow(() -> new BusinessException("用户不存在"));
+                
+        // 查询组织名称
+        String orgName = null;
+        if (latestUser.getOrgId() != null) {
+            SysOrganization org = organizationService.findById(latestUser.getOrgId());
+            if (org != null) {
+                orgName = org.getOrgName();
+            }
+        }
+        
+        // 查询部门名称
+        String deptName = null;
+        if (latestUser.getDeptId() != null) {
+            OrgDepartment dept = departmentService.findById(latestUser.getDeptId());
+            if (dept != null) {
+                deptName = dept.getDeptName();
+            }
+        }
+        
+        // 查询岗位名称
+        String positionName = null;
+        if (latestUser.getPositionId() != null) {
+            OrgPosition position = positionService.findById(latestUser.getPositionId());
+            if (position != null) {
+                positionName = position.getPositionName();
+            }
+        }
         
         // 返回用户信息，不包含token
         return LoginResponseDTO.builder()
@@ -115,8 +151,17 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .realName(latestUser.getRealName())
                 .avatar(latestUser.getAvatar())
                 .orgId(latestUser.getOrgId())
+                .orgName(orgName)
                 .deptId(latestUser.getDeptId())
+                .deptName(deptName)
+                .positionId(latestUser.getPositionId())
+                .positionName(positionName)
+                .mobile(latestUser.getMobile())
+                .email(latestUser.getEmail())
+                .gender(latestUser.getGender())
+                .status(latestUser.getStatus())
                 .lastLoginTime(latestUser.getLastLoginTime())
+                .createTime(latestUser.getCreateTime())
                 .roles(getRoleNames(latestUser.getId()))
                 .permissions(new ArrayList<>())
                 .build();
@@ -130,6 +175,33 @@ public class SysLoginServiceImpl implements SysLoginService {
      * @return 登录响应DTO
      */
     private LoginResponseDTO buildLoginResponse(SysUser user, String token) {
+        // 查询组织名称
+        String orgName = null;
+        if (user.getOrgId() != null) {
+            SysOrganization org = organizationService.findById(user.getOrgId());
+            if (org != null) {
+                orgName = org.getOrgName();
+            }
+        }
+        
+        // 查询部门名称
+        String deptName = null;
+        if (user.getDeptId() != null) {
+            OrgDepartment dept = departmentService.findById(user.getDeptId());
+            if (dept != null) {
+                deptName = dept.getDeptName();
+            }
+        }
+        
+        // 查询岗位名称
+        String positionName = null;
+        if (user.getPositionId() != null) {
+            OrgPosition position = positionService.findById(user.getPositionId());
+            if (position != null) {
+                positionName = position.getPositionName();
+            }
+        }
+        
         return LoginResponseDTO.builder()
                 .userId(user.getId())
                 .username(user.getUsername())
@@ -139,8 +211,17 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .tokenType("Bearer")
                 .expiresIn(expiration * 1000)
                 .orgId(user.getOrgId())
+                .orgName(orgName)
                 .deptId(user.getDeptId())
+                .deptName(deptName)
+                .positionId(user.getPositionId())
+                .positionName(positionName)
+                .mobile(user.getMobile())
+                .email(user.getEmail())
+                .gender(user.getGender())
+                .status(user.getStatus())
                 .lastLoginTime(user.getLastLoginTime())
+                .createTime(user.getCreateTime())
                 .roles(getRoleNames(user.getId()))
                 .permissions(new ArrayList<>())  // 这里可以添加权限信息
                 .build();

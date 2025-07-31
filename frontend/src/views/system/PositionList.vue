@@ -48,12 +48,24 @@
       </div>
 
       <!-- 岗位列表 -->
-      <el-table :data="filteredPositionList" v-loading="loading" stripe border>
-        <el-table-column prop="id" label="ID" width="80" />
+      <el-table :data="positionList" v-loading="loading" stripe border>
+        <el-table-column prop="id" label="ID" width="80">
+          <template #default="{ row }">
+            {{ $formatId(row.id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="positionName" label="岗位名称" width="150" />
         <el-table-column prop="positionCode" label="岗位编码" width="120" />
-        <el-table-column prop="orgName" label="所属组织" width="150" />
-        <el-table-column prop="deptName" label="所属部门" width="150" />
+        <el-table-column prop="orgName" label="所属组织" width="150">
+          <template #default="{ row }">
+            {{ row.orgName || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="deptName" label="所属部门" width="150">
+          <template #default="{ row }">
+            {{ row.deptName || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="sort" label="排序" width="80" align="center" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
@@ -155,7 +167,8 @@ import {
   updatePosition,
   deletePosition,
   getPositionsByOrgId,
-  checkPositionCodeExists
+  checkPositionCodeExists,
+  getPositionListWithInfo
 } from '@/api/position'
 import { getOrganizationList } from '@/api/organization'
 import { getDepartmentsByOrgId } from '@/api/department'
@@ -212,25 +225,11 @@ const positionRules = {
   ]
 }
 
-// 过滤后的岗位列表
-const filteredPositionList = computed(() => {
-  if (!positionList.value) return []
-  
-  return positionList.value.filter(position => {
-    return (
-      (!searchForm.orgId || position.orgId === searchForm.orgId) &&
-      (!searchForm.deptId || position.deptId === searchForm.deptId) &&
-      (!searchForm.positionName || position.positionName.includes(searchForm.positionName)) &&
-      (searchForm.status === '' || position.status === searchForm.status)
-    )
-  })
-})
-
 // 获取岗位列表
 const fetchPositionList = async () => {
   loading.value = true
   try {
-    const response = await getPositionList()
+    const response = await getPositionListWithInfo(searchForm.orgId || null, searchForm.deptId || null)
     positionList.value = response.data || []
   } catch (error) {
     ElMessage.error('获取岗位列表失败')
@@ -295,7 +294,7 @@ const handleFormOrgChange = async (orgId) => {
 
 // 搜索
 const handleSearch = () => {
-  // 前端本地过滤，已通过计算属性实现
+  fetchPositionList()
 }
 
 // 重置搜索
@@ -306,6 +305,7 @@ const handleReset = () => {
     positionName: '',
     status: ''
   })
+  fetchPositionList()
 }
 
 // 新增岗位

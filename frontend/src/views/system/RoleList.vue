@@ -19,7 +19,11 @@
       border
       style="width: 100%; margin-top: 15px"
     >
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column prop="id" label="ID" width="80">
+        <template #default="scope">
+          {{ $formatId(scope.row.id) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="roleName" label="角色名称" />
       <el-table-column prop="roleCode" label="角色编码" />
       <el-table-column prop="description" label="描述" />

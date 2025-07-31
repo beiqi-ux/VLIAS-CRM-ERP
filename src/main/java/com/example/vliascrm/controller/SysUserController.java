@@ -1,8 +1,13 @@
 package com.example.vliascrm.controller;
 
 import com.example.vliascrm.common.ApiResponse;
+import com.example.vliascrm.dto.UserDTO;
 import com.example.vliascrm.entity.SysUser;
 import com.example.vliascrm.repository.SysUserRepository;
+import com.example.vliascrm.service.OrgDepartmentService;
+import com.example.vliascrm.service.OrgPositionService;
+import com.example.vliascrm.service.SysOrganizationService;
+import com.example.vliascrm.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import com.example.vliascrm.entity.OrgDepartment;
+import com.example.vliascrm.entity.OrgPosition;
+import com.example.vliascrm.entity.SysOrganization;
 
 /**
  * 系统用户管理控制器
@@ -29,6 +38,10 @@ public class SysUserController {
 
     private final SysUserRepository sysUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SysUserService sysUserService;
+    private final SysOrganizationService organizationService;
+    private final OrgDepartmentService departmentService;
+    private final OrgPositionService positionService;
 
     /**
      * 获取用户列表（支持分页和条件查询）
@@ -267,5 +280,90 @@ public class SysUserController {
     private String generateRandomPassword() {
         // 简单的随机密码生成，实际应用中可以使用更复杂的算法
         return "P" + System.currentTimeMillis() % 1000000;
+    }
+
+    /**
+     * 获取用户详情列表（包含组织、部门和岗位名称）
+     */
+    @GetMapping("/detailed")
+    public ApiResponse<Map<String, Object>> getDetailedUserList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String realName,
+            @RequestParam(required = false) Integer status) {
+        
+        // 创建分页对象
+        Pageable pageable = PageRequest.of(page - 1, size);
+        
+        // 创建查询条件
+        Specification<SysUser> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 用户名模糊查询
+            if (username != null && !username.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("username"), "%" + username + "%"));
+            }
+            
+            // 真实姓名模糊查询
+            if (realName != null && !realName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("realName"), "%" + realName + "%"));
+            }
+            
+            // 状态查询
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            
+            // 只查询未删除的用户
+            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        // 执行查询
+        Page<SysUser> userPage = sysUserRepository.findAll(spec, pageable);
+        
+        // 转换为DTO并填充组织、部门和岗位名称
+        List<UserDTO> userDTOList = userPage.getContent().stream().map(user -> {
+            UserDTO dto = UserDTO.fromSysUser(user);
+            
+            // 填充组织名称
+            if (user.getOrgId() != null) {
+                SysOrganization org = organizationService.findById(user.getOrgId());
+                if (org != null) {
+                    dto.setOrgName(org.getOrgName());
+                }
+            }
+            
+            // 填充部门名称
+            if (user.getDeptId() != null) {
+                OrgDepartment dept = departmentService.findById(user.getDeptId());
+                if (dept != null) {
+                    dto.setDeptName(dept.getDeptName());
+                }
+            }
+            
+            // 填充岗位名称
+            if (user.getPositionId() != null) {
+                OrgPosition position = positionService.findById(user.getPositionId());
+                if (position != null) {
+                    dto.setPositionName(position.getPositionName());
+                }
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
+        
+        // 构造返回结果
+        Map<String, Object> result = Map.of(
+            "data", userDTOList,
+            "total", userPage.getTotalElements(),
+            "current", page,
+            "size", size,
+            "pages", userPage.getTotalPages()
+        );
+        
+        return ApiResponse.success(result);
     }
 } 

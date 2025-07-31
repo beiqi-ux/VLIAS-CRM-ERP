@@ -57,7 +57,7 @@ export const useUserStore = defineStore('user', () => {
       const response = await getUserInfo()
       if (response.success) {
         setUserInfo(response.data)
-        return true
+        return response
       } else {
         clearToken()
         return false
