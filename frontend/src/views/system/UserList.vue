@@ -54,9 +54,10 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="success" size="small" @click="handleAssignRole(row)">分配角色</el-button>
             <el-button type="warning" size="small" @click="handleChangePassword(row)">改密</el-button>
             <el-button type="info" size="small" @click="handleResetPassword(row)">重置密码</el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
@@ -143,6 +144,14 @@
         :rules="passwordRules"
         label-width="100px"
       >
+        <el-form-item label="旧密码" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            placeholder="请输入旧密码"
+            show-password
+          />
+        </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
           <el-input
             v-model="passwordForm.newPassword"
@@ -169,13 +178,42 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 角色分配对话框 -->
+    <el-dialog
+      v-model="roleDialogVisible"
+      title="分配角色"
+      width="500px"
+    >
+      <div v-loading="roleLoading">
+        <p class="mb-10">当前用户：{{ currentUser.username }} ({{ currentUser.realName || '未设置姓名' }})</p>
+        <el-checkbox-group v-model="selectedRoles">
+          <el-checkbox v-for="role in roleList" :key="role.id" :label="role.id">
+            {{ role.roleName }} ({{ role.roleCode }})
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="roleSaving" @click="handleSaveUserRoles">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, createUser, updateUser, deleteUser, changePassword, resetPassword } from '@/api/user'
+import { formatDateTime } from '@/utils/format'
+import { 
+  getUserList, 
+  createUser, 
+  updateUser, 
+  deleteUser, 
+  changePassword, 
+  resetPassword 
+} from '@/api/user'
+import { getRoleList, getUserRoleIds, assignUserRoles } from '@/api/role'
 
 // 响应式数据
 const loading = ref(false)
@@ -216,6 +254,7 @@ const userForm = reactive({
 // 密码表单
 const passwordForm = reactive({
   userId: null,
+  oldPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
@@ -242,6 +281,10 @@ const userRules = {
 }
 
 const passwordRules = {
+  oldPassword: [
+    { required: true, message: '请输入旧密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
@@ -261,20 +304,28 @@ const passwordRules = {
   ]
 }
 
-// 格式化日期时间
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  return new Date(dateTime).toLocaleString('zh-CN')
-}
-
 // 获取用户列表
 const fetchUserList = async () => {
   loading.value = true
   try {
-    const response = await getUserList()
-    userList.value = response.data || []
-    pagination.total = userList.value.length
+    // 构造查询参数
+    const params = {
+      page: pagination.current,
+      size: pagination.size,
+      username: searchForm.username || null,
+      realName: searchForm.realName || null,
+      status: searchForm.status === '' ? null : searchForm.status
+    }
+    
+    const response = await getUserList(params)
+    if (response.success && response.data) {
+      userList.value = response.data || []
+      pagination.total = response.total || 0
+    } else {
+      ElMessage.error('获取用户列表失败')
+    }
   } catch (error) {
+    console.error('获取用户列表出错:', error)
     ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
@@ -353,6 +404,7 @@ const handleDelete = async (row) => {
 // 修改密码
 const handleChangePassword = (row) => {
   passwordForm.userId = row.id
+  passwordForm.oldPassword = ''
   passwordForm.newPassword = ''
   passwordForm.confirmPassword = ''
   passwordDialogVisible.value = true
@@ -410,6 +462,7 @@ const handlePasswordSubmit = async () => {
     submitting.value = true
     
     await changePassword(passwordForm.userId, {
+      oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword
     })
     
@@ -425,6 +478,83 @@ const handlePasswordSubmit = async () => {
 // 关闭对话框
 const handleDialogClose = () => {
   userFormRef.value?.resetFields()
+}
+
+// 角色分配相关
+const roleDialogVisible = ref(false)
+const roleLoading = ref(false)
+const roleSaving = ref(false)
+const roleList = ref([])
+const selectedRoles = ref([])
+const currentUser = ref({})
+
+// 获取所有角色
+const fetchAllRoles = async () => {
+  try {
+    roleLoading.value = true
+    const response = await getRoleList()
+    if (response.success) {
+      roleList.value = response.data || []
+    } else {
+      ElMessage.error(response.message || '获取角色列表失败')
+    }
+  } catch (error) {
+    ElMessage.error('获取角色列表失败')
+    console.error(error)
+  } finally {
+    roleLoading.value = false
+  }
+}
+
+// 获取用户的角色
+const fetchUserRoles = async (userId) => {
+  try {
+    roleLoading.value = true
+    const response = await getUserRoleIds(userId)
+    if (response.success) {
+      selectedRoles.value = response.data || []
+    } else {
+      ElMessage.error(response.message || '获取用户角色失败')
+      selectedRoles.value = []
+    }
+  } catch (error) {
+    ElMessage.error('获取用户角色失败')
+    console.error(error)
+    selectedRoles.value = []
+  } finally {
+    roleLoading.value = false
+  }
+}
+
+// 分配角色
+const handleAssignRole = async (row) => {
+  currentUser.value = row
+  roleDialogVisible.value = true
+  
+  // 获取所有角色
+  await fetchAllRoles()
+  
+  // 获取用户当前角色
+  await fetchUserRoles(row.id)
+}
+
+// 保存用户角色
+const handleSaveUserRoles = async () => {
+  try {
+    roleSaving.value = true
+    const response = await assignUserRoles(currentUser.value.id, selectedRoles.value)
+    if (response.success) {
+      ElMessage.success('角色分配成功')
+      roleDialogVisible.value = false
+    } else {
+      ElMessage.error(response.message || '角色分配失败')
+    }
+  } catch (error) {
+    ElMessage.error('角色分配失败')
+    console.error(error)
+  } finally {
+    roleSaving.value = false
+  }
 }
 
 // 页面加载时获取数据
@@ -464,5 +594,9 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
 }
 </style> 

@@ -2994,4 +2994,7 @@ CREATE TABLE sys_email_record (
 ) COMMENT='邮件记录表';
 ```
 
+INSERT INTO sys_role (role_name, role_code, description, status, create_time, is_deleted)
+VALUES ('超级管理员', 'admin', '系统最高权限', 1, NOW(), 0);
+
 

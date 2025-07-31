@@ -4,12 +4,15 @@ import com.example.vliascrm.common.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 系统用户实体类
@@ -92,12 +95,35 @@ public class SysUser extends BaseEntity implements UserDetails {
     @Column(name = "last_login_time")
     private LocalDateTime lastLoginTime;
     
-    // 删除重复的isDeleted字段，直接使用BaseEntity中的
-
+    /**
+     * 员工编号
+     */
+    @Column(name = "emp_no", length = 50)
+    private String empNo;
+    
+    /**
+     * 用户类型
+     */
+    @Column(name = "user_type", length = 50)
+    private String userType;
+    
+    /**
+     * 用户权限列表（非持久化字段）
+     */
+    @Transient
+    private List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 可以根据角色权限实现，这里先返回空集合
-        return Collections.emptyList();
+        return authorities;
+    }
+    
+    /**
+     * 设置用户权限
+     * @param authorities 权限列表
+     */
+    public void setAuthorities(List<SimpleGrantedAuthority> authorities) {
+        this.authorities = authorities;
     }
 
     @Override

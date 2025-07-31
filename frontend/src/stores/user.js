@@ -26,6 +26,13 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = info
   }
   
+  // 更新用户头像
+  function updateUserAvatar(avatarUrl) {
+    if (userInfo.value) {
+      userInfo.value.avatar = avatarUrl
+    }
+  }
+  
   // 登录
   async function login(credentials) {
     try {
@@ -79,6 +86,7 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     login,
     logout,
-    fetchUserInfo
+    fetchUserInfo,
+    updateUserAvatar
   }
 }) 

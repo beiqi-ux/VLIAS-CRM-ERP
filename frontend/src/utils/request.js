@@ -15,6 +15,10 @@ request.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
+    
+    // 添加调试日志
+    console.log('发送请求:', config.method.toUpperCase(), config.url, config.params || config.data)
+    
     return config
   },
   error => {
@@ -26,6 +30,9 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   response => {
+    // 添加调试日志
+    console.log('接收响应:', response.config.url, response.data)
+    
     // 直接返回响应数据
     return response.data
   },
@@ -33,6 +40,8 @@ request.interceptors.response.use(
     // 处理HTTP错误
     let message = '发生未知错误'
     if (error.response) {
+      console.error('响应错误:', error.response.status, error.response.data)
+      
       switch (error.response.status) {
         case 400:
           message = '请求错误'
@@ -59,8 +68,10 @@ request.interceptors.response.use(
       }
     } else if (error.request) {
       message = '服务器未响应'
+      console.error('服务器未响应:', error.request)
     } else {
       message = error.message
+      console.error('请求配置错误:', error.message)
     }
 
     ElMessage.error(message)

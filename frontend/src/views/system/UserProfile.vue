@@ -5,7 +5,22 @@
       <el-col :span="8">
         <el-card class="profile-card">
           <div class="avatar-container">
-            <el-avatar :size="100" :src="userInfo.avatar || '/default-avatar.png'" />
+            <div class="avatar-wrapper">
+              <el-avatar :size="100" :src="userInfo.avatar || '/default-avatar.png'" />
+              <div class="avatar-upload">
+                <el-upload
+                  class="avatar-uploader"
+                  :action="'/api/files/avatar'"
+                  :headers="uploadHeaders"
+                  :show-file-list="false"
+                  :on-success="handleAvatarSuccess"
+                  :on-error="handleAvatarError"
+                  :before-upload="beforeAvatarUpload"
+                >
+                  <el-icon class="avatar-edit-icon"><Edit /></el-icon>
+                </el-upload>
+              </div>
+            </div>
             <h3>{{ userInfo.realName || userInfo.username }}</h3>
             <p>{{ userInfo.email || '暂无邮箱' }}</p>
           </div>
@@ -178,10 +193,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { updateUser, changePassword } from '@/api/user'
+import { Edit } from '@element-plus/icons-vue';
+import { useRouter } from 'vue-router';
 
 // 响应式数据
 const userStore = useUserStore()
@@ -335,6 +352,46 @@ const handleEditDialogClose = () => {
   editFormRef.value?.resetFields()
 }
 
+// 上传头像相关
+const uploadHeaders = computed(() => {
+  return {
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  };
+});
+
+const handleAvatarSuccess = (response, uploadFile) => {
+  if (response.success) {
+    userInfo.value.avatar = response.data.url;
+    ElMessage.success('头像更新成功');
+    
+    // 更新本地存储的用户信息
+    const userStore = useUserStore();
+    userStore.updateUserAvatar(response.data.url);
+  } else {
+    ElMessage.error(response.message || '头像上传失败');
+  }
+};
+
+const handleAvatarError = (error) => {
+  console.error('头像上传失败:', error);
+  ElMessage.error('头像上传失败，请重试');
+};
+
+const beforeAvatarUpload = (file) => {
+  const isImage = file.type.startsWith('image/');
+  const isLt2M = file.size / 1024 / 1024 < 2;
+
+  if (!isImage) {
+    ElMessage.error('头像只能是图片格式!');
+    return false;
+  }
+  if (!isLt2M) {
+    ElMessage.error('头像大小不能超过 2MB!');
+    return false;
+  }
+  return true;
+};
+
 // 页面加载时获取数据
 onMounted(() => {
   fetchUserInfo()
@@ -402,5 +459,48 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-upload {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.avatar-upload:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.avatar-edit-icon {
+  color: white;
+  font-size: 14px;
+}
+
+.avatar-uploader {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-uploader :deep(.el-upload) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style> 

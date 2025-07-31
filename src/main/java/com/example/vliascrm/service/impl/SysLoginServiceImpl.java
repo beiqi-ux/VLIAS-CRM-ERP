@@ -2,10 +2,12 @@ package com.example.vliascrm.service.impl;
 
 import com.example.vliascrm.dto.LoginDTO;
 import com.example.vliascrm.dto.LoginResponseDTO;
+import com.example.vliascrm.entity.SysRole;
 import com.example.vliascrm.entity.SysUser;
 import com.example.vliascrm.exception.BusinessException;
 import com.example.vliascrm.repository.SysUserRepository;
 import com.example.vliascrm.service.SysLoginService;
+import com.example.vliascrm.service.SysRoleService;
 import com.example.vliascrm.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 登录服务实现类
@@ -30,6 +33,7 @@ public class SysLoginServiceImpl implements SysLoginService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final SysUserRepository sysUserRepository;
+    private final SysRoleService roleService;
 
     @Value("${app.jwt.expiration}")
     private Long expiration;
@@ -113,7 +117,7 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .orgId(latestUser.getOrgId())
                 .deptId(latestUser.getDeptId())
                 .lastLoginTime(latestUser.getLastLoginTime())
-                .roles(new ArrayList<>())
+                .roles(getRoleNames(latestUser.getId()))
                 .permissions(new ArrayList<>())
                 .build();
     }
@@ -137,8 +141,21 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .orgId(user.getOrgId())
                 .deptId(user.getDeptId())
                 .lastLoginTime(user.getLastLoginTime())
-                .roles(new ArrayList<>())  // 这里可以添加角色信息
+                .roles(getRoleNames(user.getId()))
                 .permissions(new ArrayList<>())  // 这里可以添加权限信息
                 .build();
+    }
+    
+    /**
+     * 获取用户的角色名称列表
+     *
+     * @param userId 用户ID
+     * @return 角色名称列表
+     */
+    private List<String> getRoleNames(Long userId) {
+        List<SysRole> roles = roleService.getUserRoles(userId);
+        return roles.stream()
+                .map(SysRole::getRoleCode)
+                .collect(Collectors.toList());
     }
 } 

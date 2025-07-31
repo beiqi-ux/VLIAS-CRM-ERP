@@ -30,8 +30,10 @@ public class SysUserController {
     @GetMapping
     public ApiResponse<List<SysUser>> getAllUsers() {
         List<SysUser> users = sysUserRepository.findAll();
+        
         // 安全考虑，清空返回结果中的密码
         users.forEach(user -> user.setPassword(null));
+        
         return ApiResponse.success(users);
     }
 
@@ -206,7 +208,7 @@ public class SysUserController {
         sysUserRepository.save(user);
         
         // 返回新密码
-        return ApiResponse.success(Map.of("password", newPassword));
+        return ApiResponse.success(Map.of("newPassword", newPassword));
     }
     
     /**

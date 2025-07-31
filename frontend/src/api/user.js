@@ -1,13 +1,15 @@
 import request from '@/utils/request'
 
 /**
- * 获取用户列表
+ * 获取用户列表（支持分页和条件查询）
+ * @param {Object} params - 查询参数
  * @returns {Promise}
  */
-export function getUserList() {
+export function getUserList(params) {
   return request({
     url: '/api/sys/users',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

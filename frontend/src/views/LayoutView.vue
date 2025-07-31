@@ -4,7 +4,7 @@
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar-container">
       <!-- 顶部logo -->
       <div class="logo-container">
-        <img src="@/assets/logo.png" alt="Logo" v-if="!isCollapse" />
+        <div v-if="!isCollapse" style="width: 32px; height: 32px; background-color: #409EFF; border-radius: 4px; margin-right: 10px;"></div>
         <span v-if="!isCollapse">VLIAS CRM</span>
       </div>
       
@@ -23,13 +23,52 @@
           <template #title>首页</template>
         </el-menu-item>
         
-        <el-menu-item index="/users">
-          <el-icon><User /></el-icon>
-          <template #title>用户管理</template>
-        </el-menu-item>
+        <!-- 系统管理 -->
+        <el-sub-menu index="/system">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统管理</span>
+          </template>
+          <el-menu-item index="/users">
+            <el-icon><User /></el-icon>
+            <template #title>用户管理</template>
+          </el-menu-item>
+          <el-menu-item index="/roles">
+            <el-icon><UserFilled /></el-icon>
+            <template #title>角色管理</template>
+          </el-menu-item>
+          <el-menu-item index="/permissions">
+            <el-icon><Lock /></el-icon>
+            <template #title>权限管理</template>
+          </el-menu-item>
+          <el-menu-item index="/menus">
+            <el-icon><Menu /></el-icon>
+            <template #title>菜单管理</template>
+          </el-menu-item>
+        </el-sub-menu>
+        
+        <!-- 组织架构 -->
+        <el-sub-menu index="/org-structure">
+          <template #title>
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>组织架构</span>
+          </template>
+          <el-menu-item index="/organizations">
+            <el-icon><SetUp /></el-icon>
+            <template #title>组织机构管理</template>
+          </el-menu-item>
+          <el-menu-item index="/departments">
+            <el-icon><Files /></el-icon>
+            <template #title>部门管理</template>
+          </el-menu-item>
+          <el-menu-item index="/positions">
+            <el-icon><List /></el-icon>
+            <template #title>岗位管理</template>
+          </el-menu-item>
+        </el-sub-menu>
         
         <el-menu-item index="/profile">
-          <el-icon><Setting /></el-icon>
+          <el-icon><User /></el-icon>
           <template #title>个人中心</template>
         </el-menu-item>
       </el-menu>
@@ -78,7 +117,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
-import { House, User, Setting, Expand, Fold } from '@element-plus/icons-vue'
+import { 
+  House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
+  OfficeBuilding, SetUp, Files, List
+} from '@element-plus/icons-vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 // 路由

@@ -5,19 +5,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.cors.CorsUtils;
 
 /**
  * Spring Security 配置类
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -32,29 +33,31 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configure(http)) // 启用CORS配置
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 使用JWT，禁用session
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll() // 允许预检请求
-                .requestMatchers(
-                    new AntPathRequestMatcher("/api/auth/**"),
-                    new AntPathRequestMatcher("/"),
-                    new AntPathRequestMatcher("/swagger-ui.html"),
-                                 new AntPathRequestMatcher("/swagger-ui/**"),
-                                 new AntPathRequestMatcher("/api-docs/**"),
-                    new AntPathRequestMatcher("/v3/api-docs/**"),
-                    new AntPathRequestMatcher("/h2-console/**")
-                ).permitAll()
-                .anyRequest().authenticated())
-            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
-            // 禁用表单登录，使用JWT认证
-            .formLogin(form -> form.disable()) 
-            .httpBasic(basic -> basic.disable())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/api/auth/**"),
+                                new AntPathRequestMatcher("/api-docs/**"),
+                                new AntPathRequestMatcher("/swagger-ui/**"),
+                                new AntPathRequestMatcher("/swagger-ui.html"),
+                                new AntPathRequestMatcher("/h2-console/**"),
+                                new AntPathRequestMatcher("/uploads/**")
+                        ).permitAll()
+                        // 角色和权限控制
+                        .requestMatchers(new AntPathRequestMatcher("/api/sys/roles/**")).hasAnyRole("admin", "manager")
+                        .requestMatchers(new AntPathRequestMatcher("/api/sys/permissions/**")).hasRole("admin")
+                        .requestMatchers(new AntPathRequestMatcher("/api/sys/menus/**")).hasAnyRole("admin", "manager")
+                        // 其他请求需要认证
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 } 

@@ -22,12 +22,56 @@ const router = createRouter({
           component: () => import('@/views/HomeView.vue'),
           meta: { title: '首页' }
         },
+        // 用户管理
         {
           path: 'users',
           name: 'users',
           component: () => import('@/views/system/UserList.vue'),
           meta: { title: '用户管理' }
         },
+        // 角色管理
+        {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('@/views/system/RoleList.vue'),
+          meta: { title: '角色管理' }
+        },
+        // 权限管理
+        {
+          path: 'permissions',
+          name: 'permissions',
+          component: () => import('@/views/system/PermissionList.vue'),
+          meta: { title: '权限管理' }
+        },
+        // 菜单管理
+        {
+          path: 'menus',
+          name: 'menus',
+          component: () => import('@/views/system/MenuList.vue'),
+          meta: { title: '菜单管理' }
+        },
+        // 组织机构管理
+        {
+          path: 'organizations',
+          name: 'organizations',
+          component: () => import('@/views/system/OrganizationList.vue'),
+          meta: { title: '组织机构管理' }
+        },
+        // 部门管理
+        {
+          path: 'departments',
+          name: 'departments',
+          component: () => import('@/views/system/DepartmentList.vue'),
+          meta: { title: '部门管理' }
+        },
+        // 岗位管理
+        {
+          path: 'positions',
+          name: 'positions',
+          component: () => import('@/views/system/PositionList.vue'),
+          meta: { title: '岗位管理' }
+        },
+        // 个人中心
         {
           path: 'profile',
           name: 'profile',

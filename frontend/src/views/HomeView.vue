@@ -1,7 +1,6 @@
 <template>
   <div class="home-container">
     <el-row :gutter="20">
-      <!-- 欢迎卡片 -->
       <el-col :span="24">
         <el-card class="welcome-card">
           <template #header>
@@ -10,39 +9,9 @@
             </div>
           </template>
           <div class="welcome-content">
-            <el-row>
-              <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
-                <div class="welcome-info">
-                  <h3>您好, {{ userInfo.realName || userInfo.username }}</h3>
-                  <p>上次登录时间: {{ lastLoginTime }}</p>
-                  <el-button type="primary" @click="goToUserManagement">
-                    用户管理
-                  </el-button>
-                </div>
-              </el-col>
-              <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
-                <div class="welcome-image">
-                  <img src="@/assets/welcome.svg" alt="欢迎" />
-                </div>
-              </el-col>
-            </el-row>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-    
-    <el-row :gutter="20" class="mt-20">
-      <!-- 快捷操作 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" v-for="(card, index) in quickActionCards" :key="index">
-        <el-card class="quick-action-card" shadow="hover" @click="handleCardClick(card.route)">
-          <div class="card-content">
-            <el-icon class="card-icon" :size="40">
-              <component :is="card.icon"></component>
-            </el-icon>
-            <div class="card-info">
-              <h3 class="card-title">{{ card.title }}</h3>
-              <p class="card-desc">{{ card.description }}</p>
-            </div>
+            <h3>您好，欢迎使用VLIAS CRM系统</h3>
+            <p>这里是系统首页</p>
+            <el-button type="primary" @click="goToUserManagement">用户管理</el-button>
           </div>
         </el-card>
       </el-col>
@@ -51,62 +20,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { User, Setting, Document } from '@element-plus/icons-vue'
+import { useRouter } from "vue-router";
 
-// 路由
-const router = useRouter()
+const router = useRouter();
 
-// 用户store
-const userStore = useUserStore()
-
-// 用户信息
-const userInfo = computed(() => userStore.userInfo)
-
-// 格式化最后登录时间
-const lastLoginTime = computed(() => {
-  if (!userInfo.value.lastLoginTime) return '首次登录'
-  
-  try {
-    const date = new Date(userInfo.value.lastLoginTime)
-    return date.toLocaleString('zh-CN')
-  } catch (e) {
-    return '未知'
-  }
-})
-
-// 快捷操作卡片
-const quickActionCards = [
-  {
-    title: '用户管理',
-    description: '管理系统用户、角色和权限',
-    icon: 'User',
-    route: '/users'
-  },
-  {
-    title: '个人设置',
-    description: '修改个人信息和密码',
-    icon: 'Setting',
-    route: '/profile'
-  },
-  {
-    title: '系统文档',
-    description: '查看系统使用文档',
-    icon: 'Document',
-    route: '/docs'
-  }
-]
-
-// 跳转到用户管理
 function goToUserManagement() {
-  router.push('/users')
-}
-
-// 处理卡片点击
-function handleCardClick(route) {
-  router.push(route)
+  router.push("/users");
 }
 </script>
 
@@ -114,267 +33,16 @@ function handleCardClick(route) {
 .home-container {
   padding: 20px;
 }
-
 .welcome-card {
   margin-bottom: 20px;
 }
-
 .welcome-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .welcome-content {
   padding: 20px 0;
+  text-align: center;
 }
-
-.welcome-info {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.welcome-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.welcome-image img {
-  max-width: 100%;
-  height: auto;
-  max-height: 250px;
-}
-
-.mt-20 {
-  margin-top: 20px;
-}
-
-.quick-action-card {
-  height: 120px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.quick-action-card:hover {
-  transform: translateY(-5px);
-}
-
-.card-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.card-icon {
-  margin-right: 20px;
-  color: #409eff;
-}
-
-.card-info {
-  flex: 1;
-}
-
-.card-title {
-  margin: 0;
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.card-desc {
-  margin: 0;
-  color: #999;
-}
-</style> 
-  <div class="home-container">
-    <el-row :gutter="20">
-      <!-- 欢迎卡片 -->
-      <el-col :span="24">
-        <el-card class="welcome-card">
-          <template #header>
-            <div class="welcome-header">
-              <h2>欢迎使用 VLIAS CRM系统</h2>
-            </div>
-          </template>
-          <div class="welcome-content">
-            <el-row>
-              <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
-                <div class="welcome-info">
-                  <h3>您好, {{ userInfo.realName || userInfo.username }}</h3>
-                  <p>上次登录时间: {{ lastLoginTime }}</p>
-                  <el-button type="primary" @click="goToUserManagement">
-                    用户管理
-                  </el-button>
-                </div>
-              </el-col>
-              <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
-                <div class="welcome-image">
-                  <img src="@/assets/welcome.svg" alt="欢迎" />
-                </div>
-              </el-col>
-            </el-row>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-    
-    <el-row :gutter="20" class="mt-20">
-      <!-- 快捷操作 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" v-for="(card, index) in quickActionCards" :key="index">
-        <el-card class="quick-action-card" shadow="hover" @click="handleCardClick(card.route)">
-          <div class="card-content">
-            <el-icon class="card-icon" :size="40">
-              <component :is="card.icon"></component>
-            </el-icon>
-            <div class="card-info">
-              <h3 class="card-title">{{ card.title }}</h3>
-              <p class="card-desc">{{ card.description }}</p>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-  </div>
-</template>
-
-<script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { User, Setting, Document } from '@element-plus/icons-vue'
-
-// 路由
-const router = useRouter()
-
-// 用户store
-const userStore = useUserStore()
-
-// 用户信息
-const userInfo = computed(() => userStore.userInfo)
-
-// 格式化最后登录时间
-const lastLoginTime = computed(() => {
-  if (!userInfo.value.lastLoginTime) return '首次登录'
-  
-  try {
-    const date = new Date(userInfo.value.lastLoginTime)
-    return date.toLocaleString('zh-CN')
-  } catch (e) {
-    return '未知'
-  }
-})
-
-// 快捷操作卡片
-const quickActionCards = [
-  {
-    title: '用户管理',
-    description: '管理系统用户、角色和权限',
-    icon: 'User',
-    route: '/users'
-  },
-  {
-    title: '个人设置',
-    description: '修改个人信息和密码',
-    icon: 'Setting',
-    route: '/profile'
-  },
-  {
-    title: '系统文档',
-    description: '查看系统使用文档',
-    icon: 'Document',
-    route: '/docs'
-  }
-]
-
-// 跳转到用户管理
-function goToUserManagement() {
-  router.push('/users')
-}
-
-// 处理卡片点击
-function handleCardClick(route) {
-  router.push(route)
-}
-</script>
-
-<style scoped>
-.home-container {
-  padding: 20px;
-}
-
-.welcome-card {
-  margin-bottom: 20px;
-}
-
-.welcome-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.welcome-content {
-  padding: 20px 0;
-}
-
-.welcome-info {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.welcome-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.welcome-image img {
-  max-width: 100%;
-  height: auto;
-  max-height: 250px;
-}
-
-.mt-20 {
-  margin-top: 20px;
-}
-
-.quick-action-card {
-  height: 120px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.quick-action-card:hover {
-  transform: translateY(-5px);
-}
-
-.card-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
-
-.card-icon {
-  margin-right: 20px;
-  color: #409eff;
-}
-
-.card-info {
-  flex: 1;
-}
-
-.card-title {
-  margin: 0;
-  font-size: 18px;
-  margin-bottom: 8px;
-}
-
-.card-desc {
-  margin: 0;
-  color: #999;
-}
-</style> 
- 
+</style>

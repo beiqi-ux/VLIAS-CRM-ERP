@@ -62,7 +62,7 @@ springdoc:
 # 自定义配置
 app:
   jwt:
-    secret: yourSecretKey
+    secret: g8shUE86YrSytAXbfOkqbI8y2vrdPhT9k6M5fwJN20aCDxVlLpZz7HcGe3RiWjK4dW4cD7vG9sBn3MqP5zLxK1jQtR8fE6yH0uI2oA3pS4vF8dT7hG9jK2lZ5xC4vB3nM
     expiration: 604800 # 7天，单位秒
   cors:
     allowed-origins: "*"
