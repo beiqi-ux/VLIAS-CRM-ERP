@@ -3,8 +3,14 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>用户管理</span>
-          <el-button type="primary" @click="handleAdd">新增用户</el-button>
+          <div class="header-left">
+            <el-icon class="header-icon"><User /></el-icon>
+            <span class="header-title">用户管理</span>
+          </div>
+          <el-button type="primary" @click="handleAdd">
+            <el-icon><Plus /></el-icon>
+            新增用户
+          </el-button>
         </div>
       </template>
 
@@ -12,26 +18,59 @@
       <div class="search-area">
         <el-form :inline="true" :model="searchForm" class="search-form">
           <el-form-item label="用户名">
-            <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable />
+            <el-input 
+              v-model="searchForm.username" 
+              placeholder="请输入用户名" 
+              clearable 
+              @keyup.enter="handleSearch"
+              style="width: 200px;"
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item label="真实姓名">
-            <el-input v-model="searchForm.realName" placeholder="请输入真实姓名" clearable />
+            <el-input 
+              v-model="searchForm.realName" 
+              placeholder="请输入真实姓名" 
+              clearable 
+              @keyup.enter="handleSearch"
+              style="width: 200px;"
+            >
+              <template #prefix>
+                <el-icon><UserFilled /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 150px;">
               <el-option label="启用" :value="1" />
               <el-option label="禁用" :value="0" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 用户列表 -->
-      <el-table :data="userList" v-loading="loading" stripe>
+      <el-table 
+        :data="userList" 
+        v-loading="loading" 
+        stripe 
+        border
+        style="width: 100%;"
+        :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
+      >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
@@ -54,13 +93,39 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="success" size="small" @click="handleAssignRole(row)">分配角色</el-button>
-            <el-button type="warning" size="small" @click="handleChangePassword(row)">改密</el-button>
-            <el-button type="info" size="small" @click="handleResetPassword(row)">重置密码</el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button-group>
+              <el-button type="primary" size="small" @click="handleEdit(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button type="success" size="small" @click="handleAssignRole(row)">
+                <el-icon><UserFilled /></el-icon>
+                角色
+              </el-button>
+              <el-dropdown @command="(command) => handleDropdownCommand(command, row)" trigger="click">
+                <el-button type="info" size="small">
+                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="changePassword">
+                      <el-icon><Key /></el-icon>
+                      修改密码
+                    </el-dropdown-item>
+                    <el-dropdown-item command="resetPassword">
+                      <el-icon><Refresh /></el-icon>
+                      重置密码
+                    </el-dropdown-item>
+                    <el-dropdown-item divided command="delete">
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
@@ -214,6 +279,7 @@ import {
   resetPassword 
 } from '@/api/user'
 import { getRoleList, getUserRoleIds, assignUserRoles } from '@/api/role'
+import { Edit, UserFilled, ArrowDown, Key, Refresh, Delete, User, Search, Plus } from '@element-plus/icons-vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -319,8 +385,8 @@ const fetchUserList = async () => {
     
     const response = await getUserList(params)
     if (response.success && response.data) {
-      userList.value = response.data || []
-      pagination.total = response.total || 0
+      userList.value = response.data.data || []
+      pagination.total = response.data.total || 0
     } else {
       ElMessage.error('获取用户列表失败')
     }
@@ -557,6 +623,17 @@ const handleSaveUserRoles = async () => {
   }
 }
 
+// 处理下拉菜单命令
+const handleDropdownCommand = async (command, row) => {
+  if (command === 'changePassword') {
+    handleChangePassword(row)
+  } else if (command === 'resetPassword') {
+    handleResetPassword(row)
+  } else if (command === 'delete') {
+    handleDelete(row)
+  }
+}
+
 // 页面加载时获取数据
 onMounted(() => {
   fetchUserList()
@@ -574,29 +651,94 @@ onMounted(() => {
   align-items: center;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-icon {
+  margin-right: 8px;
+  font-size: 20px;
+  color: #409EFF;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+}
+
 .search-area {
   margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
 }
 
 .search-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
+  align-items: center;
+}
+
+.search-form .el-form-item {
+  margin-bottom: 0;
 }
 
 .pagination {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+  padding: 16px 0;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
-.mb-10 {
-  margin-bottom: 10px;
+/* 表格操作按钮样式 */
+.el-button-group {
+  display: flex;
+}
+
+.el-button-group .el-button {
+  margin-right: 0;
+}
+
+/* 下拉菜单样式 */
+.el-dropdown {
+  margin-left: 0;
+}
+
+.el-dropdown .el-button {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-form .el-form-item {
+    margin-bottom: 12px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .header-left {
+    justify-content: center;
+  }
 }
 </style> 

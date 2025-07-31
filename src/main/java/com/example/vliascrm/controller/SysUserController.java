@@ -4,11 +4,17 @@ import com.example.vliascrm.common.ApiResponse;
 import com.example.vliascrm.entity.SysUser;
 import com.example.vliascrm.repository.SysUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,16 +31,60 @@ public class SysUserController {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * 获取所有用户
+     * 获取用户列表（支持分页和条件查询）
      */
     @GetMapping
-    public ApiResponse<List<SysUser>> getAllUsers() {
-        List<SysUser> users = sysUserRepository.findAll();
+    public ApiResponse<Map<String, Object>> getUserList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String realName,
+            @RequestParam(required = false) Integer status) {
         
-        // 安全考虑，清空返回结果中的密码
-        users.forEach(user -> user.setPassword(null));
+        // 创建分页对象
+        Pageable pageable = PageRequest.of(page - 1, size);
         
-        return ApiResponse.success(users);
+        // 创建查询条件
+        Specification<SysUser> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 用户名模糊查询
+            if (username != null && !username.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("username"), "%" + username + "%"));
+            }
+            
+            // 真实姓名模糊查询
+            if (realName != null && !realName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("realName"), "%" + realName + "%"));
+            }
+            
+            // 状态查询
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            
+            // 只查询未删除的用户
+            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        // 执行查询
+        Page<SysUser> userPage = sysUserRepository.findAll(spec, pageable);
+        
+        // 清空密码
+        userPage.getContent().forEach(user -> user.setPassword(null));
+        
+        // 构造返回结果
+        Map<String, Object> result = Map.of(
+            "data", userPage.getContent(),
+            "total", userPage.getTotalElements(),
+            "current", page,
+            "size", size,
+            "pages", userPage.getTotalPages()
+        );
+        
+        return ApiResponse.success(result);
     }
 
     /**
