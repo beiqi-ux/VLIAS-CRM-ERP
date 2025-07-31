@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# 上传文件目录
+uploads/
+
+# 前端构建文件
+frontend/dist/
+frontend/node_modules/
+frontend/test-app/node_modules/
+
+# 日志文件
+logs/
+*.log

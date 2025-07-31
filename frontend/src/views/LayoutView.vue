@@ -4,8 +4,10 @@
     <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar-container">
       <!-- 顶部logo -->
       <div class="logo-container">
-        <div v-if="!isCollapse" style="width: 32px; height: 32px; background-color: #409EFF; border-radius: 4px; margin-right: 10px;"></div>
-        <span v-if="!isCollapse">VLIAS CRM</span>
+        <div class="vlias-logo" :class="{ 'collapsed': isCollapse }">
+          {{ isCollapse ? 'V' : 'VLIAS' }}
+        </div>
+        <span v-if="!isCollapse">企业管理系统</span>
       </div>
       
       <!-- 菜单 -->
@@ -45,6 +47,10 @@
             <el-icon><Menu /></el-icon>
             <template #title>菜单管理</template>
           </el-menu-item>
+          <el-menu-item index="/dicts">
+            <el-icon><Collection /></el-icon>
+            <template #title>数据字典管理</template>
+          </el-menu-item>
         </el-sub-menu>
         
         <!-- 组织架构 -->
@@ -64,6 +70,26 @@
           <el-menu-item index="/positions">
             <el-icon><List /></el-icon>
             <template #title>岗位管理</template>
+          </el-menu-item>
+        </el-sub-menu>
+        
+        <!-- 商品管理 -->
+        <el-sub-menu index="/product">
+          <template #title>
+            <el-icon><Goods /></el-icon>
+            <span>商品管理</span>
+          </template>
+          <el-menu-item index="/goods">
+            <el-icon><Box /></el-icon>
+            <template #title>商品管理</template>
+          </el-menu-item>
+          <el-menu-item index="/categories">
+            <el-icon><Grid /></el-icon>
+            <template #title>分类管理</template>
+          </el-menu-item>
+          <el-menu-item index="/brands">
+            <el-icon><Star /></el-icon>
+            <template #title>品牌管理</template>
           </el-menu-item>
         </el-sub-menu>
         
@@ -123,7 +149,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import { 
   House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
-  OfficeBuilding, SetUp, Files, List
+  OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star
 } from '@element-plus/icons-vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
@@ -248,5 +274,25 @@ watch(route, (to, from) => {
 .main-container {
   padding: 15px;
   background-color: #f0f2f5;
+}
+
+.vlias-logo {
+  width: 32px;
+  height: 32px;
+  background-color: #002FA7;
+  border-radius: 4px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
+
+.vlias-logo.collapsed {
+  margin-right: 0;
+  font-size: 14px;
 }
 </style> 

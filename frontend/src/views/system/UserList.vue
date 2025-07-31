@@ -44,10 +44,14 @@
             </el-input>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 150px;">
-              <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
-            </el-select>
+            <DictSelect 
+              v-model="searchForm.status" 
+              dict-code="USER_STATUS" 
+              placeholder="请选择状态" 
+              clearable 
+              value-type="number"
+              style="width: 150px;"
+            />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
@@ -97,8 +101,8 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -189,17 +193,19 @@
           <el-input v-model="userForm.email" placeholder="请输入邮箱" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
-          <el-radio-group v-model="userForm.gender">
-            <el-radio :label="1">男</el-radio>
-            <el-radio :label="2">女</el-radio>
-            <el-radio :label="0">未知</el-radio>
-          </el-radio-group>
+          <DictSelect 
+            v-model="userForm.gender" 
+            dict-code="GENDER" 
+            placeholder="请选择性别"
+            value-type="number"
+          />
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="userForm.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
-          </el-radio-group>
+          <DictRadio 
+            v-model="userForm.status" 
+            dict-code="USER_STATUS" 
+            value-type="number"
+          />
         </el-form-item>
         <el-form-item label="组织" prop="orgId">
           <el-select v-model="userForm.orgId" placeholder="请选择组织" @change="handleOrgChange">
@@ -319,6 +325,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
+import { getDictTextSync, preloadDicts } from '@/utils/dictUtils'
 import { 
   getUserList, 
   getUserDetailList,
@@ -715,7 +722,10 @@ const handleDropdownCommand = async (command, row) => {
 }
 
 // 页面加载时获取数据
-onMounted(() => {
+onMounted(async () => {
+  // 预加载字典数据
+  await preloadDicts(['USER_STATUS', 'GENDER'])
+  
   fetchUserList()
   fetchOrganizations()
 })
@@ -784,6 +794,19 @@ const handleOrgChange = async () => {
 const handleDeptChange = async () => {
   userForm.positionId = null
   await fetchPositions(userForm.deptId)
+}
+
+// 字典相关方法
+const getStatusText = (status) => {
+  return getDictTextSync('USER_STATUS', status)
+}
+
+const getStatusType = (status) => {
+  // 根据状态值返回对应的标签类型
+  if (status == 1) return 'success'  // 启用
+  if (status == 0) return 'danger'   // 禁用
+  if (status == 2) return 'warning'  // 短暂暂停使用
+  return 'info'
 }
 </script>
 

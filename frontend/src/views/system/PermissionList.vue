@@ -138,6 +138,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPermissionTree, getPermissionById, createPermission, updatePermission, deletePermission } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
 
+
 // 表格数据和加载状态
 const tableData = ref([])
 const tableLoading = ref(false)
@@ -166,6 +167,8 @@ const permissionRules = {
 // 上级权限和菜单选项
 const parentOptions = ref([])
 const menuOptions = ref([])
+
+
 
 // 初始化
 onMounted(() => {
@@ -308,6 +311,10 @@ const handleDelete = (row) => {
     }
   }).catch(() => {})
 }
+
+
+
+
 </script>
 
 <style scoped>

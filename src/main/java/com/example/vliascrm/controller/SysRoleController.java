@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -70,8 +71,11 @@ public class SysRoleController {
      * @return 角色列表
      */
     @GetMapping
-    public ApiResponse<List<SysRole>> getAllRoles() {
-        return ApiResponse.success(roleService.getAllRoles());
+    public ApiResponse<Page<SysRole>> getRoleList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime"));
+        return ApiResponse.success(roleService.getRolePage(null, pageable));
     }
 
     /**

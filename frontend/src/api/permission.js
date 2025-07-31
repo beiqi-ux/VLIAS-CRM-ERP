@@ -1,17 +1,6 @@
 import request from '@/utils/request'
 
 /**
- * 获取权限列表
- * @returns {Promise}
- */
-export function getPermissionList() {
-  return request({
-    url: '/api/sys/permissions',
-    method: 'get'
-  })
-}
-
-/**
  * 获取权限树
  * @returns {Promise}
  */
@@ -23,8 +12,8 @@ export function getPermissionTree() {
 }
 
 /**
- * 获取单个权限
- * @param {number} id - 权限ID
+ * 根据ID获取权限详情
+ * @param {Number} id - 权限ID
  * @returns {Promise}
  */
 export function getPermissionById(id) {
@@ -36,7 +25,7 @@ export function getPermissionById(id) {
 
 /**
  * 创建权限
- * @param {Object} data - 权限信息
+ * @param {Object} data - 权限数据
  * @returns {Promise}
  */
 export function createPermission(data) {
@@ -49,8 +38,8 @@ export function createPermission(data) {
 
 /**
  * 更新权限
- * @param {number} id - 权限ID
- * @param {Object} data - 权限信息
+ * @param {Number} id - 权限ID
+ * @param {Object} data - 权限数据
  * @returns {Promise}
  */
 export function updatePermission(id, data) {
@@ -63,7 +52,7 @@ export function updatePermission(id, data) {
 
 /**
  * 删除权限
- * @param {number} id - 权限ID
+ * @param {Number} id - 权限ID
  * @returns {Promise}
  */
 export function deletePermission(id) {
@@ -74,25 +63,12 @@ export function deletePermission(id) {
 }
 
 /**
- * 根据角色ID获取权限列表
- * @param {number} roleId - 角色ID
+ * 获取所有权限列表
  * @returns {Promise}
  */
-export function getPermissionsByRoleId(roleId) {
+export function getAllPermissions() {
   return request({
-    url: `/api/sys/permissions/roles/${roleId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 根据用户ID获取权限列表
- * @param {number} userId - 用户ID
- * @returns {Promise}
- */
-export function getPermissionsByUserId(userId) {
-  return request({
-    url: `/api/sys/permissions/users/${userId}`,
+    url: '/api/sys/permissions',
     method: 'get'
   })
 } 

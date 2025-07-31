@@ -31,7 +31,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
     @Override
     @Transactional
     public SysPermission createPermission(PermissionDTO permissionDTO) {
-        // 检查权限编码是否存在
+        // 检查权限编码是否已存在
         if (permissionRepository.existsByPermissionCode(permissionDTO.getPermissionCode())) {
             throw new BusinessException("权限编码已存在");
         }

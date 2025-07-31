@@ -5,7 +5,6 @@ import com.example.vliascrm.dto.DepartmentDTO;
 import com.example.vliascrm.entity.OrgDepartment;
 import com.example.vliascrm.service.OrgDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +33,6 @@ public class OrgDepartmentController {
      * @return 部门列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<DepartmentDTO>> list() {
         List<OrgDepartment> departments = departmentService.findAll();
         
@@ -65,7 +63,6 @@ public class OrgDepartmentController {
      * @return 部门树
      */
     @GetMapping("/tree")
-    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<DepartmentDTO>> tree(@RequestParam(required = false) Long orgId) {
         List<DepartmentDTO> tree = departmentService.getDepartmentTree(orgId);
         return Result.success(tree);
@@ -77,7 +74,6 @@ public class OrgDepartmentController {
      * @return 部门信息
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('system:department:query')")
     public Result<DepartmentDTO> getById(@PathVariable Long id) {
         OrgDepartment department = departmentService.findById(id);
         if (department == null) {
@@ -107,7 +103,6 @@ public class OrgDepartmentController {
      * @return 新增结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('system:department:add')")
     public Result<OrgDepartment> add(@RequestBody OrgDepartment department) {
         OrgDepartment savedDepartment = departmentService.save(department);
         return Result.success(savedDepartment);
@@ -119,7 +114,6 @@ public class OrgDepartmentController {
      * @return 更新结果
      */
     @PutMapping
-    @PreAuthorize("hasAuthority('system:department:edit')")
     public Result<OrgDepartment> update(@RequestBody OrgDepartment department) {
         OrgDepartment updatedDepartment = departmentService.update(department);
         return Result.success(updatedDepartment);
@@ -131,7 +125,6 @@ public class OrgDepartmentController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('system:department:delete')")
     public Result<Void> delete(@PathVariable Long id) {
         departmentService.delete(id);
         return Result.success();
@@ -143,7 +136,6 @@ public class OrgDepartmentController {
      * @return 部门列表
      */
     @GetMapping("/org/{orgId}")
-    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<DepartmentDTO>> getByOrgId(@PathVariable Long orgId) {
         List<OrgDepartment> departments = departmentService.findByOrgId(orgId);
         
@@ -168,7 +160,6 @@ public class OrgDepartmentController {
      * @return 子部门列表
      */
     @GetMapping("/children/{parentId}")
-    @PreAuthorize("hasAuthority('system:department:list')")
     public Result<List<DepartmentDTO>> getChildren(@PathVariable Long parentId) {
         List<OrgDepartment> children = departmentService.findByParentId(parentId);
         

@@ -62,21 +62,21 @@ public class SysPermissionController {
     }
 
     /**
-     * 获取所有权限
-     * @return 权限列表
-     */
-    @GetMapping
-    public ApiResponse<List<SysPermission>> getAllPermissions() {
-        return ApiResponse.success(permissionService.getAllPermissions());
-    }
-
-    /**
      * 获取权限树
      * @return 权限树
      */
     @GetMapping("/tree")
     public ApiResponse<List<PermissionDTO>> getPermissionTree() {
         return ApiResponse.success(permissionService.getPermissionTree());
+    }
+
+    /**
+     * 获取所有权限
+     * @return 权限列表
+     */
+    @GetMapping
+    public ApiResponse<List<SysPermission>> getAllPermissions() {
+        return ApiResponse.success(permissionService.getAllPermissions());
     }
 
     /**

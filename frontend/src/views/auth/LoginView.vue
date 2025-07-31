@@ -5,20 +5,20 @@
       <div class="login-content">
         <div class="logo-container">
           <div class="logo">VLIAS</div>
-          <div class="tagline">企业级客户关系管理系统</div>
+          <div class="tagline">企业级全栈管理系统</div>
         </div>
         <div class="features">
           <div class="feature-item">
             <el-icon><DataAnalysis /></el-icon>
-            <span>高效的客户管理</span>
+            <span>全业务流程管理</span>
           </div>
           <div class="feature-item">
             <el-icon><TrendCharts /></el-icon>
-            <span>数据驱动决策</span>
+            <span>智能数据分析</span>
           </div>
           <div class="feature-item">
             <el-icon><Connection /></el-icon>
-            <span>无缝协作体验</span>
+            <span>一体化协作平台</span>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@
           </el-form-item>
         </el-form>
         <div class="footer">
-          <p>© {{ new Date().getFullYear() }} VLIAS CRM. 保留所有权利</p>
+          <p>© {{ new Date().getFullYear() }} VLIAS 企业级全栈管理系统. 保留所有权利</p>
         </div>
       </div>
     </div>

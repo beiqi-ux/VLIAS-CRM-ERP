@@ -7,6 +7,8 @@ import formatPlugin from './plugins/format'
 
 import App from './App.vue'
 import router from './router'
+import DictSelect from './components/DictSelect.vue'
+import DictRadio from './components/DictRadio.vue'
 
 import './assets/main.css'
 
@@ -18,5 +20,9 @@ app.use(ElementPlus, {
   locale: zhCn
 })
 app.use(formatPlugin)
+
+// 全局注册组件
+app.component('DictSelect', DictSelect)
+app.component('DictRadio', DictRadio)
 
 app.mount('#app') 

@@ -71,6 +71,34 @@ const router = createRouter({
           component: () => import('@/views/system/PositionList.vue'),
           meta: { title: '岗位管理' }
         },
+        // 数据字典管理
+        {
+          path: 'dicts',
+          name: 'dicts',
+          component: () => import('@/views/system/DictList.vue'),
+          meta: { title: '数据字典管理' }
+        },
+        // 商品管理
+        {
+          path: 'goods',
+          name: 'goods',
+          component: () => import('@/views/product/GoodsList.vue'),
+          meta: { title: '商品管理' }
+        },
+        // 分类管理
+        {
+          path: 'categories',
+          name: 'categories',
+          component: () => import('@/views/product/CategoryList.vue'),
+          meta: { title: '分类管理' }
+        },
+        // 品牌管理
+        {
+          path: 'brands',
+          name: 'brands',
+          component: () => import('@/views/product/BrandList.vue'),
+          meta: { title: '品牌管理' }
+        },
         // 个人中心
         {
           path: 'profile',
