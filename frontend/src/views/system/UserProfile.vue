@@ -155,6 +155,10 @@ const handleAvatarSuccess = async (response, uploadFile) => {
     // 获取头像URL
     const avatarUrl = response.data.url;
     
+    // 调试信息
+    console.log('服务器返回的头像URL:', avatarUrl);
+    console.log('格式化后的头像URL:', window.location.origin + avatarUrl);
+    
     // 更新用户信息
     userInfo.value.avatar = avatarUrl;
     ElMessage.success('头像更新成功');

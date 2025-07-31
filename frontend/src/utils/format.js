@@ -38,7 +38,8 @@ export function formatImageUrl(url, defaultUrl = '/default-avatar.png') {
   if (!url) return defaultUrl;
   if (url.startsWith('http')) return url;
   
-  // 对于相对路径，添加服务器地址
-  const baseUrl = 'http://localhost:8080';
-  return baseUrl + url;
+  // 直接使用相对路径，让代理配置处理
+  // 添加随机参数防止缓存
+  const timestamp = new Date().getTime();
+  return `${url}?t=${timestamp}`;
 } 
