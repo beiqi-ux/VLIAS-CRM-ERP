@@ -32,13 +32,21 @@
           <!-- 目录类型菜单 -->
           <el-sub-menu v-if="menu.menuType === 1" :index="menu.menuCode">
             <template #title>
-              <el-icon v-if="menu.icon">
-                <component :is="menu.icon" />
+              <el-icon v-if="menu.icon && iconMap[menu.icon]">
+                <component :is="iconMap[menu.icon]" />
               </el-icon>
               <el-icon v-else>
                 <Setting v-if="menu.menuCode === 'system'" />
                 <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
                 <Goods v-else-if="menu.menuCode === 'product'" />
+                <Document v-else-if="menu.menuCode === 'crm'" />
+                <Calendar v-else-if="menu.menuCode === 'order'" />
+                <Box v-else-if="menu.menuCode === 'inventory'" />
+                <Document v-else-if="menu.menuCode === 'purchase'" />
+                <Star v-else-if="menu.menuCode === 'promotion'" />
+                <Money v-else-if="menu.menuCode === 'finance'" />
+                <User v-else-if="menu.menuCode === 'member'" />
+                <Bell v-else-if="menu.menuCode === 'message'" />
                 <Menu v-else />
               </el-icon>
               <span>{{ menu.menuName }}</span>
@@ -46,23 +54,6 @@
             <!-- 子菜单 -->
             <template v-for="child in menu.children" :key="child.id">
               <el-menu-item :index="child.path">
-                <el-icon v-if="child.icon">
-                  <component :is="child.icon" />
-                </el-icon>
-                <el-icon v-else>
-                  <User v-if="child.menuCode === 'system:user'" />
-                  <UserFilled v-else-if="child.menuCode === 'system:role'" />
-                  <Lock v-else-if="child.menuCode === 'system:permission'" />
-                  <Menu v-else-if="child.menuCode === 'system:menu'" />
-                  <Collection v-else-if="child.menuCode === 'system:dict'" />
-                  <SetUp v-else-if="child.menuCode === 'org:organization'" />
-                  <Files v-else-if="child.menuCode === 'org:department'" />
-                  <List v-else-if="child.menuCode === 'org:position'" />
-                  <Box v-else-if="child.menuCode === 'product:goods'" />
-                  <Grid v-else-if="child.menuCode === 'product:category'" />
-                  <Star v-else-if="child.menuCode === 'product:brand'" />
-                  <View v-else />
-                </el-icon>
                 <template #title>{{ child.menuName }}</template>
               </el-menu-item>
             </template>
@@ -70,8 +61,8 @@
           
           <!-- 菜单类型 -->
           <el-menu-item v-else-if="menu.menuType === 2" :index="menu.path">
-            <el-icon v-if="menu.icon">
-              <component :is="menu.icon" />
+            <el-icon v-if="menu.icon && iconMap[menu.icon]">
+              <component :is="iconMap[menu.icon]" />
             </el-icon>
             <el-icon v-else>
               <User v-if="menu.menuCode === 'profile'" />
@@ -132,8 +123,22 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import { 
   House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
-  OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star
+  OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star,
+  Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
+  Bell, Message, Calendar, Location, Phone, Link, StarFilled,
+  CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
+  Money, ChatDotRound
 } from '@element-plus/icons-vue'
+
+// 创建图标组件映射
+const iconMap = {
+  House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
+  OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star,
+  Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
+  Bell, Message, Calendar, Location, Phone, Link, StarFilled,
+  CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
+  Money, ChatDotRound
+}
 import { getUserMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
@@ -171,6 +176,8 @@ async function fetchUserMenus() {
       console.log('获取到的菜单数据:', data)
       userMenus.value = data || []
       console.log('设置后的菜单数据:', userMenus.value)
+      
+
     } else {
       console.log('用户信息不完整，无法获取菜单')
       console.log('用户信息:', userInfo.value)
