@@ -112,17 +112,20 @@
       width="600px"
       :close-on-click-modal="false"
     >
-      <el-tree
-        ref="permissionTreeRef"
-        :data="permissionTree"
-        show-checkbox
-        node-key="id"
-        :props="{ label: 'permissionName' }"
-        :default-checked-keys="checkedPermissionIds"
-      />
+      <div v-loading="permissionLoading">
+        <el-tree
+          ref="permissionTreeRef"
+          :data="permissionTree"
+          show-checkbox
+          node-key="id"
+          :props="{ label: 'permissionName' }"
+          :default-checked-keys="checkedPermissionIds"
+          :default-expanded-keys="expandedPermissionIds"
+        />
+      </div>
       <template #footer>
         <el-button @click="permissionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitPermission">确定</el-button>
+        <el-button type="primary" @click="submitPermission" :loading="permissionLoading">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -166,8 +169,10 @@ const roleRules = {
 const permissionDialogVisible = ref(false)
 const permissionTree = ref([])
 const checkedPermissionIds = ref([])
+const expandedPermissionIds = ref([])
 const permissionTreeRef = ref(null)
 const currentRoleId = ref(null)
+const permissionLoading = ref(false)
 
 // 初始化
 onMounted(() => {
@@ -306,21 +311,91 @@ const handleDelete = (row) => {
 // 分配权限
 const handleAssignPermission = async (row) => {
   try {
+    permissionLoading.value = true
     currentRoleId.value = row.id
+    
+    // 重置权限树状态
+    resetPermissionTreeState()
     
     // 加载权限树
     const { data: treeData } = await getPermissionTree()
     permissionTree.value = treeData || []
+    console.log('权限树数据:', permissionTree.value)
     
     // 获取已分配的权限ID
     const { data: permissionIds } = await getRolePermissionIds(row.id)
     checkedPermissionIds.value = permissionIds || []
+    console.log('已分配权限ID:', checkedPermissionIds.value)
+    
+    // 计算需要展开的节点ID（包含已选权限的所有父级节点）
+    expandedPermissionIds.value = calculateExpandedKeys(permissionTree.value, checkedPermissionIds.value)
+    console.log('展开节点ID:', expandedPermissionIds.value)
     
     permissionDialogVisible.value = true
   } catch (error) {
     ElMessage.error('获取权限信息失败')
     console.error(error)
+  } finally {
+    permissionLoading.value = false
   }
+}
+
+// 重置权限树状态
+const resetPermissionTreeState = () => {
+  permissionTree.value = []
+  checkedPermissionIds.value = []
+  expandedPermissionIds.value = []
+}
+
+// 计算需要展开的节点ID
+const calculateExpandedKeys = (tree, checkedKeys) => {
+  const expandedKeys = new Set()
+  
+  const findParents = (nodes, targetIds) => {
+    for (const node of nodes) {
+      if (targetIds.includes(node.id)) {
+        // 如果当前节点被选中，需要展开其所有父级节点
+        let parent = findParentNode(tree, node.id)
+        while (parent) {
+          expandedKeys.add(parent.id)
+          parent = findParentNode(tree, parent.id)
+        }
+      }
+      if (node.children && node.children.length > 0) {
+        findParents(node.children, targetIds)
+      }
+    }
+  }
+  
+  findParents(tree, checkedKeys)
+  
+  // 如果没有选中的权限，至少展开第一级
+  if (expandedKeys.size === 0 && tree.length > 0) {
+    tree.forEach(node => expandedKeys.add(node.id))
+  }
+  
+  // 如果树不为空，总是展开第一级
+  if (tree.length > 0) {
+    tree.forEach(node => expandedKeys.add(node.id))
+  }
+  
+  return Array.from(expandedKeys)
+}
+
+// 查找父节点
+const findParentNode = (tree, nodeId) => {
+  for (const node of tree) {
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.id === nodeId) {
+          return node
+        }
+        const found = findParentNode([child], nodeId)
+        if (found) return found
+      }
+    }
+  }
+  return null
 }
 
 // 提交权限分配
@@ -329,10 +404,13 @@ const submitPermission = async () => {
   
   try {
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
-    const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
-    const permissionIds = [...checkedKeys, ...halfCheckedKeys]
     
-    await assignPermissions(currentRoleId.value, permissionIds)
+    console.log('提交权限分配:', {
+      roleId: currentRoleId.value,
+      checkedKeys
+    })
+    
+    await assignPermissions(currentRoleId.value, checkedKeys)
     ElMessage.success('权限分配成功')
     permissionDialogVisible.value = false
   } catch (error) {
