@@ -139,7 +139,7 @@ const iconMap = {
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
   Money, ChatDotRound
 }
-import { getUserMenuTree } from '@/api/menu'
+import { getUserMenuTree, getMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 // 路由
@@ -172,18 +172,31 @@ async function fetchUserMenus() {
     if (userInfo.value.userId || userInfo.value.id) {
       const userId = userInfo.value.userId || userInfo.value.id
       console.log('获取用户菜单，用户ID:', userId)
+      console.log('用户信息:', userInfo.value)
+      
       const { data } = await getUserMenuTree(userId)
       console.log('获取到的菜单数据:', data)
       userMenus.value = data || []
       console.log('设置后的菜单数据:', userMenus.value)
       
-
+      // 如果没有菜单数据，显示提示
+      if (!data || data.length === 0) {
+        console.warn('用户没有菜单权限，可能需要分配角色权限')
+      }
     } else {
       console.log('用户信息不完整，无法获取菜单')
       console.log('用户信息:', userInfo.value)
     }
   } catch (error) {
     console.error('获取用户菜单失败:', error)
+    // 如果获取失败，显示所有菜单（临时方案）
+    console.log('菜单获取失败，显示所有菜单')
+    try {
+      const { data } = await getMenuTree()
+      userMenus.value = data || []
+    } catch (fallbackError) {
+      console.error('获取所有菜单也失败:', fallbackError)
+    }
   }
 }
 

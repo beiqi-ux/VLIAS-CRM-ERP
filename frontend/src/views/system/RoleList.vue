@@ -119,7 +119,6 @@
           show-checkbox
           node-key="id"
           :props="{ label: 'permissionName' }"
-          :default-checked-keys="checkedPermissionIds"
           :default-expanded-keys="expandedPermissionIds"
         />
       </div>
@@ -132,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getRolePage, getRoleById, createRole, updateRole, deleteRole, getRolePermissionIds, assignPermissions } from '@/api/role'
 import { getPermissionTree } from '@/api/permission'
@@ -322,16 +321,65 @@ const handleAssignPermission = async (row) => {
     permissionTree.value = treeData || []
     console.log('权限树数据:', permissionTree.value)
     
-    // 获取已分配的权限ID
+    // 检查权限树数据结构
+    if (permissionTree.value.length > 0) {
+      console.log('权限树第一个节点ID类型:', typeof permissionTree.value[0].id)
+      console.log('权限树第一个节点ID值:', permissionTree.value[0].id)
+    }
+    
+    // 从数据库重新获取该角色的权限ID
     const { data: permissionIds } = await getRolePermissionIds(row.id)
     checkedPermissionIds.value = permissionIds || []
-    console.log('已分配权限ID:', checkedPermissionIds.value)
+    console.log('从数据库获取的权限ID:', checkedPermissionIds.value)
+    
+    // 确保ID类型一致（都转换为数字）
+    checkedPermissionIds.value = checkedPermissionIds.value.map(id => Number(id))
+    console.log('转换后的权限ID:', checkedPermissionIds.value)
     
     // 计算需要展开的节点ID（包含已选权限的所有父级节点）
     expandedPermissionIds.value = calculateExpandedKeys(permissionTree.value, checkedPermissionIds.value)
     console.log('展开节点ID:', expandedPermissionIds.value)
     
     permissionDialogVisible.value = true
+    
+    // 使用nextTick确保权限树渲染完成后再设置选中状态
+    await nextTick()
+    console.log('权限树引用:', permissionTreeRef.value)
+    console.log('要设置的权限ID:', checkedPermissionIds.value)
+    
+    if (permissionTreeRef.value && checkedPermissionIds.value.length > 0) {
+      console.log('开始设置权限树选中状态...')
+      
+      // 先清除所有选中状态
+      permissionTreeRef.value.setCheckedKeys([])
+      
+      // 等待一下确保清除完成
+      await nextTick()
+      
+      // 逐个设置权限，确保精确控制
+      for (const permissionId of checkedPermissionIds.value) {
+        console.log('设置权限ID:', permissionId)
+        permissionTreeRef.value.setChecked(permissionId, true, false)
+      }
+      
+      console.log('权限树选中状态设置完成')
+      
+      // 验证设置结果
+      const currentCheckedKeys = permissionTreeRef.value.getCheckedKeys()
+      const currentHalfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
+      console.log('设置后的选中权限:', currentCheckedKeys)
+      console.log('设置后的半选权限:', currentHalfCheckedKeys)
+      
+      // 验证设置是否正确
+      const expectedIds = checkedPermissionIds.value.sort()
+      const actualIds = currentCheckedKeys.sort()
+      console.log('期望的权限ID:', expectedIds)
+      console.log('实际的权限ID:', actualIds)
+      console.log('设置是否正确:', JSON.stringify(expectedIds) === JSON.stringify(actualIds))
+      
+    } else {
+      console.log('权限树引用不存在或没有权限ID')
+    }
   } catch (error) {
     ElMessage.error('获取权限信息失败')
     console.error(error)
@@ -404,14 +452,23 @@ const submitPermission = async () => {
   
   try {
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
+    const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
+    const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
     
     console.log('提交权限分配:', {
       roleId: currentRoleId.value,
-      checkedKeys
+      checkedKeys,
+      halfCheckedKeys,
+      allPermissionIds
     })
     
-    await assignPermissions(currentRoleId.value, checkedKeys)
+    await assignPermissions(currentRoleId.value, allPermissionIds)
     ElMessage.success('权限分配成功')
+    
+    // 提交成功后，重新获取权限状态以确保数据一致性
+    const { data: updatedPermissionIds } = await getRolePermissionIds(currentRoleId.value)
+    console.log('提交后重新获取的权限ID:', updatedPermissionIds)
+    
     permissionDialogVisible.value = false
   } catch (error) {
     ElMessage.error('权限分配失败')
