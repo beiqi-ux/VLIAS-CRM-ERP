@@ -15,7 +15,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.HashSet;
 
 /**
  * 菜单服务实现类
@@ -137,9 +139,34 @@ public class SysMenuServiceImpl implements SysMenuService {
     public List<MenuDTO> getUserMenuTree(Long userId) {
         // 获取用户的菜单列表
         List<SysMenu> userMenus = menuRepository.findMenusByUserId(userId);
+        
+        // 获取所有菜单，用于构建完整的树形结构
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !m.getIsDeleted() && m.getStatus() == 1)
+                .collect(Collectors.toList());
+        
+        // 获取用户有权限的菜单ID集合
+        Set<Long> userMenuIds = userMenus.stream()
+                .map(SysMenu::getId)
+                .collect(Collectors.toSet());
+        
+        // 构建菜单ID到菜单对象的映射
+        Map<Long, SysMenu> menuMap = allMenus.stream()
+                .collect(Collectors.toMap(SysMenu::getId, menu -> menu));
+        
+        // 递归获取所有父级菜单ID
+        Set<Long> allVisibleMenuIds = new HashSet<>(userMenuIds);
+        for (Long menuId : userMenuIds) {
+            addParentMenuIds(menuId, menuMap, allVisibleMenuIds);
+        }
+        
+        // 过滤出用户可见的菜单
+        List<SysMenu> visibleMenus = allMenus.stream()
+                .filter(menu -> allVisibleMenuIds.contains(menu.getId()))
+                .collect(Collectors.toList());
 
         // 转换为DTO
-        List<MenuDTO> dtoList = userMenus.stream().map(m -> {
+        List<MenuDTO> dtoList = visibleMenus.stream().map(m -> {
             MenuDTO dto = new MenuDTO();
             BeanUtils.copyProperties(m, dto);
             return dto;
@@ -156,5 +183,16 @@ public class SysMenuServiceImpl implements SysMenuService {
         rootMenus.forEach(root -> setChildren(root, parentMap));
 
         return rootMenus;
+    }
+    
+    /**
+     * 递归添加父级菜单ID
+     */
+    private void addParentMenuIds(Long menuId, Map<Long, SysMenu> menuMap, Set<Long> visibleMenuIds) {
+        SysMenu menu = menuMap.get(menuId);
+        if (menu != null && menu.getParentId() != null && menu.getParentId() > 0) {
+            visibleMenuIds.add(menu.getParentId());
+            addParentMenuIds(menu.getParentId(), menuMap, visibleMenuIds);
+        }
     }
 } 

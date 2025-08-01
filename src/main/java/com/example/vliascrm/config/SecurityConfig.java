@@ -50,7 +50,7 @@ public class SecurityConfig {
                         // 角色和权限控制
                         .requestMatchers(new AntPathRequestMatcher("/api/sys/roles/**")).hasAnyRole("admin", "manager")
                         .requestMatchers(new AntPathRequestMatcher("/api/sys/permissions/**")).hasRole("admin")
-                        .requestMatchers(new AntPathRequestMatcher("/api/sys/menus/**")).hasAnyRole("admin", "manager")
+                        .requestMatchers(new AntPathRequestMatcher("/api/sys/menus/**")).authenticated()
                         // 其他请求需要认证
                         .anyRequest().authenticated()
                 )
