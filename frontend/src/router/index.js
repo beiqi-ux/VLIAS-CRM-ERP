@@ -15,9 +15,10 @@ const router = createRouter({
       path: '/',
       component: () => import('@/views/LayoutView.vue'),
       meta: { requiresAuth: true },
+      redirect: '/home',
       children: [
         {
-          path: '',
+          path: 'home',
           name: 'home',
           component: () => import('@/views/HomeView.vue'),
           meta: { title: '首页' }

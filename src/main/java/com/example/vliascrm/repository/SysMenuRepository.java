@@ -43,7 +43,7 @@ public interface SysMenuRepository extends JpaRepository<SysMenu, Long> {
      * @return 菜单列表
      */
     @Query("SELECT DISTINCT m FROM SysMenu m " +
-           "JOIN SysPermission p ON m.id = p.menuId " +
+           "JOIN SysPermission p ON m.permissionCode = p.permissionCode " +
            "JOIN SysRolePermission rp ON p.id = rp.permissionId " +
            "WHERE rp.roleId = ?1 AND m.status = 1 AND m.isDeleted = false " +
            "ORDER BY m.sort ASC")
@@ -55,7 +55,7 @@ public interface SysMenuRepository extends JpaRepository<SysMenu, Long> {
      * @return 菜单列表
      */
     @Query("SELECT DISTINCT m FROM SysMenu m " +
-           "JOIN SysPermission p ON m.id = p.menuId " +
+           "JOIN SysPermission p ON m.permissionCode = p.permissionCode " +
            "JOIN SysRolePermission rp ON p.id = rp.permissionId " +
            "JOIN SysUserRole ur ON rp.roleId = ur.roleId " +
            "WHERE ur.userId = ?1 AND m.status = 1 AND m.isDeleted = false " +

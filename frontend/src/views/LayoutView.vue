@@ -10,93 +10,76 @@
         <span v-if="!isCollapse">企业管理系统</span>
       </div>
       
-      <!-- 菜单 -->
+      <!-- 动态菜单 -->
       <el-menu
         :collapse="isCollapse"
         :default-active="activeMenu"
+        :default-openeds="[]"
         background-color="#304156"
         text-color="#bfcbd9"
         active-text-color="#409eff"
         :collapse-transition="false"
         router
       >
-        <el-menu-item index="/">
+        <!-- 首页菜单 -->
+        <el-menu-item index="/home">
           <el-icon><House /></el-icon>
           <template #title>首页</template>
         </el-menu-item>
         
-        <!-- 系统管理 -->
-        <el-sub-menu index="/system">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
-          </template>
-          <el-menu-item index="/users">
-            <el-icon><User /></el-icon>
-            <template #title>用户管理</template>
+        <!-- 动态渲染菜单 -->
+        <template v-for="menu in userMenus" :key="menu.id">
+          <!-- 目录类型菜单 -->
+          <el-sub-menu v-if="menu.menuType === 1" :index="menu.menuCode">
+            <template #title>
+              <el-icon v-if="menu.icon">
+                <component :is="menu.icon" />
+              </el-icon>
+              <el-icon v-else>
+                <Setting v-if="menu.menuCode === 'system'" />
+                <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
+                <Goods v-else-if="menu.menuCode === 'product'" />
+                <Menu v-else />
+              </el-icon>
+              <span>{{ menu.menuName }}</span>
+            </template>
+            <!-- 子菜单 -->
+            <template v-for="child in menu.children" :key="child.id">
+              <el-menu-item :index="child.path">
+                <el-icon v-if="child.icon">
+                  <component :is="child.icon" />
+                </el-icon>
+                <el-icon v-else>
+                  <User v-if="child.menuCode === 'system:user'" />
+                  <UserFilled v-else-if="child.menuCode === 'system:role'" />
+                  <Lock v-else-if="child.menuCode === 'system:permission'" />
+                  <Menu v-else-if="child.menuCode === 'system:menu'" />
+                  <Collection v-else-if="child.menuCode === 'system:dict'" />
+                  <SetUp v-else-if="child.menuCode === 'org:organization'" />
+                  <Files v-else-if="child.menuCode === 'org:department'" />
+                  <List v-else-if="child.menuCode === 'org:position'" />
+                  <Box v-else-if="child.menuCode === 'product:goods'" />
+                  <Grid v-else-if="child.menuCode === 'product:category'" />
+                  <Star v-else-if="child.menuCode === 'product:brand'" />
+                  <View v-else />
+                </el-icon>
+                <template #title>{{ child.menuName }}</template>
+              </el-menu-item>
+            </template>
+          </el-sub-menu>
+          
+          <!-- 菜单类型 -->
+          <el-menu-item v-else-if="menu.menuType === 2" :index="menu.path">
+            <el-icon v-if="menu.icon">
+              <component :is="menu.icon" />
+            </el-icon>
+            <el-icon v-else>
+              <User v-if="menu.menuCode === 'profile'" />
+              <View v-else />
+            </el-icon>
+            <template #title>{{ menu.menuName }}</template>
           </el-menu-item>
-          <el-menu-item index="/roles">
-            <el-icon><UserFilled /></el-icon>
-            <template #title>角色管理</template>
-          </el-menu-item>
-          <el-menu-item index="/permissions">
-            <el-icon><Lock /></el-icon>
-            <template #title>权限管理</template>
-          </el-menu-item>
-          <el-menu-item index="/menus">
-            <el-icon><Menu /></el-icon>
-            <template #title>菜单管理</template>
-          </el-menu-item>
-          <el-menu-item index="/dicts">
-            <el-icon><Collection /></el-icon>
-            <template #title>数据字典管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-        
-        <!-- 组织架构 -->
-        <el-sub-menu index="/org-structure">
-          <template #title>
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>组织架构</span>
-          </template>
-          <el-menu-item index="/organizations">
-            <el-icon><SetUp /></el-icon>
-            <template #title>组织机构管理</template>
-          </el-menu-item>
-          <el-menu-item index="/departments">
-            <el-icon><Files /></el-icon>
-            <template #title>部门管理</template>
-          </el-menu-item>
-          <el-menu-item index="/positions">
-            <el-icon><List /></el-icon>
-            <template #title>岗位管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-        
-        <!-- 商品管理 -->
-        <el-sub-menu index="/product">
-          <template #title>
-            <el-icon><Goods /></el-icon>
-            <span>商品管理</span>
-          </template>
-          <el-menu-item index="/goods">
-            <el-icon><Box /></el-icon>
-            <template #title>商品管理</template>
-          </el-menu-item>
-          <el-menu-item index="/categories">
-            <el-icon><Grid /></el-icon>
-            <template #title>分类管理</template>
-          </el-menu-item>
-          <el-menu-item index="/brands">
-            <el-icon><Star /></el-icon>
-            <template #title>品牌管理</template>
-          </el-menu-item>
-        </el-sub-menu>
-        
-        <el-menu-item index="/profile">
-          <el-icon><User /></el-icon>
-          <template #title>个人中心</template>
-        </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
     
@@ -151,6 +134,7 @@ import {
   House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
   OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star
 } from '@element-plus/icons-vue'
+import { getUserMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 // 路由
@@ -169,9 +153,31 @@ const isCollapse = ref(false)
 // 激活菜单
 const activeMenu = computed(() => route.path)
 
+// 用户菜单数据
+const userMenus = ref([])
+
 // 切换侧边栏
 function toggleSidebar() {
   isCollapse.value = !isCollapse.value
+}
+
+// 获取用户菜单
+async function fetchUserMenus() {
+  try {
+    if (userInfo.value.userId || userInfo.value.id) {
+      const userId = userInfo.value.userId || userInfo.value.id
+      console.log('获取用户菜单，用户ID:', userId)
+      const { data } = await getUserMenuTree(userId)
+      console.log('获取到的菜单数据:', data)
+      userMenus.value = data || []
+      console.log('设置后的菜单数据:', userMenus.value)
+    } else {
+      console.log('用户信息不完整，无法获取菜单')
+      console.log('用户信息:', userInfo.value)
+    }
+  } catch (error) {
+    console.error('获取用户菜单失败:', error)
+  }
 }
 
 // 下拉菜单命令处理
@@ -193,10 +199,18 @@ function handleCommand(command) {
   }
 }
 
-// 组件挂载时获取用户信息
-onMounted(() => {
+// 组件挂载时获取用户信息和菜单
+onMounted(async () => {
   if (!Object.keys(userInfo.value).length) {
-    userStore.fetchUserInfo()
+    await userStore.fetchUserInfo()
+  }
+  await fetchUserMenus()
+})
+
+// 监听用户信息变化，重新获取菜单
+watch(() => userInfo.value.userId || userInfo.value.id, async (newId) => {
+  if (newId) {
+    await fetchUserMenus()
   }
 })
 
