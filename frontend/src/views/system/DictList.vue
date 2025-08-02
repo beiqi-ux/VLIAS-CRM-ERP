@@ -26,7 +26,14 @@
       </el-select>
       <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button @click="resetSearch">重置</el-button>
-      <el-button type="success" @click="handleAdd" style="margin-left: 10px">新增字典</el-button>
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.DICT.ADD)"
+        type="success" 
+        @click="handleAdd" 
+        style="margin-left: 10px"
+      >
+        新增字典
+      </el-button>
     </div>
 
     <el-table
@@ -55,11 +62,30 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column 
+        v-if="hasPermission(PERMISSIONS.SYS.DICT.EDIT) || hasPermission(PERMISSIONS.SYS.DICT.DELETE)"
+        label="操作" 
+        width="280" 
+        fixed="right"
+      >
         <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="primary" @click="handleManageItems(scope.row)">管理字典项</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.DICT.EDIT)"
+            size="small" 
+            @click="handleEdit(scope.row)"
+          >
+            编辑
+          </el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.DICT.EDIT)"
+            size="small" 
+            type="primary" 
+            @click="handleManageItems(scope.row)"
+          >
+            管理字典项
+          </el-button>
           <el-button
+            v-if="hasPermission(PERMISSIONS.SYS.DICT.EDIT)"
             size="small"
             :type="scope.row.status === 1 ? 'warning' : 'success'"
             @click="handleToggleStatus(scope.row)"
@@ -67,10 +93,13 @@
             {{ scope.row.status === 1 ? '禁用' : '启用' }}
           </el-button>
           <el-button
+            v-if="hasPermission(PERMISSIONS.SYS.DICT.DELETE)"
             size="small"
             type="danger"
             @click="handleDelete(scope.row)"
-          >删除</el-button>
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -250,6 +279,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import {
   getDictList,
   createDict,

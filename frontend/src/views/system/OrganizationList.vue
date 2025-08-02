@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>组织机构管理</span>
-          <el-button type="primary" @click="handleAdd">新增组织机构</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
+            新增组织机构
+          </el-button>
         </div>
       </template>
 
@@ -58,10 +64,29 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.EDIT) || hasPermission(PERMISSIONS.ORG.ORGANIZATION.DELETE)"
+          label="操作" 
+          width="200" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.EDIT)"
+              type="primary" 
+              size="small" 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.DELETE)"
+              type="danger" 
+              size="small" 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -149,6 +174,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import { 
   getOrganizationList,
   getOrganizationTree,

@@ -1,7 +1,13 @@
 <template>
   <div class="menu-container">
     <div class="action-bar">
-      <el-button type="primary" @click="handleAddTopLevel">新增顶级菜单</el-button>
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.ADD)"
+        type="primary" 
+        @click="handleAddTopLevel"
+      >
+        新增顶级菜单
+      </el-button>
       <el-button type="success" @click="expandAll">展开全部</el-button>
       <el-button type="info" @click="collapseAll">折叠全部</el-button>
     </div>
@@ -49,18 +55,36 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column 
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT) || hasPermission(PERMISSIONS.SYS.MENU.ADD) || hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
+        label="操作" 
+        width="300" 
+        fixed="right"
+      >
         <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button 
-            v-if="scope.row.menuType !== 3" 
+            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+            size="small" 
+            @click="handleEdit(scope.row)"
+          >
+            编辑
+          </el-button>
+          <el-button 
+            v-if="scope.row.menuType !== 3 && hasPermission(PERMISSIONS.SYS.MENU.ADD)" 
             size="small" 
             type="success" 
             @click="handleAddChild(scope.row)"
           >
             添加子菜单
           </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
+            size="small" 
+            type="danger" 
+            @click="handleDelete(scope.row)"
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -155,6 +179,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu } from '@/api/menu'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 表格数据和加载状态
 const tableData = ref([])

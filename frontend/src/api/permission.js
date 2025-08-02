@@ -129,4 +129,16 @@ export function getPermissionSyncStatus() {
     url: '/api/sys/permission-sync/status',
     method: 'get'
   })
+}
+
+/**
+ * 根据用户ID获取权限列表
+ * @param {Number} userId - 用户ID
+ * @returns {Promise}
+ */
+export function getUserPermissions(userId) {
+  return request({
+    url: `/api/sys/permissions/users/${userId}`,
+    method: 'get'
+  })
 } 

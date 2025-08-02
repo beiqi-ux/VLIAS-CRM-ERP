@@ -40,7 +40,11 @@
     <el-card class="operation-card" shadow="never">
       <div class="operation-row">
         <div class="left-operations">
-          <el-button type="primary" @click="handleAdd">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             新增分类
           </el-button>
@@ -100,11 +104,31 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.ADD) || hasPermission(PERMISSIONS.PRODUCT.CATEGORY.EDIT) || hasPermission(PERMISSIONS.PRODUCT.CATEGORY.DELETE)"
+          label="操作" 
+          width="320" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" text @click="handleAddChild(row)">添加子级</el-button>
-            <el-button type="primary" text @click="handleEdit(row)">编辑</el-button>
             <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.ADD)"
+              type="primary" 
+              text 
+              @click="handleAddChild(row)"
+            >
+              添加子级
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.EDIT)"
+              type="primary" 
+              text 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.EDIT)"
               :type="row.status === 1 ? 'warning' : 'success'" 
               text 
               @click="handleToggleStatus(row)"
@@ -112,13 +136,21 @@
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
             <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.EDIT)"
               :type="row.isShow === 1 ? 'info' : 'success'" 
               text 
               @click="handleToggleShow(row)"
             >
               {{ row.isShow === 1 ? '隐藏' : '显示' }}
             </el-button>
-            <el-button type="danger" text @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.DELETE)"
+              type="danger" 
+              text 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -204,6 +236,8 @@ import {
   showCategory,
   hideCategory
 } from '@/api/category'
+import { formatDateTime } from '@/utils/format'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 响应式数据
 const loading = ref(false)

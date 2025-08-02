@@ -1,6 +1,28 @@
 <template>
-  <div class="user-profile">
-    <el-row :gutter="20">
+  <div class="user-profile" v-loading="loading">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-container">
+      <el-skeleton :rows="8" animated />
+      <p style="text-align: center; margin-top: 20px; color: #909399;">
+        正在加载个人信息...
+      </p>
+    </div>
+    
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="error-container">
+      <el-result
+        icon="warning"
+        title="加载失败"
+        :sub-title="error"
+      >
+        <template #extra>
+          <el-button type="primary" @click="fetchUserInfo">重新加载</el-button>
+        </template>
+      </el-result>
+    </div>
+    
+    <!-- 正常内容 -->
+    <el-row v-else :gutter="20">
       <!-- 个人信息卡片 -->
       <el-col :span="8">
         <el-card class="profile-card">
@@ -8,7 +30,9 @@
             <div class="avatar-wrapper">
               <el-avatar 
                 :size="100" 
-                :src="$formatImageUrl(userInfo.avatar)" 
+                :src="avatarUrl"
+                :icon="!avatarUrl ? 'User' : undefined"
+                @error="handleAvatarLoadError"
               />
               <div class="avatar-upload">
                 <el-upload
@@ -69,7 +93,26 @@
       <el-col :span="16">
         <el-card>
           <template #header>
-            <span>详细信息</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>详细信息</span>
+              <div>
+                <el-button 
+                  size="small" 
+                  type="primary" 
+                  @click="() => fetchUserInfo(true)"
+                  :loading="loading"
+                >
+                  重新加载
+                </el-button>
+                <el-button 
+                  size="small" 
+                  type="info" 
+                  @click="showDebugInfo"
+                >
+                  调试信息
+                </el-button>
+              </div>
+            </div>
           </template>
           
           <el-descriptions :column="2" border>
@@ -104,15 +147,46 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import { Edit } from '@element-plus/icons-vue';
-import { useRouter } from 'vue-router';
+import { Edit } from '@element-plus/icons-vue'
+import { getUserInfo } from '@/api/auth'
 
 // 响应式数据
 const userStore = useUserStore()
 const userInfo = ref({})
+const loading = ref(true)
+const error = ref('')
+const isInitialized = ref(false) // 防止重复初始化
+
+// 计算属性：处理头像URL
+const avatarUrl = computed(() => {
+  if (!userInfo.value.avatar) {
+    return '' // 返回空字符串，让el-avatar显示默认图标
+  }
+  
+  // 使用格式化函数处理头像URL
+  const formatted = window.app?.config?.globalProperties?.$formatImageUrl?.(userInfo.value.avatar) || 
+                   formatImageUrl(userInfo.value.avatar)
+  
+  console.log('头像URL处理:', {
+    original: userInfo.value.avatar,
+    formatted: formatted
+  })
+  
+  return formatted
+})
+
+// 本地导入格式化函数作为备用
+const formatImageUrl = (url, defaultUrl = '') => {
+  if (!url) return defaultUrl
+  if (url.startsWith('http')) return url
+  
+  // 直接使用相对路径，让代理配置处理
+  const timestamp = new Date().getTime()
+  return `${url}?t=${timestamp}`
+}
 
 // 获取性别文本
 const getGenderText = (gender) => {
@@ -129,17 +203,63 @@ const formatDateTime = (dateTime) => {
   return new Date(dateTime).toLocaleString('zh-CN')
 }
 
-// 获取用户信息
-const fetchUserInfo = async () => {
+// 直接从API获取用户信息，避免通过store的循环问题
+const fetchUserInfo = async (forceRefresh = false) => {
+  // 如果不是强制刷新且已初始化，跳过
+  if (!forceRefresh && isInitialized.value) {
+    console.log('用户信息已初始化，跳过重复获取')
+    return
+  }
+  
+  loading.value = true
+  error.value = ''
+  
   try {
-    const response = await userStore.fetchUserInfo()
-    if (response && response.success) {
-      userInfo.value = response.data
-    } else {
-      ElMessage.error('获取用户信息失败')
+    console.log('个人中心页面：开始获取用户信息...', { forceRefresh })
+    
+    // 首先检查用户是否已登录
+    if (!userStore.isLoggedIn) {
+      error.value = '用户未登录，请先登录'
+      ElMessage.error('用户未登录，请先登录')
+      return
     }
-  } catch (error) {
-    ElMessage.error('获取用户信息失败')
+    
+    // 直接调用API，避免store的循环问题
+    const response = await getUserInfo()
+    console.log('个人中心页面：API响应:', response)
+    
+    if (response && response.success) {
+      userInfo.value = { ...response.data } // 使用解构赋值确保响应式更新
+      isInitialized.value = true
+      console.log('个人中心页面：用户信息设置成功:', userInfo.value)
+      
+      // 使用nextTick确保DOM更新
+      await nextTick()
+      console.log('个人中心页面：DOM已更新')
+    } else {
+      console.error('个人中心页面：获取用户信息失败:', response)
+      error.value = response?.message || '获取用户信息失败'
+      ElMessage.error(response?.message || '获取用户信息失败')
+    }
+  } catch (err) {
+    console.error('个人中心页面：获取用户信息异常:', err)
+    
+    // 检查是否是取消的请求 - 优化判断逻辑
+    if (err.name === 'CanceledError' || (err.message && err.message.includes('取消'))) {
+      console.log('请求被取消，尝试重新请求...')
+      // 延迟重试，避免立即重复请求
+      setTimeout(() => {
+        if (!isInitialized.value) {
+          fetchUserInfo(true)
+        }
+      }, 1000)
+      return
+    }
+    
+    error.value = '获取用户信息失败: ' + (err.message || '未知错误')
+    ElMessage.error('获取用户信息失败: ' + (err.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
 
@@ -165,9 +285,6 @@ const handleAvatarSuccess = async (response, uploadFile) => {
     
     // 更新用户存储中的头像
     userStore.updateUserAvatar(avatarUrl);
-    
-    // 获取最新用户信息并完全刷新
-    await userStore.fetchUserInfo();
   } else {
     ElMessage.error(response.message || '头像上传失败');
   }
@@ -193,9 +310,54 @@ const beforeAvatarUpload = (file) => {
   return true;
 };
 
-// 页面加载时获取数据
-onMounted(() => {
-  fetchUserInfo()
+// 处理头像加载失败
+const handleAvatarLoadError = () => {
+  console.warn('头像加载失败，使用默认头像');
+  // 可以在这里设置一个默认头像的URL
+  // userInfo.value.avatar = 'https://cube.elemecdn.com/0/88/03b0d633a00067c8a7005739700jpeg.jpeg'; // 示例默认头像
+};
+
+// 显示调试信息
+const showDebugInfo = () => {
+  const debugInfo = {
+    页面状态: {
+      loading: loading.value,
+      error: error.value,
+      isInitialized: isInitialized.value,
+      userInfoKeys: Object.keys(userInfo.value)
+    },
+    Store状态: {
+      isLoggedIn: userStore.isLoggedIn,
+      permissionsLoaded: userStore.permissionsLoaded,
+      isFetchingUserInfo: userStore.isFetchingUserInfo,
+      hasToken: !!userStore.token,
+      storeUserInfoKeys: Object.keys(userStore.userInfo)
+    },
+    头像信息: {
+      原始头像URL: userInfo.value.avatar,
+      计算后头像URL: avatarUrl.value,
+      格式化函数可用: !!window.app?.config?.globalProperties?.$formatImageUrl
+    },
+    用户信息: userInfo.value
+  }
+  
+  console.log('=== 个人中心调试信息 ===')
+  console.log(debugInfo)
+  
+  ElMessage.info(`调试信息已输出到控制台 - 初始化状态: ${isInitialized.value}`)
+};
+
+// 页面加载时获取数据 - 简化逻辑
+onMounted(async () => {
+  console.log('个人中心页面：组件挂载')
+  
+  // 等待一个微任务，确保所有同步代码执行完成
+  await nextTick()
+  
+  // 只在页面首次加载时获取数据
+  if (!isInitialized.value) {
+    await fetchUserInfo()
+  }
 })
 </script>
 

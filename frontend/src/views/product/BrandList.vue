@@ -34,11 +34,16 @@
     <el-card class="operation-card" shadow="never">
       <div class="operation-row">
         <div class="left-operations">
-          <el-button type="primary" @click="handleAdd">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             新增品牌
           </el-button>
           <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
             type="danger" 
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
@@ -104,17 +109,37 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT) || hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
+          label="操作" 
+          width="220" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" text @click="handleEdit(row)">编辑</el-button>
             <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT)"
+              type="primary" 
+              text 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT)"
               :type="row.status === 1 ? 'warning' : 'success'" 
               text 
               @click="handleToggleStatus(row)"
             >
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
-            <el-button type="danger" text @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
+              type="danger" 
+              text 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -205,6 +230,8 @@ import {
   enableBrand,
   disableBrand
 } from '@/api/brand'
+import { formatDateTime } from '@/utils/format'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 响应式数据
 const loading = ref(false)

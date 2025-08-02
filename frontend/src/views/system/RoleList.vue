@@ -10,7 +10,14 @@
       />
       <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button @click="resetSearch">重置</el-button>
-      <el-button type="success" @click="handleAdd" style="margin-left: 10px">新增角色</el-button>
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.ROLE.ADD)"
+        type="success" 
+        @click="handleAdd" 
+        style="margin-left: 10px"
+      >
+        新增角色
+      </el-button>
     </div>
 
     <el-table
@@ -39,15 +46,36 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column 
+        v-if="hasPermission(PERMISSIONS.SYS.ROLE.EDIT) || hasPermission(PERMISSIONS.SYS.ROLE.DELETE) || hasPermission(PERMISSIONS.SYS.ROLE.PERMISSION)"
+        label="操作" 
+        width="280" 
+        fixed="right"
+      >
         <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="primary" @click="handleAssignPermission(scope.row)">分配权限</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.ROLE.EDIT)"
+            size="small" 
+            @click="handleEdit(scope.row)"
+          >
+            编辑
+          </el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.ROLE.PERMISSION)"
+            size="small" 
+            type="primary" 
+            @click="handleAssignPermission(scope.row)"
+          >
+            分配权限
+          </el-button>
           <el-button
+            v-if="hasPermission(PERMISSIONS.SYS.ROLE.DELETE)"
             size="small"
             type="danger"
             @click="handleDelete(scope.row)"
-          >删除</el-button>
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -135,6 +163,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getRolePage, getRoleById, createRole, updateRole, deleteRole, getRolePermissionIds, assignPermissions } from '@/api/role'
 import { getPermissionTree } from '@/api/permission'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 表格数据和加载状态
 const tableData = ref([])

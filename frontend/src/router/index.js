@@ -118,19 +118,35 @@ const router = createRouter({
 })
 
 // 全局导航守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth !== false)
   
+  console.log('路由导航:', {
+    to: to.path,
+    from: from.path,
+    requiresAuth,
+    isLoggedIn: userStore.isLoggedIn,
+    hasToken: !!userStore.token
+  })
+  
   // 如果需要认证且用户未登录，重定向到登录页
   if (requiresAuth && !userStore.isLoggedIn) {
+    console.log('用户未登录，重定向到登录页')
     next('/login')
-  } else if (to.path === '/login' && userStore.isLoggedIn) {
-    // 如果已登录且尝试访问登录页，重定向到首页
-    next('/')
-  } else {
-    next()
+    return
   }
+  
+  if (to.path === '/login' && userStore.isLoggedIn) {
+    // 如果已登录且尝试访问登录页，重定向到首页
+    console.log('用户已登录，重定向到首页')
+    next('/')
+    return
+  }
+  
+  // 简化权限验证逻辑，不在路由守卫中进行权限数据获取
+  // 让各个页面自己处理权限数据的获取
+  next()
 })
 
 export default router 

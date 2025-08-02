@@ -62,7 +62,7 @@ springdoc:
 # 自定义配置
 app:
   jwt:
-    secret: VLIASCRMJWTSecretKey2024ForEnterpriseLevelSystemVerySecureAndLongEnoughFor256BitsRequirement1234567890
+    secret: VLIASCRMJWTSecretKey2024ForEnterpriseLevelSystemVerySecureAndLongEnoughFor256BitsRequirementRandomString1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ
     expiration: 604800 # 7天，单位秒
   cors:
     allowed-origins: "*"

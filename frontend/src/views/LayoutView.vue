@@ -100,18 +100,33 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item @click="showUserProfile">
+                  <el-icon><User /></el-icon>
+                  个人中心
+                </el-dropdown-item>
+                <el-dropdown-item @click="showDebugInfo">
+                  <el-icon><Tools /></el-icon>
+                  调试权限
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
       </el-header>
       
-      <!-- 内容区域 -->
-      <el-main class="main-container">
-        <router-view />
-      </el-main>
+      <!-- 主内容区域 -->
+      <main class="main-content">
+        <!-- 权限数据加载中 -->
+        <div v-if="!userStore.permissionsLoaded" class="loading-container">
+          <el-skeleton :rows="8" animated />
+        </div>
+        <!-- 权限数据已加载，显示正常内容 -->
+        <RouterView v-else />
+      </main>
     </el-container>
   </el-container>
 </template>
@@ -127,7 +142,7 @@ import {
   Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
   Bell, Message, Calendar, Location, Phone, Link, StarFilled,
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
-  Money, ChatDotRound
+  Money, ChatDotRound, Tools, SwitchButton
 } from '@element-plus/icons-vue'
 
 // 创建图标组件映射
@@ -137,7 +152,7 @@ const iconMap = {
   Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
   Bell, Message, Calendar, Location, Phone, Link, StarFilled,
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
-  Money, ChatDotRound
+  Money, ChatDotRound, Tools, SwitchButton
 }
 import { getUserMenuTree, getMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -221,26 +236,88 @@ function handleCommand(command) {
 
 // 组件挂载时获取用户信息和菜单
 onMounted(async () => {
-  if (!Object.keys(userInfo.value).length) {
-    await userStore.fetchUserInfo()
+  console.log('LayoutView组件挂载')
+  
+  // 如果权限数据还未加载且有token，尝试获取用户信息
+  if (!userStore.permissionsLoaded && userStore.token) {
+    console.log('权限数据未加载，获取用户信息...')
+    const result = await userStore.fetchUserInfo()
+    // 如果获取用户信息失败，说明token可能已失效
+    if (!result) {
+      console.log('获取用户信息失败，可能需要重新登录')
+      return
+    }
   }
+  
+  // 获取用户菜单
   await fetchUserMenus()
 })
 
-// 监听用户信息变化，重新获取菜单
-watch(() => userInfo.value.userId || userInfo.value.id, async (newId) => {
-  if (newId) {
-    await fetchUserMenus()
-  }
-})
-
+// 移除可能导致循环的监听器，只在需要时手动刷新
 // 监听路由变化
 watch(route, (to, from) => {
-  // 如果从个人中心页面返回，重新获取用户信息以更新头像
+  console.log('路由变化:', { to: to.path, from: from.path })
+  
+  // 只在从个人中心页面返回时更新用户信息
   if (from.path === '/profile' && to.path !== '/profile') {
-    userStore.fetchUserInfo()
+    console.log('从个人中心返回，延迟更新用户信息')
+    // 添加较长的防抖，避免与个人中心页面的请求冲突
+    setTimeout(async () => {
+      if (!userStore.isFetchingUserInfo) {
+        await userStore.fetchUserInfo()
+      }
+    }, 2000)
   }
 }, { immediate: false })
+
+// 显示个人中心
+function showUserProfile() {
+  router.push('/profile')
+}
+
+// 显示调试权限信息
+function showDebugInfo() {
+  const debugInfo = {
+    用户ID: userInfo.value.userId || userInfo.value.id,
+    用户名: userInfo.value.username,
+    真实姓名: userInfo.value.realName,
+    角色: userInfo.value.roles,
+    权限列表: userInfo.value.permissions,
+    权限数量: userInfo.value.permissions ? userInfo.value.permissions.length : 0,
+    菜单数量: userMenus.value ? userMenus.value.length : 0
+  }
+  
+  console.log('=== 权限调试信息 ===')
+  console.log(debugInfo)
+  console.log('完整用户信息:', userInfo.value)
+  console.log('菜单信息:', userMenus.value)
+  
+  ElMessageBox.alert(`
+    <div style="text-align: left;">
+      <p><strong>用户:</strong> ${debugInfo.用户名} (${debugInfo.真实姓名})</p>
+      <p><strong>角色:</strong> ${JSON.stringify(debugInfo.角色)}</p>
+      <p><strong>权限数量:</strong> ${debugInfo.权限数量}</p>
+      <p><strong>权限列表:</strong> ${debugInfo.权限列表 ? debugInfo.权限列表.slice(0, 5).join(', ') + (debugInfo.权限列表.length > 5 ? '...' : '') : '无'}</p>
+      <p><strong>菜单数量:</strong> ${debugInfo.菜单数量}</p>
+      <p style="color: #909399; font-size: 12px;">详细信息请查看浏览器控制台</p>
+    </div>
+  `, '权限调试信息', {
+    dangerouslyUseHTMLString: true,
+    confirmButtonText: '确定'
+  })
+}
+
+// 退出登录
+async function handleLogout() {
+  ElMessageBox.confirm('确定退出登录?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    await userStore.logout()
+    router.push('/login')
+  }).catch(() => {})
+}
 </script>
 
 <style scoped>
@@ -306,8 +383,22 @@ watch(route, (to, from) => {
 }
 
 .main-container {
-  padding: 15px;
-  background-color: #f0f2f5;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 60px);
+}
+
+.main-content {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: calc(100vh - 60px);
+}
+
+.loading-container {
+  padding: 20px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .vlias-logo {

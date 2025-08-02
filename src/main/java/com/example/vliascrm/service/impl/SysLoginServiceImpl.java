@@ -13,6 +13,7 @@ import com.example.vliascrm.service.OrgDepartmentService;
 import com.example.vliascrm.service.OrgPositionService;
 import com.example.vliascrm.service.SysLoginService;
 import com.example.vliascrm.service.SysOrganizationService;
+import com.example.vliascrm.service.SysPermissionService;
 import com.example.vliascrm.service.SysRoleService;
 import com.example.vliascrm.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class SysLoginServiceImpl implements SysLoginService {
     private final SysOrganizationService organizationService;
     private final OrgDepartmentService departmentService;
     private final OrgPositionService positionService;
+    private final SysPermissionService permissionService;
 
     @Value("${app.jwt.expiration}")
     private Long expiration;
@@ -163,7 +165,7 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .lastLoginTime(latestUser.getLastLoginTime())
                 .createTime(latestUser.getCreateTime())
                 .roles(getRoleNames(latestUser.getId()))
-                .permissions(new ArrayList<>())
+                .permissions(getUserPermissions(latestUser.getId()))  // 返回真实的权限列表
                 .build();
     }
     
@@ -223,7 +225,7 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .lastLoginTime(user.getLastLoginTime())
                 .createTime(user.getCreateTime())
                 .roles(getRoleNames(user.getId()))
-                .permissions(new ArrayList<>())  // 这里可以添加权限信息
+                .permissions(getUserPermissions(user.getId()))  // 返回真实的权限列表
                 .build();
     }
     
@@ -237,6 +239,18 @@ public class SysLoginServiceImpl implements SysLoginService {
         List<SysRole> roles = roleService.getUserRoles(userId);
         return roles.stream()
                 .map(SysRole::getRoleCode)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取用户的权限编码列表
+     *
+     * @param userId 用户ID
+     * @return 权限编码列表
+     */
+    private List<String> getUserPermissions(Long userId) {
+        return permissionService.getPermissionsByUserId(userId).stream()
+                .map(permission -> permission.getPermissionCode())
                 .collect(Collectors.toList());
     }
 } 

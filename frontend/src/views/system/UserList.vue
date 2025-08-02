@@ -7,7 +7,11 @@
             <el-icon class="header-icon"><User /></el-icon>
             <span class="header-title">用户管理</span>
           </div>
-          <el-button type="primary" @click="handleAdd">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.USER.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             新增用户
           </el-button>
@@ -116,32 +120,61 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT) || hasPermission(PERMISSIONS.SYS.USER.DELETE) || hasPermission(PERMISSIONS.SYS.USER.ROLE)"
+          label="操作" 
+          width="220" 
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button-group>
-              <el-button type="primary" size="small" @click="handleEdit(row)">
+              <el-button 
+                v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT)"
+                type="primary" 
+                size="small" 
+                @click="handleEdit(row)"
+              >
                 <el-icon><Edit /></el-icon>
                 编辑
               </el-button>
-              <el-button type="success" size="small" @click="handleAssignRole(row)">
+              <el-button 
+                v-if="hasPermission(PERMISSIONS.SYS.USER.ROLE)"
+                type="success" 
+                size="small" 
+                @click="handleAssignRole(row)"
+              >
                 <el-icon><UserFilled /></el-icon>
                 角色
               </el-button>
-              <el-dropdown @command="(command) => handleDropdownCommand(command, row)" trigger="click">
+              <el-dropdown 
+                v-if="hasPermission(PERMISSIONS.SYS.USER.DELETE) || hasPermission(PERMISSIONS.SYS.USER.EDIT)"
+                @command="(command) => handleDropdownCommand(command, row)" 
+                trigger="click"
+              >
                 <el-button type="info" size="small">
                   更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="changePassword">
+                    <el-dropdown-item 
+                      v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT)"
+                      command="changePassword"
+                    >
                       <el-icon><Key /></el-icon>
                       修改密码
                     </el-dropdown-item>
-                    <el-dropdown-item command="resetPassword">
+                    <el-dropdown-item 
+                      v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT)"
+                      command="resetPassword"
+                    >
                       <el-icon><Refresh /></el-icon>
                       重置密码
                     </el-dropdown-item>
-                    <el-dropdown-item divided command="delete">
+                    <el-dropdown-item 
+                      v-if="hasPermission(PERMISSIONS.SYS.USER.DELETE)"
+                      divided 
+                      command="delete"
+                    >
                       <el-icon><Delete /></el-icon>
                       删除
                     </el-dropdown-item>
@@ -340,6 +373,7 @@ import { getOrganizationList } from '@/api/organization'
 import { getDepartmentsByOrgId } from '@/api/department'
 import { getPositionsByDeptId } from '@/api/position'
 import { Edit, UserFilled, ArrowDown, Key, Refresh, Delete, User, Search, Plus } from '@element-plus/icons-vue'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 响应式数据
 const loading = ref(false)

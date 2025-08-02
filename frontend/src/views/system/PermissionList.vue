@@ -1,21 +1,41 @@
 <template>
   <div class="permission-container">
     <div class="action-bar">
-      <el-button type="primary" @click="handleAddTopLevel">新增一级权限</el-button>
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.ADD)"
+        type="primary" 
+        @click="handleAddTopLevel"
+      >
+        新增一级权限
+      </el-button>
       <el-button type="success" @click="expandAll">展开全部</el-button>
       <el-button type="info" @click="collapseAll">折叠全部</el-button>
       
       <!-- 权限同步功能 -->
       <el-divider direction="vertical" />
-      <el-button type="warning" @click="handleSyncPermissions" :loading="syncLoading">
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.SYNC)"
+        type="warning" 
+        @click="handleSyncPermissions" 
+        :loading="syncLoading"
+      >
         <el-icon><Refresh /></el-icon>
         同步权限
       </el-button>
-      <el-button type="danger" @click="handleResetPermissions" :loading="resetLoading">
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.RESET)"
+        type="danger" 
+        @click="handleResetPermissions" 
+        :loading="resetLoading"
+      >
         <el-icon><Delete /></el-icon>
         重置权限
       </el-button>
-      <el-button type="info" @click="handleValidateConfig">
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.VALIDATE)"
+        type="info" 
+        @click="handleValidateConfig"
+      >
         <el-icon><Tools /></el-icon>
         验证配置
       </el-button>
@@ -57,13 +77,36 @@
           {{ formatDateTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column 
+        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT) || hasPermission(PERMISSIONS.SYS.PERMISSION.ADD) || hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE)"
+        label="操作" 
+        width="280" 
+        fixed="right"
+      >
         <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button v-if="scope.row.permissionType === 1" size="small" type="success" @click="handleAddChild(scope.row)">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
+            size="small" 
+            @click="handleEdit(scope.row)"
+          >
+            编辑
+          </el-button>
+          <el-button 
+            v-if="scope.row.permissionType === 1 && hasPermission(PERMISSIONS.SYS.PERMISSION.ADD)" 
+            size="small" 
+            type="success" 
+            @click="handleAddChild(scope.row)"
+          >
             添加子权限
           </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE)"
+            size="small" 
+            type="danger" 
+            @click="handleDelete(scope.row)"
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -153,6 +196,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPermissionTree, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
 import { Refresh, Tools, Delete } from '@element-plus/icons-vue'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 
 // 表格数据和加载状态

@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>部门管理</span>
-          <el-button type="primary" @click="handleAdd">新增部门</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.ORG.DEPARTMENT.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
+            新增部门
+          </el-button>
         </div>
       </template>
 
@@ -62,10 +68,29 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.ORG.DEPARTMENT.EDIT) || hasPermission(PERMISSIONS.ORG.DEPARTMENT.DELETE)"
+          label="操作" 
+          width="200" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.DEPARTMENT.EDIT)"
+              type="primary" 
+              size="small" 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.DEPARTMENT.DELETE)"
+              type="danger" 
+              size="small" 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,13 +120,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="上级部门" prop="parentId">
-          <el-tree-select
+          <el-cascader
             v-model="deptForm.parentId"
-            :data="deptTreeOptions"
-            node-key="id"
-            :props="{ label: 'deptName', children: 'children' }"
-            placeholder="请选择上级部门"
-            check-strictly
+            :options="deptTreeOptions"
+            :props="{
+              checkStrictly: true,
+              label: 'deptName',
+              value: 'id',
+              emitPath: false
+            }"
+            placeholder="请选择上级部门（可选）"
             clearable
           />
         </el-form-item>
@@ -109,42 +137,40 @@
           <el-input v-model="deptForm.deptName" placeholder="请输入部门名称" />
         </el-form-item>
         <el-form-item label="部门编码" prop="deptCode">
-          <el-input v-model="deptForm.deptCode" placeholder="请输入部门编码" />
+          <el-input v-model="deptForm.deptCode" placeholder="请输入部门编码" :rules="[{ validator: validateDeptCode, trigger: 'blur' }]" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="deptForm.sort" :min="1" :max="999" />
-        </el-form-item>
-        <el-form-item label="负责人" prop="leader">
+        <el-form-item label="负责人">
           <el-input v-model="deptForm.leader" placeholder="请输入负责人" />
         </el-form-item>
-        <el-form-item label="联系电话" prop="phone">
+        <el-form-item label="联系电话">
           <el-input v-model="deptForm.phone" placeholder="请输入联系电话" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item label="邮箱">
           <el-input v-model="deptForm.email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item label="排序">
+          <el-input-number v-model="deptForm.sort" :min="1" placeholder="请输入排序" />
+        </el-form-item>
+        <el-form-item label="状态">
           <el-radio-group v-model="deptForm.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item label="备注">
           <el-input
             v-model="deptForm.remark"
             type="textarea"
-            placeholder="请输入备注"
             :rows="3"
+            placeholder="请输入备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <span class="dialog-footer">
+        <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            确定
-          </el-button>
-        </span>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -154,13 +180,13 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
-import { 
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
+import {
   getDepartmentList,
   getDepartmentTree,
   addDepartment,
   updateDepartment,
   deleteDepartment,
-  getDepartmentsByOrgId,
   checkDeptCodeExists
 } from '@/api/department'
 import { getOrganizationList } from '@/api/organization'

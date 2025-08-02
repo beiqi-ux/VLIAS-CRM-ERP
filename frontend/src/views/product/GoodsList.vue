@@ -69,11 +69,16 @@
     <el-card class="operation-card" shadow="never">
       <div class="operation-row">
         <div class="left-operations">
-          <el-button type="primary" @click="handleAdd">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             新增商品
           </el-button>
           <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.DELETE)"
             type="danger" 
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
@@ -145,11 +150,31 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.VIEW) || hasPermission(PERMISSIONS.PRODUCT.GOODS.EDIT) || hasPermission(PERMISSIONS.PRODUCT.GOODS.DELETE) || hasPermission(PERMISSIONS.PRODUCT.GOODS.AUDIT)"
+          label="操作" 
+          width="280" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" text @click="handleView(row)">查看</el-button>
-            <el-button type="primary" text @click="handleEdit(row)">编辑</el-button>
             <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.VIEW)"
+              type="primary" 
+              text 
+              @click="handleView(row)"
+            >
+              查看
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.EDIT)"
+              type="primary" 
+              text 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.EDIT)"
               :type="row.saleStatus === 1 ? 'warning' : 'success'" 
               text 
               @click="handleToggleSaleStatus(row)"
@@ -157,14 +182,21 @@
               {{ row.saleStatus === 1 ? '下架' : '上架' }}
             </el-button>
             <el-button 
-              v-if="row.auditStatus === 0"
+              v-if="row.auditStatus === 0 && hasPermission(PERMISSIONS.PRODUCT.GOODS.AUDIT)"
               type="success" 
               text 
               @click="handleAudit(row)"
             >
               审核
             </el-button>
-            <el-button type="danger" text @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.DELETE)"
+              type="danger" 
+              text 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -377,9 +409,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
+import { formatDateTime } from '@/utils/format'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import {
   getGoodsList,
   createGoods,

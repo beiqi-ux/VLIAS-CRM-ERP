@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>岗位管理</span>
-          <el-button type="primary" @click="handleAdd">新增岗位</el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.ORG.POSITION.ADD)"
+            type="primary" 
+            @click="handleAdd"
+          >
+            新增岗位
+          </el-button>
         </div>
       </template>
 
@@ -79,10 +85,29 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column 
+          v-if="hasPermission(PERMISSIONS.ORG.POSITION.EDIT) || hasPermission(PERMISSIONS.ORG.POSITION.DELETE)"
+          label="操作" 
+          width="200" 
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.POSITION.EDIT)"
+              type="primary" 
+              size="small" 
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORG.POSITION.DELETE)"
+              type="danger" 
+              size="small" 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -172,6 +197,7 @@ import {
 } from '@/api/position'
 import { getOrganizationList } from '@/api/organization'
 import { getDepartmentsByOrgId } from '@/api/department'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 响应式数据
 const loading = ref(false)
