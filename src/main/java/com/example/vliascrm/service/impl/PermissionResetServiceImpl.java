@@ -154,6 +154,7 @@ public class PermissionResetServiceImpl {
             {"user", "edit", "编辑", "编辑用户信息"},
             {"user", "delete", "删除", "删除用户"},
             {"user", "reset-password", "重置密码", "重置用户密码"},
+            {"user", "assign-role", "分配角色", "为用户分配角色"},
             
             // 角色管理操作
             {"role", "view", "查看", "查看角色列表"},
@@ -262,6 +263,7 @@ public class PermissionResetServiceImpl {
             {"user:edit", "编辑", 2, "user", "编辑用户信息"},
             {"user:delete", "删除", 2, "user", "删除用户"},
             {"user:reset-password", "重置密码", 2, "user", "重置用户密码"},
+            {"user:assign-role", "分配角色", 2, "user", "为用户分配角色"},
             
             {"role", "角色管理", 1, "", "角色权限管理"},
             {"role:view", "查看", 2, "role", "查看角色列表"},

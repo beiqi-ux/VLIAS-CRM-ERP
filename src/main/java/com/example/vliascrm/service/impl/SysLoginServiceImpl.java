@@ -165,7 +165,7 @@ public class SysLoginServiceImpl implements SysLoginService {
                 .lastLoginTime(latestUser.getLastLoginTime())
                 .createTime(latestUser.getCreateTime())
                 .roles(getRoleNames(latestUser.getId()))
-                .permissions(getUserPermissions(latestUser.getId()))  // 返回真实的权限列表
+                .permissions(getUserPermissions(latestUser.getId()))  // 添加权限信息
                 .build();
     }
     

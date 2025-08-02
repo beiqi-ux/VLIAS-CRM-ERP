@@ -135,7 +135,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { 
   House, User, UserFilled, Setting, Lock, Menu, Expand, Fold,
   OfficeBuilding, SetUp, Files, List, Collection, View, Goods, Box, Grid, Star,
@@ -204,14 +204,10 @@ async function fetchUserMenus() {
     }
   } catch (error) {
     console.error('获取用户菜单失败:', error)
-    // 如果获取失败，显示所有菜单（临时方案）
-    console.log('菜单获取失败，显示所有菜单')
-    try {
-      const { data } = await getMenuTree()
-      userMenus.value = data || []
-    } catch (fallbackError) {
-      console.error('获取所有菜单也失败:', fallbackError)
-    }
+    // 获取失败时不显示任何菜单，确保权限安全
+    console.log('菜单获取失败，为安全起见不显示任何菜单')
+    userMenus.value = []
+    ElMessage.warning('获取菜单权限失败，请检查用户角色配置')
   }
 }
 

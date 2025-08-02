@@ -76,84 +76,84 @@ export const PERMISSIONS = {
   // 系统管理权限（基于菜单中的permissionCode）
   SYS: {
     USER: {
-      VIEW: 'user',
-      ADD: 'user',
-      EDIT: 'user',
-      DELETE: 'user',
-      ROLE: 'user'
+      VIEW: 'user:view',
+      ADD: 'user:add',
+      EDIT: 'user:edit',
+      DELETE: 'user:delete',
+      ROLE: 'user:assign-role'
     },
     ROLE: {
-      VIEW: 'role', 
-      ADD: 'role',
-      EDIT: 'role',
-      DELETE: 'role',
-      PERMISSION: 'role'
+      VIEW: 'role:view', 
+      ADD: 'role:add',
+      EDIT: 'role:edit',
+      DELETE: 'role:delete',
+      PERMISSION: 'role:assign'
     },
     PERMISSION: {
-      VIEW: 'permission',
-      ADD: 'permission',
-      EDIT: 'permission',
-      DELETE: 'permission',
-      SYNC: 'permission',
-      RESET: 'permission',
-      VALIDATE: 'permission'
+      VIEW: 'permission:view',
+      ADD: 'permission:add',
+      EDIT: 'permission:edit',
+      DELETE: 'permission:delete',
+      SYNC: 'permission:sync',
+      RESET: 'permission:reset',
+      VALIDATE: 'permission:validate'
     },
     MENU: {
-      VIEW: 'menu',
-      ADD: 'menu',
-      EDIT: 'menu',
-      DELETE: 'menu'
+      VIEW: 'menu:view',
+      ADD: 'menu:add',
+      EDIT: 'menu:edit',
+      DELETE: 'menu:delete'
     },
     DICT: {
-      VIEW: 'dict',
-      ADD: 'dict',
-      EDIT: 'dict',
-      DELETE: 'dict'
+      VIEW: 'dict:view',
+      ADD: 'dict:add',
+      EDIT: 'dict:edit',
+      DELETE: 'dict:delete'
     }
   },
 
   // 组织架构权限
   ORG: {
     ORGANIZATION: {
-      VIEW: 'organization',
-      ADD: 'organization',
-      EDIT: 'organization',
-      DELETE: 'organization'
+      VIEW: 'organization:view',
+      ADD: 'organization:add',
+      EDIT: 'organization:edit',
+      DELETE: 'organization:delete'
     },
     DEPARTMENT: {
-      VIEW: 'department',
-      ADD: 'department',
-      EDIT: 'department',
-      DELETE: 'department'
+      VIEW: 'department:view',
+      ADD: 'department:add',
+      EDIT: 'department:edit',
+      DELETE: 'department:delete'
     },
     POSITION: {
-      VIEW: 'position',
-      ADD: 'position',
-      EDIT: 'position',
-      DELETE: 'position'
+      VIEW: 'position:view',
+      ADD: 'position:add',
+      EDIT: 'position:edit',
+      DELETE: 'position:delete'
     }
   },
 
   // 商品管理权限
   PRODUCT: {
     GOODS: {
-      VIEW: 'goods',
-      ADD: 'goods',
-      EDIT: 'goods',
-      DELETE: 'goods',
-      AUDIT: 'goods'
+      VIEW: 'product:view',
+      ADD: 'product:add',
+      EDIT: 'product:edit',
+      DELETE: 'product:delete',
+      AUDIT: 'product:audit'
     },
     CATEGORY: {
-      VIEW: 'category',
-      ADD: 'category',
-      EDIT: 'category',
-      DELETE: 'category'
+      VIEW: 'category:view',
+      ADD: 'category:add',
+      EDIT: 'category:edit',
+      DELETE: 'category:delete'
     },
     BRAND: {
-      VIEW: 'brand',
-      ADD: 'brand',
-      EDIT: 'brand',
-      DELETE: 'brand'
+      VIEW: 'brand:view',
+      ADD: 'brand:add',
+      EDIT: 'brand:edit',
+      DELETE: 'brand:delete'
     }
   }
 } 

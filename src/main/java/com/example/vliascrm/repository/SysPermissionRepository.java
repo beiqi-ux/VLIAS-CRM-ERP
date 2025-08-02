@@ -60,7 +60,9 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
     @Query("SELECT DISTINCT p FROM SysPermission p " +
            "JOIN SysRolePermission rp ON p.id = rp.permissionId " +
            "JOIN SysUserRole ur ON rp.roleId = ur.roleId " +
-           "WHERE ur.userId = ?1 AND p.status = 1 AND p.isDeleted = false")
+           "JOIN SysRole r ON ur.roleId = r.id " +
+           "WHERE ur.userId = ?1 AND p.status = 1 AND p.isDeleted = false " +
+           "AND r.status = 1 AND r.isDeleted = false")
     List<SysPermission> findPermissionsByUserId(Long userId);
 
     /**

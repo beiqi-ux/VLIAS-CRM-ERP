@@ -76,69 +76,281 @@ vlias:
   permission-sync:
     enabled: true  # 启用权限同步功能
     modules:
-      # 系统管理模块
-      - name: "系统管理"
-        code: "sys"
-        description: "系统基础功能管理"
+      # 用户管理模块
+      - name: "用户管理"
+        code: "user"
+        description: "用户管理功能"
         sort: 1
         operations:
-          - name: "用户管理"
-            code: "user"
-            description: "用户增删改查操作"
+          - name: "查看"
+            code: "view"
+            description: "查看用户列表"
             sort: 1
-          - name: "角色管理"
-            code: "role"
-            description: "角色增删改查操作"
+          - name: "新增"
+            code: "add"
+            description: "新增用户"
             sort: 2
-          - name: "权限管理"
-            code: "permission"
-            description: "权限增删改查操作"
+          - name: "编辑"
+            code: "edit"
+            description: "编辑用户信息"
             sort: 3
-          - name: "菜单管理"
-            code: "menu"
-            description: "菜单增删改查操作"
+          - name: "删除"
+            code: "delete"
+            description: "删除用户"
             sort: 4
-          - name: "字典管理"
-            code: "dict"
-            description: "数据字典管理操作"
+          - name: "重置密码"
+            code: "reset-password"
+            description: "重置用户密码"
             sort: 5
-
-      # 组织架构模块
-      - name: "组织架构"
-        code: "org"
-        description: "组织架构管理"
+          - name: "分配角色"
+            code: "assign-role"
+            description: "为用户分配角色"
+            sort: 6
+      
+      # 角色管理模块
+      - name: "角色管理"
+        code: "role"
+        description: "角色管理功能"
         sort: 2
         operations:
-          - name: "组织管理"
-            code: "organization"
-            description: "组织机构增删改查操作"
+          - name: "查看"
+            code: "view"
+            description: "查看角色列表"
             sort: 1
-          - name: "部门管理"
-            code: "department"
-            description: "部门增删改查操作"
+          - name: "新增"
+            code: "add"
+            description: "新增角色"
             sort: 2
-          - name: "岗位管理"
-            code: "position"
-            description: "岗位增删改查操作"
+          - name: "编辑"
+            code: "edit"
+            description: "编辑角色信息"
             sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除角色"
+            sort: 4
+          - name: "分配权限"
+            code: "assign"
+            description: "为角色分配权限"
+            sort: 5
+      
+      # 权限管理模块
+      - name: "权限管理"
+        code: "permission"
+        description: "权限管理功能"
+        sort: 3
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看权限列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增权限"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑权限信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除权限"
+            sort: 4
+          - name: "同步"
+            code: "sync"
+            description: "同步权限"
+            sort: 5
+          - name: "重置"
+            code: "reset"
+            description: "重置权限"
+            sort: 6
+          - name: "验证"
+            code: "validate"
+            description: "验证权限配置"
+            sort: 7
+      
+      # 菜单管理模块
+      - name: "菜单管理"
+        code: "menu"
+        description: "菜单管理功能"
+        sort: 4
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看菜单列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增菜单"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑菜单信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除菜单"
+            sort: 4
+      
+      # 字典管理模块
+      - name: "字典管理"
+        code: "dict"
+        description: "数据字典管理功能"
+        sort: 5
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看字典列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增字典"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑字典信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除字典"
+            sort: 4
+
+      # 组织管理模块
+      - name: "组织管理"
+        code: "organization"
+        description: "组织机构管理功能"
+        sort: 6
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看组织列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增组织"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑组织信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除组织"
+            sort: 4
+      
+      # 部门管理模块
+      - name: "部门管理"
+        code: "department"
+        description: "部门管理功能"
+        sort: 7
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看部门列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增部门"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑部门信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除部门"
+            sort: 4
+      
+      # 岗位管理模块
+      - name: "岗位管理"
+        code: "position"
+        description: "岗位管理功能"
+        sort: 8
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看岗位列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增岗位"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑岗位信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除岗位"
+            sort: 4
 
       # 商品管理模块
       - name: "商品管理"
-        code: "product"
-        description: "商品信息管理"
-        sort: 3
+        code: "goods"
+        description: "商品信息管理功能"
+        sort: 9
         operations:
-          - name: "商品管理"
-            code: "goods"
-            description: "商品增删改查操作"
+          - name: "查看"
+            code: "view"
+            description: "查看商品列表"
             sort: 1
-          - name: "分类管理"
-            code: "category"
-            description: "商品分类管理操作"
+          - name: "新增"
+            code: "add"
+            description: "新增商品"
             sort: 2
-          - name: "品牌管理"
-            code: "brand"
-            description: "商品品牌管理操作"
-            sort: 3 
+          - name: "编辑"
+            code: "edit"
+            description: "编辑商品信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除商品"
+            sort: 4
+      
+      # 分类管理模块
+      - name: "分类管理"
+        code: "category"
+        description: "商品分类管理功能"
+        sort: 10
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看分类列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增分类"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑分类信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除分类"
+            sort: 4
+      
+      # 品牌管理模块
+      - name: "品牌管理"
+        code: "brand"
+        description: "商品品牌管理功能"
+        sort: 11
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看品牌列表"
+            sort: 1
+          - name: "新增"
+            code: "add"
+            description: "新增品牌"
+            sort: 2
+          - name: "编辑"
+            code: "edit"
+            description: "编辑品牌信息"
+            sort: 3
+          - name: "删除"
+            code: "delete"
+            description: "删除品牌"
+            sort: 4 
 
  
