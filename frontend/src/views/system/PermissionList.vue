@@ -8,16 +8,26 @@
       >
         新增一级权限
       </el-button>
-      <el-button type="success" @click="expandAll">展开全部</el-button>
-      <el-button type="info" @click="collapseAll">折叠全部</el-button>
+      <el-button
+        type="success"
+        @click="expandAll"
+      >
+        展开全部
+      </el-button>
+      <el-button
+        type="info"
+        @click="collapseAll"
+      >
+        折叠全部
+      </el-button>
       
       <!-- 权限同步功能 -->
       <el-divider direction="vertical" />
       <el-button 
         v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.SYNC)"
         type="warning" 
-        @click="handleSyncPermissions" 
-        :loading="syncLoading"
+        :loading="syncLoading" 
+        @click="handleSyncPermissions"
       >
         <el-icon><Refresh /></el-icon>
         同步权限
@@ -25,8 +35,8 @@
       <el-button 
         v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.RESET)"
         type="danger" 
-        @click="handleResetPermissions" 
-        :loading="resetLoading"
+        :loading="resetLoading" 
+        @click="handleResetPermissions"
       >
         <el-icon><Delete /></el-icon>
         重置权限
@@ -42,37 +52,62 @@
     </div>
 
     <el-table
+      ref="permissionTableRef"
       v-loading="tableLoading"
       :data="tableData"
       row-key="id"
       border
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       style="width: 100%; margin-top: 15px"
-      ref="permissionTableRef"
     >
-      <el-table-column prop="id" label="ID" width="80">
+      <el-table-column
+        prop="id"
+        label="ID"
+        width="80"
+      >
         <template #default="scope">
           {{ $formatId(scope.row.id) }}
         </template>
       </el-table-column>
-      <el-table-column prop="permissionName" label="权限名称" />
-      <el-table-column prop="permissionCode" label="权限编码" />
-      <el-table-column prop="permissionType" label="权限类型" width="120">
+      <el-table-column
+        prop="permissionName"
+        label="权限名称"
+      />
+      <el-table-column
+        prop="permissionCode"
+        label="权限编码"
+      />
+      <el-table-column
+        prop="permissionType"
+        label="权限类型"
+        width="120"
+      >
         <template #default="scope">
           <el-tag :type="scope.row.permissionType === 1 ? 'primary' : 'success'">
             {{ scope.row.permissionType === 1 ? '一级权限(模块)' : '二级权限(操作)' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="description" label="描述" />
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column
+        prop="description"
+        label="描述"
+      />
+      <el-table-column
+        prop="status"
+        label="状态"
+        width="100"
+      >
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
             {{ scope.row.status === 1 ? '启用' : '禁用' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180">
+      <el-table-column
+        prop="createTime"
+        label="创建时间"
+        width="180"
+      >
         <template #default="scope">
           {{ formatDateTime(scope.row.createTime) }}
         </template>
@@ -124,19 +159,41 @@
         :rules="permissionRules"
         label-width="120px"
       >
-        <el-form-item label="权限名称" prop="permissionName">
-          <el-input v-model="permissionForm.permissionName" placeholder="请输入权限名称" />
+        <el-form-item
+          label="权限名称"
+          prop="permissionName"
+        >
+          <el-input
+            v-model="permissionForm.permissionName"
+            placeholder="请输入权限名称"
+          />
         </el-form-item>
-        <el-form-item label="权限编码" prop="permissionCode">
-          <el-input v-model="permissionForm.permissionCode" placeholder="请输入权限编码" />
+        <el-form-item
+          label="权限编码"
+          prop="permissionCode"
+        >
+          <el-input
+            v-model="permissionForm.permissionCode"
+            placeholder="请输入权限编码"
+          />
         </el-form-item>
-        <el-form-item label="权限类型" prop="permissionType">
+        <el-form-item
+          label="权限类型"
+          prop="permissionType"
+        >
           <el-radio-group v-model="permissionForm.permissionType">
-            <el-radio :label="1">一级权限(模块)</el-radio>
-            <el-radio :label="2">二级权限(操作)</el-radio>
+            <el-radio :label="1">
+              一级权限(模块)
+            </el-radio>
+            <el-radio :label="2">
+              二级权限(操作)
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="上级权限" v-if="permissionForm.permissionType === 2">
+        <el-form-item
+          v-if="permissionForm.permissionType === 2"
+          label="上级权限"
+        >
           <el-select
             v-model="permissionForm.parentId"
             placeholder="请选择上级权限"
@@ -150,7 +207,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="关联菜单" v-if="permissionForm.permissionType === 2">
+        <el-form-item
+          v-if="permissionForm.permissionType === 2"
+          label="关联菜单"
+        >
           <el-select
             v-model="permissionForm.menuId"
             placeholder="请选择关联菜单"
@@ -165,14 +225,20 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item
+          label="描述"
+          prop="description"
+        >
           <el-input
             v-model="permissionForm.description"
             type="textarea"
             placeholder="请输入描述"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-switch
             v-model="permissionForm.status"
             :active-value="1"
@@ -183,8 +249,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>

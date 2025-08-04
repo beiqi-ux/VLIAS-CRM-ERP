@@ -1,0 +1,1 @@
+SELECT id, role_name, role_code, status FROM sys_role WHERE role_code = 'super_admin'; 

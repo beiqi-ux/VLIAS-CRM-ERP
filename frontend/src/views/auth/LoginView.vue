@@ -1,11 +1,15 @@
 <template>
   <div class="login-container">
     <div class="login-left">
-      <div class="login-overlay"></div>
+      <div class="login-overlay" />
       <div class="login-content">
         <div class="logo-container">
-          <div class="logo">VLIAS</div>
-          <div class="tagline">企业级全栈管理系统</div>
+          <div class="logo">
+            VLIAS
+          </div>
+          <div class="tagline">
+            企业级全栈管理系统
+          </div>
         </div>
         <div class="features">
           <div class="feature-item">
@@ -29,7 +33,12 @@
           <h2>欢迎回来</h2>
           <p>请登录您的账号以继续</p>
         </div>
-        <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form">
+        <el-form
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+        >
           <el-form-item prop="username">
             <el-input 
               v-model="loginForm.username" 
@@ -57,11 +66,22 @@
             </el-input>
           </el-form-item>
           <el-form-item class="remember-me">
-            <el-checkbox v-model="loginForm.rememberMe">记住我</el-checkbox>
-            <a href="#" class="forgot-password">忘记密码?</a>
+            <el-checkbox v-model="loginForm.rememberMe">
+              记住我
+            </el-checkbox>
+            <a
+              href="#"
+              class="forgot-password"
+            >忘记密码?</a>
           </el-form-item>
           <el-form-item>
-            <el-button :loading="loading" type="primary" size="large" class="login-button" @click="handleLogin">
+            <el-button
+              :loading="loading"
+              type="primary"
+              size="large"
+              class="login-button"
+              @click="handleLogin"
+            >
               {{ loading ? '登录中...' : '登录' }}
             </el-button>
           </el-form-item>

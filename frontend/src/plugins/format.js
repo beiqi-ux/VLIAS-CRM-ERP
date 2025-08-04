@@ -1,4 +1,4 @@
-import { formatDateTime, formatDate, formatId, formatImageUrl } from '@/utils/format';
+import { formatDateTime, formatDate, formatId, formatImageUrl } from '@/utils/format'
 
 /**
  * 格式化插件
@@ -12,12 +12,12 @@ export default {
       date: formatDate,
       id: formatId,
       imageUrl: formatImageUrl
-    };
+    }
 
     // 添加全局方法
-    app.config.globalProperties.$formatDateTime = formatDateTime;
-    app.config.globalProperties.$formatDate = formatDate;
-    app.config.globalProperties.$formatId = formatId;
-    app.config.globalProperties.$formatImageUrl = formatImageUrl;
+    app.config.globalProperties.$formatDateTime = formatDateTime
+    app.config.globalProperties.$formatDate = formatDate
+    app.config.globalProperties.$formatId = formatId
+    app.config.globalProperties.$formatImageUrl = formatImageUrl
   }
 } 

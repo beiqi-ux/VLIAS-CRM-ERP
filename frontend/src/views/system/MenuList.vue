@@ -8,20 +8,34 @@
       >
         新增顶级菜单
       </el-button>
-      <el-button type="success" @click="expandAll">展开全部</el-button>
-      <el-button type="info" @click="collapseAll">折叠全部</el-button>
+      <el-button
+        type="success"
+        @click="expandAll"
+      >
+        展开全部
+      </el-button>
+      <el-button
+        type="info"
+        @click="collapseAll"
+      >
+        折叠全部
+      </el-button>
     </div>
 
     <el-table
+      ref="menuTableRef"
       v-loading="tableLoading"
       :data="tableData"
       row-key="id"
       border
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       style="width: 100%; margin-top: 15px"
-      ref="menuTableRef"
     >
-      <el-table-column prop="id" label="ID" width="80">
+      <el-table-column
+        prop="id"
+        label="ID"
+        width="80"
+      >
         <template #default="scope">
           {{ $formatId(scope.row.id) }}
         </template>
@@ -29,26 +43,53 @@
       <el-table-column label="菜单名称">
         <template #default="scope">
           <div class="menu-name">
-            <el-icon v-if="scope.row.icon" class="menu-icon">
+            <el-icon
+              v-if="scope.row.icon"
+              class="menu-icon"
+            >
               <component :is="scope.row.icon" />
             </el-icon>
             <span>{{ scope.row.menuName }}</span>
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="menuCode" label="菜单编码" />
-      <el-table-column prop="menuType" label="菜单类型" width="120">
+      <el-table-column
+        prop="menuCode"
+        label="菜单编码"
+      />
+      <el-table-column
+        prop="menuType"
+        label="菜单类型"
+        width="120"
+      >
         <template #default="scope">
           <el-tag :type="getMenuTypeTagType(scope.row.menuType)">
             {{ getMenuTypeName(scope.row.menuType) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="path" label="路由地址" />
-      <el-table-column prop="component" label="组件路径" />
-      <el-table-column prop="permissionCode" label="权限标识" />
-      <el-table-column prop="sort" label="排序" width="80" />
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column
+        prop="path"
+        label="路由地址"
+      />
+      <el-table-column
+        prop="component"
+        label="组件路径"
+      />
+      <el-table-column
+        prop="permissionCode"
+        label="权限标识"
+      />
+      <el-table-column
+        prop="sort"
+        label="排序"
+        width="80"
+      />
+      <el-table-column
+        prop="status"
+        label="状态"
+        width="100"
+      >
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
             {{ scope.row.status === 1 ? '启用' : '禁用' }}
@@ -102,20 +143,44 @@
         :rules="menuRules"
         label-width="120px"
       >
-        <el-form-item label="菜单名称" prop="menuName">
-          <el-input v-model="menuForm.menuName" placeholder="请输入菜单名称" />
+        <el-form-item
+          label="菜单名称"
+          prop="menuName"
+        >
+          <el-input
+            v-model="menuForm.menuName"
+            placeholder="请输入菜单名称"
+          />
         </el-form-item>
-        <el-form-item label="菜单编码" prop="menuCode">
-          <el-input v-model="menuForm.menuCode" placeholder="请输入菜单编码" />
+        <el-form-item
+          label="菜单编码"
+          prop="menuCode"
+        >
+          <el-input
+            v-model="menuForm.menuCode"
+            placeholder="请输入菜单编码"
+          />
         </el-form-item>
-        <el-form-item label="菜单类型" prop="menuType">
+        <el-form-item
+          label="菜单类型"
+          prop="menuType"
+        >
           <el-radio-group v-model="menuForm.menuType">
-            <el-radio :label="1">目录</el-radio>
-            <el-radio :label="2">菜单</el-radio>
-            <el-radio :label="3">按钮</el-radio>
+            <el-radio :label="1">
+              目录
+            </el-radio>
+            <el-radio :label="2">
+              菜单
+            </el-radio>
+            <el-radio :label="3">
+              按钮
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="上级菜单" v-if="menuForm.parentId !== 0">
+        <el-form-item
+          v-if="menuForm.parentId !== 0"
+          label="上级菜单"
+        >
           <el-cascader
             v-model="menuForm.parentId"
             :options="parentMenuOptions"
@@ -130,34 +195,80 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="图标" v-if="menuForm.menuType !== 3">
-          <el-input v-model="menuForm.icon" placeholder="请输入图标" />
+        <el-form-item
+          v-if="menuForm.menuType !== 3"
+          label="图标"
+        >
+          <el-input
+            v-model="menuForm.icon"
+            placeholder="请输入图标"
+          />
         </el-form-item>
-        <el-form-item label="路由地址" v-if="menuForm.menuType !== 3" prop="path">
-          <el-input v-model="menuForm.path" placeholder="请输入路由地址" />
+        <el-form-item
+          v-if="menuForm.menuType !== 3"
+          label="路由地址"
+          prop="path"
+        >
+          <el-input
+            v-model="menuForm.path"
+            placeholder="请输入路由地址"
+          />
         </el-form-item>
-        <el-form-item label="组件路径" v-if="menuForm.menuType === 2">
-          <el-input v-model="menuForm.component" placeholder="请输入组件路径" />
+        <el-form-item
+          v-if="menuForm.menuType === 2"
+          label="组件路径"
+        >
+          <el-input
+            v-model="menuForm.component"
+            placeholder="请输入组件路径"
+          />
         </el-form-item>
-        <el-form-item label="权限标识" v-if="menuForm.menuType === 3">
-          <el-input v-model="menuForm.permissionCode" placeholder="请输入权限标识" />
+        <el-form-item
+          v-if="menuForm.menuType === 3"
+          label="权限标识"
+        >
+          <el-input
+            v-model="menuForm.permissionCode"
+            placeholder="请输入权限标识"
+          />
         </el-form-item>
         <el-form-item label="排序">
-          <el-input-number v-model="menuForm.sort" :min="0" :max="999" />
+          <el-input-number
+            v-model="menuForm.sort"
+            :min="0"
+            :max="999"
+          />
         </el-form-item>
-        <el-form-item label="显示状态" v-if="menuForm.menuType !== 3">
+        <el-form-item
+          v-if="menuForm.menuType !== 3"
+          label="显示状态"
+        >
           <el-radio-group v-model="menuForm.visible">
-            <el-radio :label="1">显示</el-radio>
-            <el-radio :label="0">隐藏</el-radio>
+            <el-radio :label="1">
+              显示
+            </el-radio>
+            <el-radio :label="0">
+              隐藏
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="是否外链" v-if="menuForm.menuType !== 3">
+        <el-form-item
+          v-if="menuForm.menuType !== 3"
+          label="是否外链"
+        >
           <el-radio-group v-model="menuForm.isFrame">
-            <el-radio :label="1">是</el-radio>
-            <el-radio :label="0">否</el-radio>
+            <el-radio :label="1">
+              是
+            </el-radio>
+            <el-radio :label="0">
+              否
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="菜单状态" prop="status">
+        <el-form-item
+          label="菜单状态"
+          prop="status"
+        >
           <el-switch
             v-model="menuForm.status"
             :active-value="1"
@@ -168,8 +279,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -239,20 +357,20 @@ const fetchMenuList = async () => {
 // 菜单类型转换
 const getMenuTypeName = (type) => {
   switch (type) {
-    case 1: return '目录'
-    case 2: return '菜单'
-    case 3: return '按钮'
-    default: return '未知'
+  case 1: return '目录'
+  case 2: return '菜单'
+  case 3: return '按钮'
+  default: return '未知'
   }
 }
 
 // 菜单类型标签
 const getMenuTypeTagType = (type) => {
   switch (type) {
-    case 1: return 'primary'
-    case 2: return 'success'
-    case 3: return 'warning'
-    default: return 'info'
+  case 1: return 'primary'
+  case 2: return 'success'
+  case 3: return 'warning'
+  default: return 'info'
   }
 }
 

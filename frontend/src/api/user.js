@@ -101,4 +101,18 @@ export function resetPassword(id) {
     url: `/api/sys/users/${id}/reset-password`,
     method: 'post'
   })
+}
+
+/**
+ * 更新用户状态
+ * @param {number} id - 用户ID
+ * @param {number} status - 状态 (1: 启用, 0: 禁用)
+ * @returns {Promise}
+ */
+export function updateUserStatus(id, status) {
+  return request({
+    url: `/api/sys/users/${id}/status`,
+    method: 'patch',
+    params: { status }
+  })
 } 

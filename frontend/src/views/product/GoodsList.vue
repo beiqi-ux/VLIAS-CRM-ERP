@@ -1,8 +1,14 @@
 <template>
   <div class="goods-list">
     <!-- 搜索栏 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :model="searchForm" inline>
+    <el-card
+      class="search-card"
+      shadow="never"
+    >
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="商品名称">
           <el-input 
             v-model="searchForm.goodsName" 
@@ -20,7 +26,12 @@
           />
         </el-form-item>
         <el-form-item label="商品分类">
-          <el-select v-model="searchForm.categoryId" placeholder="请选择分类" clearable style="width: 200px">
+          <el-select
+            v-model="searchForm.categoryId"
+            placeholder="请选择分类"
+            clearable
+            style="width: 200px"
+          >
             <el-option
               v-for="category in categoryList"
               :key="category.id"
@@ -30,7 +41,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="商品品牌">
-          <el-select v-model="searchForm.brandId" placeholder="请选择品牌" clearable style="width: 200px">
+          <el-select
+            v-model="searchForm.brandId"
+            placeholder="请选择品牌"
+            clearable
+            style="width: 200px"
+          >
             <el-option
               v-for="brand in brandList"
               :key="brand.id"
@@ -40,20 +56,49 @@
           </el-select>
         </el-form-item>
         <el-form-item label="商品状态">
-          <el-select v-model="searchForm.saleStatus" placeholder="请选择状态" clearable style="width: 120px">
-            <el-option label="在售" :value="1" />
-            <el-option label="下架" :value="0" />
+          <el-select
+            v-model="searchForm.saleStatus"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              label="在售"
+              :value="1"
+            />
+            <el-option
+              label="下架"
+              :value="0"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="审核状态">
-          <el-select v-model="searchForm.auditStatus" placeholder="请选择审核状态" clearable style="width: 120px">
-            <el-option label="待审核" :value="0" />
-            <el-option label="已通过" :value="1" />
-            <el-option label="已拒绝" :value="2" />
+          <el-select
+            v-model="searchForm.auditStatus"
+            placeholder="请选择审核状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              label="待审核"
+              :value="0"
+            />
+            <el-option
+              label="已通过"
+              :value="1"
+            />
+            <el-option
+              label="已拒绝"
+              :value="2"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :loading="loading">
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleSearch"
+          >
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
@@ -66,7 +111,10 @@
     </el-card>
 
     <!-- 操作栏 -->
-    <el-card class="operation-card" shadow="never">
+    <el-card
+      class="operation-card"
+      shadow="never"
+    >
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
@@ -88,7 +136,10 @@
           </el-button>
         </div>
         <div class="right-operations">
-          <el-button type="success" @click="handleRefresh">
+          <el-button
+            type="success"
+            @click="handleRefresh"
+          >
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
@@ -97,17 +148,30 @@
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card class="table-card" shadow="never">
+    <el-card
+      class="table-card"
+      shadow="never"
+    >
       <el-table
-        :data="goodsList"
         v-loading="loading"
-        @selection-change="handleSelectionChange"
+        :data="goodsList"
         stripe
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="商品图片" width="80">
+        <el-table-column
+          type="selection"
+          width="55"
+        />
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          label="商品图片"
+          width="80"
+        >
           <template #default="{ row }">
             <el-image
               v-if="row.mainImage"
@@ -117,30 +181,68 @@
               :preview-src-list="[row.mainImage]"
               preview-teleported
             />
-            <div v-else class="no-image">暂无图片</div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="goodsCode" label="商品编码" width="120" />
-        <el-table-column prop="goodsName" label="商品名称" min-width="150" />
-        <el-table-column prop="categoryName" label="分类" width="120" />
-        <el-table-column prop="brandName" label="品牌" width="120" />
-        <el-table-column label="价格信息" width="180">
-          <template #default="{ row }">
-            <div class="price-info">
-              <div class="cost-price">成本: ¥{{ row.costPrice || 0 }}</div>
-              <div class="selling-price">售价: ¥{{ row.sellingPrice || 0 }}</div>
+            <div
+              v-else
+              class="no-image"
+            >
+              暂无图片
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="stockQty" label="库存" width="80" />
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          prop="goodsCode"
+          label="商品编码"
+          width="120"
+        />
+        <el-table-column
+          prop="goodsName"
+          label="商品名称"
+          min-width="150"
+        />
+        <el-table-column
+          prop="categoryName"
+          label="分类"
+          width="120"
+        />
+        <el-table-column
+          prop="brandName"
+          label="品牌"
+          width="120"
+        />
+        <el-table-column
+          label="价格信息"
+          width="180"
+        >
+          <template #default="{ row }">
+            <div class="price-info">
+              <div class="cost-price">
+                成本: ¥{{ row.costPrice || 0 }}
+              </div>
+              <div class="selling-price">
+                售价: ¥{{ row.sellingPrice || 0 }}
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="stockQty"
+          label="库存"
+          width="80"
+        />
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag :type="row.saleStatus === 1 ? 'success' : 'danger'">
               {{ row.saleStatus === 1 ? '在售' : '下架' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="审核状态" width="100">
+        <el-table-column
+          label="审核状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag 
               :type="row.auditStatus === 1 ? 'success' : row.auditStatus === 2 ? 'danger' : 'warning'"
@@ -149,7 +251,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        />
         <el-table-column 
           v-if="hasPermission(PERMISSIONS.PRODUCT.GOODS.VIEW) || hasPermission(PERMISSIONS.PRODUCT.GOODS.EDIT) || hasPermission(PERMISSIONS.PRODUCT.GOODS.DELETE) || hasPermission(PERMISSIONS.PRODUCT.GOODS.AUDIT)"
           label="操作" 
@@ -217,33 +323,52 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
-      :title="dialogTitle"
       v-model="dialogVisible"
+      :title="dialogTitle"
       width="800px"
       :close-on-click-modal="false"
     >
       <el-form
+        ref="formRef"
         :model="formData"
         :rules="formRules"
-        ref="formRef"
         label-width="100px"
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="商品编码" prop="goodsCode">
-              <el-input v-model="formData.goodsCode" placeholder="请输入商品编码" />
+            <el-form-item
+              label="商品编码"
+              prop="goodsCode"
+            >
+              <el-input
+                v-model="formData.goodsCode"
+                placeholder="请输入商品编码"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="商品名称" prop="goodsName">
-              <el-input v-model="formData.goodsName" placeholder="请输入商品名称" />
+            <el-form-item
+              label="商品名称"
+              prop="goodsName"
+            >
+              <el-input
+                v-model="formData.goodsName"
+                placeholder="请输入商品名称"
+              />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="商品分类" prop="categoryId">
-              <el-select v-model="formData.categoryId" placeholder="请选择分类" style="width: 100%">
+            <el-form-item
+              label="商品分类"
+              prop="categoryId"
+            >
+              <el-select
+                v-model="formData.categoryId"
+                placeholder="请选择分类"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="category in categoryList"
                   :key="category.id"
@@ -254,8 +379,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="商品品牌" prop="brandId">
-              <el-select v-model="formData.brandId" placeholder="请选择品牌" style="width: 100%">
+            <el-form-item
+              label="商品品牌"
+              prop="brandId"
+            >
+              <el-select
+                v-model="formData.brandId"
+                placeholder="请选择品牌"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="brand in brandList"
                   :key="brand.id"
@@ -268,7 +400,10 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="成本价" prop="costPrice">
+            <el-form-item
+              label="成本价"
+              prop="costPrice"
+            >
               <el-input-number 
                 v-model="formData.costPrice" 
                 :precision="2" 
@@ -278,7 +413,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="售价" prop="sellingPrice">
+            <el-form-item
+              label="售价"
+              prop="sellingPrice"
+            >
               <el-input-number 
                 v-model="formData.sellingPrice" 
                 :precision="2" 
@@ -288,7 +426,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="原价" prop="originalPrice">
+            <el-form-item
+              label="原价"
+              prop="originalPrice"
+            >
               <el-input-number 
                 v-model="formData.originalPrice" 
                 :precision="2" 
@@ -300,7 +441,10 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="库存数量" prop="stockQty">
+            <el-form-item
+              label="库存数量"
+              prop="stockQty"
+            >
               <el-input-number 
                 v-model="formData.stockQty" 
                 :min="0" 
@@ -309,7 +453,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="预警库存" prop="warnStock">
+            <el-form-item
+              label="预警库存"
+              prop="warnStock"
+            >
               <el-input-number 
                 v-model="formData.warnStock" 
                 :min="0" 
@@ -318,7 +465,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="重量(g)" prop="weight">
+            <el-form-item
+              label="重量(g)"
+              prop="weight"
+            >
               <el-input-number 
                 v-model="formData.weight" 
                 :precision="2" 
@@ -330,23 +480,40 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="销售状态" prop="saleStatus">
+            <el-form-item
+              label="销售状态"
+              prop="saleStatus"
+            >
               <el-radio-group v-model="formData.saleStatus">
-                <el-radio :label="1">上架</el-radio>
-                <el-radio :label="0">下架</el-radio>
+                <el-radio :label="1">
+                  上架
+                </el-radio>
+                <el-radio :label="0">
+                  下架
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="是否推荐" prop="isRecommended">
+            <el-form-item
+              label="是否推荐"
+              prop="isRecommended"
+            >
               <el-radio-group v-model="formData.isRecommended">
-                <el-radio :label="1">是</el-radio>
-                <el-radio :label="0">否</el-radio>
+                <el-radio :label="1">
+                  是
+                </el-radio>
+                <el-radio :label="0">
+                  否
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="商品简介" prop="brief">
+        <el-form-item
+          label="商品简介"
+          prop="brief"
+        >
           <el-input 
             v-model="formData.brief" 
             type="textarea" 
@@ -354,7 +521,10 @@
             placeholder="请输入商品简介" 
           />
         </el-form-item>
-        <el-form-item label="商品详情" prop="content">
+        <el-form-item
+          label="商品详情"
+          prop="content"
+        >
           <el-input 
             v-model="formData.content" 
             type="textarea" 
@@ -365,8 +535,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+          <el-button @click="dialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </div>
@@ -375,19 +551,34 @@
 
     <!-- 审核对话框 -->
     <el-dialog
-      title="商品审核"
       v-model="auditDialogVisible"
+      title="商品审核"
       width="500px"
       :close-on-click-modal="false"
     >
-      <el-form :model="auditForm" :rules="auditRules" ref="auditFormRef" label-width="100px">
-        <el-form-item label="审核结果" prop="auditStatus">
+      <el-form
+        ref="auditFormRef"
+        :model="auditForm"
+        :rules="auditRules"
+        label-width="100px"
+      >
+        <el-form-item
+          label="审核结果"
+          prop="auditStatus"
+        >
           <el-radio-group v-model="auditForm.auditStatus">
-            <el-radio :label="1">通过</el-radio>
-            <el-radio :label="2">拒绝</el-radio>
+            <el-radio :label="1">
+              通过
+            </el-radio>
+            <el-radio :label="2">
+              拒绝
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="审核备注" prop="auditRemark">
+        <el-form-item
+          label="审核备注"
+          prop="auditRemark"
+        >
           <el-input 
             v-model="auditForm.auditRemark" 
             type="textarea" 
@@ -398,8 +589,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="auditDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleAuditSubmit" :loading="auditLoading">
+          <el-button @click="auditDialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="auditLoading"
+            @click="handleAuditSubmit"
+          >
             确定
           </el-button>
         </div>
@@ -614,7 +811,7 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   Object.keys(formData).forEach(key => {
     formData[key] = row[key] || (key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 : 
-                                key === 'saleStatus' || key === 'isRecommended' ? (row[key] ?? 1) : '')
+      key === 'saleStatus' || key === 'isRecommended' ? (row[key] ?? 1) : '')
   })
   dialogVisible.value = true
 }
@@ -747,8 +944,8 @@ const handleSubmit = async () => {
 const resetFormData = () => {
   Object.keys(formData).forEach(key => {
     formData[key] = key === 'saleStatus' || key === 'isRecommended' ? (key === 'saleStatus' ? 1 : 0) :
-                    key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 :
-                    key === 'id' ? null : ''
+      key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 :
+        key === 'id' ? null : ''
   })
 }
 

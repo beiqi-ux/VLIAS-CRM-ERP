@@ -3,6 +3,7 @@ package com.example.vliascrm.controller;
 import com.example.vliascrm.common.ApiResponse;
 import com.example.vliascrm.dto.UserDTO;
 import com.example.vliascrm.entity.SysUser;
+import com.example.vliascrm.entity.SysOrganization;
 import com.example.vliascrm.repository.SysUserRepository;
 import com.example.vliascrm.service.OrgDepartmentService;
 import com.example.vliascrm.service.OrgPositionService;
@@ -28,7 +29,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.example.vliascrm.entity.OrgDepartment;
 import com.example.vliascrm.entity.OrgPosition;
-import com.example.vliascrm.entity.SysOrganization;
+import com.example.vliascrm.entity.OrgPosition;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * 系统用户管理控制器
@@ -50,14 +52,14 @@ public class SysUserController {
      */
     @GetMapping
     public ApiResponse<Map<String, Object>> getUserList(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String realName,
             @RequestParam(required = false) Integer status) {
         
-        // 创建分页对象
-        Pageable pageable = PageRequest.of(page - 1, size);
+        // 创建分页对象 (前端已经传递了从0开始的页码)
+        Pageable pageable = PageRequest.of(page, size);
         
         // 创建查询条件
         Specification<SysUser> spec = (root, query, criteriaBuilder) -> {
@@ -277,6 +279,34 @@ public class SysUserController {
     }
     
     /**
+     * 更新用户状态
+     * @param id 用户ID
+     * @param status 状态 (1: 启用, 0: 禁用)
+     * @return 更新后的用户
+     */
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "更新用户状态", description = "更新用户的启用/禁用状态")
+    public ApiResponse<SysUser> updateUserStatus(@PathVariable Long id, @RequestParam Integer status) {
+        try {
+            Optional<SysUser> userOptional = sysUserRepository.findById(id);
+            if (userOptional.isEmpty()) {
+                return ApiResponse.failure("用户不存在");
+            }
+            
+            SysUser user = userOptional.get();
+            user.setStatus(status);
+            SysUser updatedUser = sysUserRepository.save(user);
+            
+            // 安全考虑，清空返回结果中的密码
+            updatedUser.setPassword(null);
+            
+            return ApiResponse.success(updatedUser);
+        } catch (Exception e) {
+            return ApiResponse.failure("更新用户状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 生成随机密码
      */
     private String generateRandomPassword() {
@@ -289,14 +319,14 @@ public class SysUserController {
      */
     @GetMapping("/detailed")
     public ApiResponse<Map<String, Object>> getDetailedUserList(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String realName,
             @RequestParam(required = false) Integer status) {
         
-        // 创建分页对象
-        Pageable pageable = PageRequest.of(page - 1, size);
+        // 创建分页对象 (前端已经传递了从0开始的页码)
+        Pageable pageable = PageRequest.of(page, size);
         
         // 创建查询条件
         Specification<SysUser> spec = (root, query, criteriaBuilder) -> {

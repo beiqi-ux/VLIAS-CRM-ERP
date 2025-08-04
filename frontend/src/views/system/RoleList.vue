@@ -8,13 +8,20 @@
         style="width: 200px; margin-right: 10px"
         @keyup.enter="handleSearch"
       />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button @click="resetSearch">重置</el-button>
+      <el-button
+        type="primary"
+        @click="handleSearch"
+      >
+        搜索
+      </el-button>
+      <el-button @click="resetSearch">
+        重置
+      </el-button>
       <el-button 
         v-if="hasPermission(PERMISSIONS.SYS.ROLE.ADD)"
         type="success" 
-        @click="handleAdd" 
-        style="margin-left: 10px"
+        style="margin-left: 10px" 
+        @click="handleAdd"
       >
         新增角色
       </el-button>
@@ -26,20 +33,41 @@
       border
       style="width: 100%; margin-top: 15px"
     >
-      <el-table-column prop="id" label="ID" width="80">
+      <el-table-column
+        prop="id"
+        label="ID"
+        width="80"
+      >
         <template #default="scope">
           {{ $formatId(scope.row.id) }}
         </template>
       </el-table-column>
-      <el-table-column prop="roleName" label="角色名称" />
-      <el-table-column prop="roleCode" label="角色编码" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column prop="createTime" label="创建时间" width="180">
+      <el-table-column
+        prop="roleName"
+        label="角色名称"
+      />
+      <el-table-column
+        prop="roleCode"
+        label="角色编码"
+      />
+      <el-table-column
+        prop="description"
+        label="描述"
+      />
+      <el-table-column
+        prop="createTime"
+        label="创建时间"
+        width="180"
+      >
         <template #default="scope">
           {{ formatDateTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column
+        prop="status"
+        label="状态"
+        width="100"
+      >
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
             {{ scope.row.status === 1 ? '启用' : '禁用' }}
@@ -86,9 +114,9 @@
       :total="total"
       :page-size="pageSize"
       :current-page="currentPage"
+      style="margin-top: 15px; justify-content: flex-end"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
-      style="margin-top: 15px; justify-content: flex-end"
     />
 
     <!-- 角色表单对话框 -->
@@ -104,20 +132,38 @@
         :rules="roleRules"
         label-width="100px"
       >
-        <el-form-item label="角色名称" prop="roleName">
-          <el-input v-model="roleForm.roleName" placeholder="请输入角色名称" />
+        <el-form-item
+          label="角色名称"
+          prop="roleName"
+        >
+          <el-input
+            v-model="roleForm.roleName"
+            placeholder="请输入角色名称"
+          />
         </el-form-item>
-        <el-form-item label="角色编码" prop="roleCode">
-          <el-input v-model="roleForm.roleCode" placeholder="请输入角色编码" />
+        <el-form-item
+          label="角色编码"
+          prop="roleCode"
+        >
+          <el-input
+            v-model="roleForm.roleCode"
+            placeholder="请输入角色编码"
+          />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item
+          label="描述"
+          prop="description"
+        >
           <el-input
             v-model="roleForm.description"
             type="textarea"
             placeholder="请输入描述"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-switch
             v-model="roleForm.status"
             :active-value="1"
@@ -128,8 +174,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
 
@@ -151,8 +204,16 @@
         />
       </div>
       <template #footer>
-        <el-button @click="permissionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitPermission" :loading="permissionLoading">确定</el-button>
+        <el-button @click="permissionDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="permissionLoading"
+          @click="submitPermission"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>

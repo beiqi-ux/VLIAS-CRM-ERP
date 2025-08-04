@@ -16,9 +16,18 @@
 
       <!-- 搜索区域 -->
       <div class="search-area">
-        <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form
+          :inline="true"
+          :model="searchForm"
+          class="search-form"
+        >
           <el-form-item label="所属组织">
-            <el-select v-model="searchForm.orgId" placeholder="请选择组织" clearable @change="handleOrgChange">
+            <el-select
+              v-model="searchForm.orgId"
+              placeholder="请选择组织"
+              clearable
+              @change="handleOrgChange"
+            >
               <el-option
                 v-for="org in orgOptions"
                 :key="org.id"
@@ -28,7 +37,11 @@
             </el-select>
           </el-form-item>
           <el-form-item label="所属部门">
-            <el-select v-model="searchForm.deptId" placeholder="请选择部门" clearable>
+            <el-select
+              v-model="searchForm.deptId"
+              placeholder="请选择部门"
+              clearable
+            >
               <el-option
                 v-for="dept in deptOptions"
                 :key="dept.id"
@@ -38,49 +51,108 @@
             </el-select>
           </el-form-item>
           <el-form-item label="岗位名称">
-            <el-input v-model="searchForm.positionName" placeholder="请输入岗位名称" clearable />
+            <el-input
+              v-model="searchForm.positionName"
+              placeholder="请输入岗位名称"
+              clearable
+            />
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-              <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
+            <el-select
+              v-model="searchForm.status"
+              placeholder="请选择状态"
+              clearable
+            >
+              <el-option
+                label="启用"
+                :value="1"
+              />
+              <el-option
+                label="禁用"
+                :value="0"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button
+              type="primary"
+              @click="handleSearch"
+            >
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 岗位列表 -->
-      <el-table :data="positionList" v-loading="loading" stripe border>
-        <el-table-column prop="id" label="ID" width="80">
+      <el-table
+        v-loading="loading"
+        :data="positionList"
+        stripe
+        border
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        >
           <template #default="{ row }">
             {{ $formatId(row.id) }}
           </template>
         </el-table-column>
-        <el-table-column prop="positionName" label="岗位名称" width="150" />
-        <el-table-column prop="positionCode" label="岗位编码" width="120" />
-        <el-table-column prop="orgName" label="所属组织" width="150">
+        <el-table-column
+          prop="positionName"
+          label="岗位名称"
+          width="150"
+        />
+        <el-table-column
+          prop="positionCode"
+          label="岗位编码"
+          width="120"
+        />
+        <el-table-column
+          prop="orgName"
+          label="所属组织"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.orgName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="deptName" label="所属部门" width="150">
+        <el-table-column
+          prop="deptName"
+          label="所属部门"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.deptName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" align="center" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column
+          prop="sort"
+          label="排序"
+          width="80"
+          align="center"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="80"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180">
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.createTime) }}
           </template>
@@ -126,8 +198,15 @@
         :rules="positionRules"
         label-width="100px"
       >
-        <el-form-item label="所属组织" prop="orgId">
-          <el-select v-model="positionForm.orgId" placeholder="请选择组织" @change="handleFormOrgChange">
+        <el-form-item
+          label="所属组织"
+          prop="orgId"
+        >
+          <el-select
+            v-model="positionForm.orgId"
+            placeholder="请选择组织"
+            @change="handleFormOrgChange"
+          >
             <el-option
               v-for="org in orgOptions"
               :key="org.id"
@@ -136,8 +215,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="所属部门" prop="deptId">
-          <el-select v-model="positionForm.deptId" placeholder="请选择部门">
+        <el-form-item
+          label="所属部门"
+          prop="deptId"
+        >
+          <el-select
+            v-model="positionForm.deptId"
+            placeholder="请选择部门"
+          >
             <el-option
               v-for="dept in formDeptOptions"
               :key="dept.id"
@@ -146,22 +231,51 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="岗位名称" prop="positionName">
-          <el-input v-model="positionForm.positionName" placeholder="请输入岗位名称" />
+        <el-form-item
+          label="岗位名称"
+          prop="positionName"
+        >
+          <el-input
+            v-model="positionForm.positionName"
+            placeholder="请输入岗位名称"
+          />
         </el-form-item>
-        <el-form-item label="岗位编码" prop="positionCode">
-          <el-input v-model="positionForm.positionCode" placeholder="请输入岗位编码" />
+        <el-form-item
+          label="岗位编码"
+          prop="positionCode"
+        >
+          <el-input
+            v-model="positionForm.positionCode"
+            placeholder="请输入岗位编码"
+          />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="positionForm.sort" :min="1" :max="999" />
+        <el-form-item
+          label="排序"
+          prop="sort"
+        >
+          <el-input-number
+            v-model="positionForm.sort"
+            :min="1"
+            :max="999"
+          />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-radio-group v-model="positionForm.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :label="1">
+              启用
+            </el-radio>
+            <el-radio :label="0">
+              禁用
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item
+          label="备注"
+          prop="remark"
+        >
           <el-input
             v-model="positionForm.remark"
             type="textarea"
@@ -173,7 +287,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          <el-button
+            type="primary"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </span>

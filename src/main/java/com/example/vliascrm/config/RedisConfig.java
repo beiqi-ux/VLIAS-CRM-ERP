@@ -1,5 +1,8 @@
 package com.example.vliascrm.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.databind.type.MapType;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,4 +40,16 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
+    /**
+     * 配置ObjectMapper用于缓存序列化
+     * 注释掉这个方法，使用JacksonConfig中的统一配置
+     */
+    // @Bean
+    // public ObjectMapper objectMapper() {
+    //     ObjectMapper mapper = new ObjectMapper();
+    //     // 配置时间格式
+    //     mapper.findAndRegisterModules();
+    //     return mapper;
+    // }
 } 

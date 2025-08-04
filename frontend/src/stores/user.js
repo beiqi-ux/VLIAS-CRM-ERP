@@ -14,6 +14,38 @@ export const useUserStore = defineStore('user', () => {
   const isFetchingUserInfo = ref(false)
   const isValidatingToken = ref(false)
   
+  // 新增：用户信息缓存管理
+  const userInfoCache = ref({
+    timestamp: 0,
+    ttl: 15 * 60 * 1000, // 默认15分钟过期
+    version: '1.0.0',
+    isAutoRefreshing: false // 是否正在后台自动刷新
+  })
+  
+  // 检查用户信息缓存是否有效
+  function isUserInfoCacheValid() {
+    if (!permissionsLoaded.value || !userInfo.value.id) {
+      return false
+    }
+    
+    const now = Date.now()
+    const cacheAge = now - userInfoCache.value.timestamp
+    return cacheAge < userInfoCache.value.ttl
+  }
+  
+  // 获取缓存剩余时间
+  function getCacheRemainingTime() {
+    if (!isUserInfoCacheValid()) return 0
+    const elapsed = Date.now() - userInfoCache.value.timestamp
+    return Math.max(0, userInfoCache.value.ttl - elapsed)
+  }
+  
+  // 更新用户信息缓存时间戳
+  function updateCacheTimestamp() {
+    userInfoCache.value.timestamp = Date.now()
+    console.log(`用户信息缓存更新，将在 ${userInfoCache.value.ttl / 1000} 秒后过期`)
+  }
+  
   // 设置token
   function setToken(newToken) {
     token.value = newToken
@@ -28,18 +60,28 @@ export const useUserStore = defineStore('user', () => {
     permissionsLoaded.value = false // 重置权限加载状态
     isFetchingUserInfo.value = false // 重置请求状态
     isValidatingToken.value = false
+    
+    // 清除缓存时间戳
+    userInfoCache.value.timestamp = 0
+    userInfoCache.value.isAutoRefreshing = false
+    console.log('已清除用户信息缓存')
   }
   
   // 设置用户信息
   function setUserInfo(info) {
     userInfo.value = info
     permissionsLoaded.value = true // 标记权限已加载
+    updateCacheTimestamp() // 更新缓存时间戳
   }
   
   // 更新用户头像
   function updateUserAvatar(avatarUrl) {
     if (userInfo.value) {
       userInfo.value.avatar = avatarUrl
+      // 头像更新不影响缓存过期时间，但需要标记缓存仍然有效
+      if (permissionsLoaded.value) {
+        updateCacheTimestamp()
+      }
     }
   }
   
@@ -56,9 +98,9 @@ export const useUserStore = defineStore('user', () => {
       return true
     }
     
-    // 如果权限已经加载过，直接返回true
-    if (permissionsLoaded.value) {
-      console.log('权限已加载，跳过token验证')
+    // 如果用户信息缓存仍然有效，直接返回true
+    if (isUserInfoCacheValid()) {
+      console.log(`用户信息缓存有效，剩余时间: ${Math.round(getCacheRemainingTime() / 1000)}秒`)
       return true
     }
     
@@ -108,7 +150,34 @@ export const useUserStore = defineStore('user', () => {
   }
   
   // 获取用户信息
-  async function fetchUserInfo() {
+  async function fetchUserInfo(forceRefresh = false) {
+    // 如果不强制刷新且缓存有效，直接返回缓存
+    if (!forceRefresh && isUserInfoCacheValid()) {
+      const remainingTime = getCacheRemainingTime()
+      console.log(`使用用户信息缓存，剩余时间: ${Math.round(remainingTime / 1000)}秒`)
+      
+      // 如果缓存即将过期（少于5分钟），启动后台刷新
+      const shouldAutoRefresh = remainingTime < 5 * 60 * 1000 && !userInfoCache.value.isAutoRefreshing
+      if (shouldAutoRefresh) {
+        console.log('缓存即将过期，启动后台自动刷新')
+        userInfoCache.value.isAutoRefreshing = true
+        
+        // 后台异步刷新，不阻塞当前调用
+        setTimeout(async () => {
+          try {
+            await fetchUserInfo(true) // 强制刷新
+            console.log('后台自动刷新用户信息完成')
+          } catch (error) {
+            console.warn('后台自动刷新失败:', error)
+          } finally {
+            userInfoCache.value.isAutoRefreshing = false
+          }
+        }, 0)
+      }
+      
+      return { success: true, data: userInfo.value }
+    }
+    
     // 防止重复请求
     if (isFetchingUserInfo.value) {
       console.log('正在获取用户信息，等待当前请求完成')
@@ -122,10 +191,16 @@ export const useUserStore = defineStore('user', () => {
     isFetchingUserInfo.value = true
     
     try {
-      console.log('用户store获取用户信息...')
+      if (forceRefresh) {
+        console.log('强制刷新用户信息...')
+      } else {
+        console.log('用户store获取用户信息...')
+      }
       
-      // 重置权限加载状态
-      permissionsLoaded.value = false
+      // 仅在非后台刷新时重置权限加载状态
+      if (!userInfoCache.value.isAutoRefreshing) {
+        permissionsLoaded.value = false
+      }
       
       const response = await getUserInfo()
       console.log('用户store getUserInfo API响应:', response)
@@ -166,6 +241,30 @@ export const useUserStore = defineStore('user', () => {
     }
   }
   
+  // 新增：设置缓存过期时间
+  function setCacheTTL(ttl) {
+    userInfoCache.value.ttl = ttl
+    console.log(`用户信息缓存过期时间设置为: ${ttl / 1000}秒`)
+  }
+  
+  // 新增：获取缓存状态
+  function getCacheStatus() {
+    return {
+      isValid: isUserInfoCacheValid(),
+      remainingTime: getCacheRemainingTime(),
+      isAutoRefreshing: userInfoCache.value.isAutoRefreshing,
+      ttl: userInfoCache.value.ttl,
+      timestamp: userInfoCache.value.timestamp,
+      version: userInfoCache.value.version
+    }
+  }
+  
+  // 新增：强制刷新用户信息（便捷方法）
+  async function refreshUserInfo() {
+    console.log('手动刷新用户信息')
+    return await fetchUserInfo(true)
+  }
+
   return {
     // 状态
     token,
@@ -175,6 +274,9 @@ export const useUserStore = defineStore('user', () => {
     isFetchingUserInfo,
     isValidatingToken,
     
+    // 新增：缓存相关状态
+    userInfoCache: computed(() => userInfoCache.value),
+    
     // 方法
     setToken,
     clearToken,
@@ -183,6 +285,13 @@ export const useUserStore = defineStore('user', () => {
     validateToken,
     login,
     fetchUserInfo,
-    logout
+    logout,
+    
+    // 新增：缓存管理方法
+    isUserInfoCacheValid,
+    getCacheRemainingTime,
+    setCacheTTL,
+    getCacheStatus,
+    refreshUserInfo
   }
 }) 

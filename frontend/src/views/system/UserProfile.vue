@@ -1,28 +1,48 @@
 <template>
-  <div class="user-profile" v-loading="loading">
+  <div
+    v-loading="loading"
+    class="user-profile"
+  >
     <!-- 加载状态 -->
-    <div v-if="loading" class="loading-container">
-      <el-skeleton :rows="8" animated />
+    <div
+      v-if="loading"
+      class="loading-container"
+    >
+      <el-skeleton
+        :rows="8"
+        animated
+      />
       <p style="text-align: center; margin-top: 20px; color: #909399;">
         正在加载个人信息...
       </p>
     </div>
     
     <!-- 错误状态 -->
-    <div v-else-if="error" class="error-container">
+    <div
+      v-else-if="error"
+      class="error-container"
+    >
       <el-result
         icon="warning"
         title="加载失败"
         :sub-title="error"
       >
         <template #extra>
-          <el-button type="primary" @click="fetchUserInfo">重新加载</el-button>
+          <el-button
+            type="primary"
+            @click="fetchUserInfo"
+          >
+            重新加载
+          </el-button>
         </template>
       </el-result>
     </div>
     
     <!-- 正常内容 -->
-    <el-row v-else :gutter="20">
+    <el-row
+      v-else
+      :gutter="20"
+    >
       <!-- 个人信息卡片 -->
       <el-col :span="8">
         <el-card class="profile-card">
@@ -44,7 +64,9 @@
                   :on-error="handleAvatarError"
                   :before-upload="beforeAvatarUpload"
                 >
-                  <el-icon class="avatar-edit-icon"><Edit /></el-icon>
+                  <el-icon class="avatar-edit-icon">
+                    <Edit />
+                  </el-icon>
                 </el-upload>
               </div>
             </div>
@@ -99,8 +121,8 @@
                 <el-button 
                   size="small" 
                   type="primary" 
-                  @click="() => fetchUserInfo(true)"
                   :loading="loading"
+                  @click="() => fetchUserInfo(true)"
                 >
                   重新加载
                 </el-button>
@@ -115,28 +137,58 @@
             </div>
           </template>
           
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="用户ID">{{ userInfo.id }}</el-descriptions-item>
-            <el-descriptions-item label="用户名">{{ userInfo.username }}</el-descriptions-item>
-            <el-descriptions-item label="真实姓名">{{ userInfo.realName || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="邮箱">{{ userInfo.email || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="手机号">{{ userInfo.mobile || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="性别">{{ getGenderText(userInfo.gender) }}</el-descriptions-item>
-            <el-descriptions-item label="组织">{{ userInfo.orgName || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="部门">{{ userInfo.deptName || '未设置' }}</el-descriptions-item>
-            <el-descriptions-item label="岗位">{{ userInfo.positionName || '未设置' }}</el-descriptions-item>
+          <el-descriptions
+            :column="2"
+            border
+          >
+            <el-descriptions-item label="用户ID">
+              {{ userInfo.id }}
+            </el-descriptions-item>
+            <el-descriptions-item label="用户名">
+              {{ userInfo.username }}
+            </el-descriptions-item>
+            <el-descriptions-item label="真实姓名">
+              {{ userInfo.realName || '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="邮箱">
+              {{ userInfo.email || '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="手机号">
+              {{ userInfo.mobile || '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="性别">
+              {{ getGenderText(userInfo.gender) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="组织">
+              {{ userInfo.orgName || '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="部门">
+              {{ userInfo.deptName || '未设置' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="岗位">
+              {{ userInfo.positionName || '未设置' }}
+            </el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="userInfo.status === 1 ? 'success' : 'danger'">
                 {{ userInfo.status === 1 ? '启用' : '禁用' }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="最后登录时间" :span="2">
+            <el-descriptions-item
+              label="最后登录时间"
+              :span="2"
+            >
               {{ formatDateTime(userInfo.lastLoginTime) }}
             </el-descriptions-item>
-            <el-descriptions-item label="创建时间" :span="2">
+            <el-descriptions-item
+              label="创建时间"
+              :span="2"
+            >
               {{ formatDateTime(userInfo.createTime) }}
             </el-descriptions-item>
-            <el-descriptions-item label="更新时间" :span="2">
+            <el-descriptions-item
+              label="更新时间"
+              :span="2"
+            >
               {{ formatDateTime(userInfo.updateTime) }}
             </el-descriptions-item>
           </el-descriptions>
@@ -191,9 +243,9 @@ const formatImageUrl = (url, defaultUrl = '') => {
 // 获取性别文本
 const getGenderText = (gender) => {
   switch (gender) {
-    case 1: return '男'
-    case 2: return '女'
-    default: return '未知'
+  case 1: return '男'
+  case 2: return '女'
+  default: return '未知'
   }
 }
 
@@ -267,55 +319,55 @@ const fetchUserInfo = async (forceRefresh = false) => {
 const uploadHeaders = computed(() => {
   return {
     Authorization: `Bearer ${localStorage.getItem('token')}`
-  };
-});
+  }
+})
 
 const handleAvatarSuccess = async (response, uploadFile) => {
   if (response.success) {
     // 获取头像URL
-    const avatarUrl = response.data.url;
+    const avatarUrl = response.data.url
     
     // 调试信息
-    console.log('服务器返回的头像URL:', avatarUrl);
-    console.log('格式化后的头像URL:', window.location.origin + avatarUrl);
+    console.log('服务器返回的头像URL:', avatarUrl)
+    console.log('格式化后的头像URL:', window.location.origin + avatarUrl)
     
     // 更新用户信息
-    userInfo.value.avatar = avatarUrl;
-    ElMessage.success('头像更新成功');
+    userInfo.value.avatar = avatarUrl
+    ElMessage.success('头像更新成功')
     
     // 更新用户存储中的头像
-    userStore.updateUserAvatar(avatarUrl);
+    userStore.updateUserAvatar(avatarUrl)
   } else {
-    ElMessage.error(response.message || '头像上传失败');
+    ElMessage.error(response.message || '头像上传失败')
   }
-};
+}
 
 const handleAvatarError = (error) => {
-  console.error('头像上传失败:', error);
-  ElMessage.error('头像上传失败，请重试');
-};
+  console.error('头像上传失败:', error)
+  ElMessage.error('头像上传失败，请重试')
+}
 
 const beforeAvatarUpload = (file) => {
-  const isImage = file.type.startsWith('image/');
-  const isLt2M = file.size / 1024 / 1024 < 2;
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isImage) {
-    ElMessage.error('头像只能是图片格式!');
-    return false;
+    ElMessage.error('头像只能是图片格式!')
+    return false
   }
   if (!isLt2M) {
-    ElMessage.error('头像大小不能超过 2MB!');
-    return false;
+    ElMessage.error('头像大小不能超过 2MB!')
+    return false
   }
-  return true;
-};
+  return true
+}
 
 // 处理头像加载失败
 const handleAvatarLoadError = () => {
-  console.warn('头像加载失败，使用默认头像');
+  console.warn('头像加载失败，使用默认头像')
   // 可以在这里设置一个默认头像的URL
   // userInfo.value.avatar = 'https://cube.elemecdn.com/0/88/03b0d633a00067c8a7005739700jpeg.jpeg'; // 示例默认头像
-};
+}
 
 // 显示调试信息
 const showDebugInfo = () => {
@@ -345,7 +397,7 @@ const showDebugInfo = () => {
   console.log(debugInfo)
   
   ElMessage.info(`调试信息已输出到控制台 - 初始化状态: ${isInitialized.value}`)
-};
+}
 
 // 页面加载时获取数据 - 简化逻辑
 onMounted(async () => {

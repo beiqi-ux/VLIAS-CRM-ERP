@@ -145,46 +145,46 @@ request.interceptors.response.use(
       console.error('响应错误:', error.response.status, error.response.data)
       
       switch (error.response.status) {
-        case 400:
-          message = '请求错误'
-          break
-        case 401:
-          message = '未授权，请重新登录'
+      case 400:
+        message = '请求错误'
+        break
+      case 401:
+        message = '未授权，请重新登录'
           
-          // 清除所有认证信息
-          clearAuthInfo()
+        // 清除所有认证信息
+        clearAuthInfo()
           
-          // 防止重复跳转
-          if (!isRedirecting) {
-            isRedirecting = true
+        // 防止重复跳转
+        if (!isRedirecting) {
+          isRedirecting = true
             
-            // 延迟跳转，避免与其他导航冲突
-            setTimeout(() => {
-              // 优先使用router跳转，如果不可用则使用window.location
-              if (window.__VUE_ROUTER__) {
-                window.__VUE_ROUTER__.replace('/login')
-              } else {
-                window.location.href = '/login'
-              }
+          // 延迟跳转，避免与其他导航冲突
+          setTimeout(() => {
+            // 优先使用router跳转，如果不可用则使用window.location
+            if (window.__VUE_ROUTER__) {
+              window.__VUE_ROUTER__.replace('/login')
+            } else {
+              window.location.href = '/login'
+            }
               
-              // 重置跳转标志
-              setTimeout(() => {
-                isRedirecting = false
-              }, 1000)
-            }, 1500)
-          }
-          break
-        case 403:
-          message = '拒绝访问'
-          break
-        case 404:
-          message = '请求的资源不存在'
-          break
-        case 500:
-          message = '服务器内部错误'
-          break
-        default:
-          message = `错误 ${error.response.status}: ${error.response.statusText}`
+            // 重置跳转标志
+            setTimeout(() => {
+              isRedirecting = false
+            }, 1000)
+          }, 1500)
+        }
+        break
+      case 403:
+        message = '拒绝访问'
+        break
+      case 404:
+        message = '请求的资源不存在'
+        break
+      case 500:
+        message = '服务器内部错误'
+        break
+      default:
+        message = `错误 ${error.response.status}: ${error.response.statusText}`
       }
     } else if (error.request) {
       console.error('网络错误:', error.request)

@@ -13,145 +13,93 @@ WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
 [INFO] 
 [INFO] --- resources:3.3.1:resources (default-resources) @ VLIASCRM ---
 [INFO] Copying 2 resources from src/main/resources to target/classes
-[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] Copying 3 resources from src/main/resources to target/classes
 [INFO] 
 [INFO] --- compiler:3.11.0:compile (default-compile) @ VLIASCRM ---
-[INFO] Changes detected - recompiling the module! :source
-[INFO] Compiling 35 source files with javac [debug release 17] to target/classes
+[INFO] Nothing to compile - all classes are up to date
 [INFO] 
 [INFO] --- resources:3.3.1:testResources (default-testResources) @ VLIASCRM ---
 [INFO] skip non existing resourceDirectory /Users/qichengxu/IdeaProjects/VLIASCRM/src/test/resources
 [INFO] 
 [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ VLIASCRM ---
-[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Nothing to compile - all classes are up to date
 [INFO] 
 [INFO] <<< spring-boot:3.1.5:run (default-cli) < test-compile @ VLIASCRM <<<
 [INFO] 
 [INFO] 
 [INFO] --- spring-boot:3.1.5:run (default-cli) @ VLIASCRM ---
 [INFO] Attaching agents: []
+08:47:53.425 [restartedMain] ERROR org.springframework.boot.SpringApplication -- Application run failed
+org.yaml.snakeyaml.scanner.ScannerException: while scanning a simple key
+ in 'reader', line 4, column 1:
+    spring:b
+    ^
+could not find expected ':'
+ in 'reader', line 5, column 14:
+      application:
+                 ^
 
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-[32m :: Spring Boot :: [39m              [2m (v3.1.5)[0;39m
-
-[2m2025-07-30T16:42:21.183+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.example.vliascrm.VliascrmApplication  [0;39m [2m:[0;39m Starting VliascrmApplication using Java 24.0.1 with PID 64666 (/Users/qichengxu/IdeaProjects/VLIASCRM/target/classes started by qichengxu in /Users/qichengxu/IdeaProjects/VLIASCRM)
-[2m2025-07-30T16:42:21.184+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.example.vliascrm.VliascrmApplication  [0;39m [2m:[0;39m Running with Spring Boot v3.1.5, Spring v6.0.13
-[2m2025-07-30T16:42:21.185+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.example.vliascrm.VliascrmApplication  [0;39m [2m:[0;39m No active profile set, falling back to 1 default profile: "default"
-[2m2025-07-30T16:42:21.215+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.e.DevToolsPropertyDefaultsPostProcessor[0;39m [2m:[0;39m Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
-[2m2025-07-30T16:42:21.215+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.e.DevToolsPropertyDefaultsPostProcessor[0;39m [2m:[0;39m For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
-[2m2025-07-30T16:42:21.663+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Multiple Spring Data modules found, entering strict repository configuration mode
-[2m2025-07-30T16:42:21.664+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-[2m2025-07-30T16:42:21.741+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Finished Spring Data repository scanning in 73 ms. Found 1 JPA repository interfaces.
-[2m2025-07-30T16:42:21.750+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Multiple Spring Data modules found, entering strict repository configuration mode
-[2m2025-07-30T16:42:21.750+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-[2m2025-07-30T16:42:21.758+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.RepositoryConfigurationExtensionSupport[0;39m [2m:[0;39m Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.vliascrm.repository.SysUserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-[2m2025-07-30T16:42:21.758+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
-WARNING: A restricted method in java.lang.System has been called
-WARNING: java.lang.System::load has been called by org.apache.tomcat.jni.Library in an unnamed module (file:/Users/qichengxu/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.15/tomcat-embed-core-10.1.15.jar)
-WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
-WARNING: Restricted methods will be blocked in a future release unless native access is enabled
-
-[2m2025-07-30T16:42:22.130+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat initialized with port(s): 8080 (http)
-[2m2025-07-30T16:42:22.136+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.apache.catalina.core.StandardService  [0;39m [2m:[0;39m Starting service [Tomcat]
-[2m2025-07-30T16:42:22.136+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.apache.catalina.core.StandardEngine   [0;39m [2m:[0;39m Starting Servlet engine: [Apache Tomcat/10.1.15]
-[2m2025-07-30T16:42:22.167+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.a.c.c.C.[Tomcat].[localhost].[/]      [0;39m [2m:[0;39m Initializing Spring embedded WebApplicationContext
-[2m2025-07-30T16:42:22.168+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mw.s.c.ServletWebServerApplicationContext[0;39m [2m:[0;39m Root WebApplicationContext: initialization completed in 952 ms
-[2m2025-07-30T16:42:22.188+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Starting...
-[2m2025-07-30T16:42:22.299+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mcom.zaxxer.hikari.pool.HikariPool       [0;39m [2m:[0;39m HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3490e7fd
-[2m2025-07-30T16:42:22.300+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Start completed.
-[2m2025-07-30T16:42:22.304+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.b.a.h2.H2ConsoleAutoConfiguration   [0;39m [2m:[0;39m H2 console available at '/h2-console'. Database available at 'jdbc:mysql://localhost:3306/vliascrm?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true'
-WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
-WARNING: sun.misc.Unsafe::objectFieldOffset has been called by io.netty.util.internal.PlatformDependent0$4 (file:/Users/qichengxu/.m2/repository/io/netty/netty-common/4.1.100.Final/netty-common-4.1.100.Final.jar)
-WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$4
-WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
-[2m2025-07-30T16:42:22.476+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.hibernate.jpa.internal.util.LogHelper [0;39m [2m:[0;39m HHH000204: Processing PersistenceUnitInfo [name: default]
-[2m2025-07-30T16:42:22.505+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36morg.hibernate.Version                   [0;39m [2m:[0;39m HHH000412: Hibernate ORM core version 6.2.13.Final
-[2m2025-07-30T16:42:22.507+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36morg.hibernate.cfg.Environment           [0;39m [2m:[0;39m HHH000406: Using bytecode reflection optimizer
-[2m2025-07-30T16:42:22.639+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.o.j.p.SpringPersistenceUnitInfo     [0;39m [2m:[0;39m No LoadTimeWeaver setup: ignoring JPA class transformer
-[2m2025-07-30T16:42:22.665+08:00[0;39m [33m WARN[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36morg.hibernate.orm.deprecation           [0;39m [2m:[0;39m HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-[2m2025-07-30T16:42:22.666+08:00[0;39m [33m WARN[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36morg.hibernate.orm.deprecation           [0;39m [2m:[0;39m HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(12, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@694d82f7) replaced previous registration(org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@4557631a)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(-9, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@1bbdf548) replaced previous registration(org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@1050b8)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(-3, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@54f2077) replaced previous registration(org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@7b7ecc77)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(4003, org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@f1d71e5) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@d8a652e)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(4001, org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@713aa070) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@7c2ac754)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(4002, org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@18dc036d) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@46a1b64d)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(2004, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@623cb7c9) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@4806ccbd)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(2005, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@303969bb) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@7be1b22f)
-[2m2025-07-30T16:42:22.676+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.t.d.sql.spi.DdlTypeRegistry         [0;39m [2m:[0;39m addDescriptor(2011, org.hibernate.type.descriptor.sql.internal.CapacityDependentDdlType@7ce4c065) replaced previous registration(org.hibernate.type.descriptor.sql.internal.DdlTypeImpl@2f99860)
-[2m2025-07-30T16:42:23.057+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.h.e.t.j.p.i.JtaPlatformInitiator      [0;39m [2m:[0;39m HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-[2m2025-07-30T16:42:23.230+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36morg.hibernate.SQL                       [0;39m [2m:[0;39m 
-    alter table sys_user 
-       modify column is_deleted tinyint default 0
-Hibernate: 
-    alter table sys_user 
-       modify column is_deleted tinyint default 0
-[2m2025-07-30T16:42:23.243+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mj.LocalContainerEntityManagerFactoryBean[0;39m [2m:[0;39m Initialized JPA EntityManagerFactory for persistence unit 'default'
-[2m2025-07-30T16:42:23.405+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.d.j.r.query.QueryEnhancerFactory    [0;39m [2m:[0;39m Hibernate is in classpath; If applicable, HQL parser will be used.
-[2m2025-07-30T16:42:23.621+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.e.v.security.JwtAuthenticationFilter  [0;39m [2m:[0;39m Filter 'jwtAuthenticationFilter' configured for use
-[2m2025-07-30T16:42:23.875+08:00[0;39m [33m WARN[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mJpaBaseConfiguration$JpaWebConfiguration[0;39m [2m:[0;39m spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-[2m2025-07-30T16:42:24.016+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.e.vliascrm.config.FileUploadConfig    [0;39m [2m:[0;39m 配置静态资源映射: /uploads/** -> file:/Users/qichengxu/IdeaProjects/VLIASCRM/uploads/
-[2m2025-07-30T16:42:24.027+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.s.web.DefaultSecurityFilterChain    [0;39m [2m:[0;39m Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@cf4f60f, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@d3b9bbc, org.springframework.security.web.context.SecurityContextHolderFilter@1342e43b, org.springframework.security.web.header.HeaderWriterFilter@553c0d13, org.springframework.web.filter.CorsFilter@576c6202, org.springframework.security.web.authentication.logout.LogoutFilter@3bd7a7db, com.example.vliascrm.security.JwtAuthenticationFilter@c25eff2, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@29cc3865, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@33608122, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@7f1c6e26, org.springframework.security.web.session.SessionManagementFilter@10da5846, org.springframework.security.web.access.ExceptionTranslationFilter@10e60708, org.springframework.security.web.access.intercept.AuthorizationFilter@771eca1f]
-[2m2025-07-30T16:42:24.221+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.b.d.a.OptionalLiveReloadServer      [0;39m [2m:[0;39m LiveReload server is running on port 35729
-[2m2025-07-30T16:42:24.240+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat started on port(s): 8080 (http) with context path ''
-[2m2025-07-30T16:42:24.248+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[  restartedMain][0;39m [36mc.example.vliascrm.VliascrmApplication  [0;39m [2m:[0;39m Started VliascrmApplication in 3.25 seconds (process running for 3.434)
-[2m2025-07-30T16:43:44.431+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[nio-8080-exec-1][0;39m [36mo.a.c.c.C.[Tomcat].[localhost].[/]      [0;39m [2m:[0;39m Initializing Spring DispatcherServlet 'dispatcherServlet'
-[2m2025-07-30T16:43:44.431+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[nio-8080-exec-1][0;39m [36mo.s.web.servlet.DispatcherServlet       [0;39m [2m:[0;39m Initializing Servlet 'dispatcherServlet'
-[2m2025-07-30T16:43:44.433+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[nio-8080-exec-1][0;39m [36mo.s.web.servlet.DispatcherServlet       [0;39m [2m:[0;39m Completed initialization in 2 ms
-[2m2025-07-30T16:43:44.636+08:00[0;39m [32mDEBUG[0;39m [35m64666[0;39m [2m---[0;39m [2m[nio-8080-exec-1][0;39m [36morg.hibernate.SQL                       [0;39m [2m:[0;39m 
-    select
-        s1_0.id,
-        s1_0.avatar,
-        s1_0.create_by,
-        s1_0.create_time,
-        s1_0.dept_id,
-        s1_0.email,
-        s1_0.gender,
-        s1_0.is_deleted,
-        s1_0.last_login_time,
-        s1_0.mobile,
-        s1_0.org_id,
-        s1_0.password,
-        s1_0.position_id,
-        s1_0.real_name,
-        s1_0.status,
-        s1_0.update_by,
-        s1_0.update_time,
-        s1_0.username 
-    from
-        sys_user s1_0 
-    where
-        s1_0.username=?
-Hibernate: 
-    select
-        s1_0.id,
-        s1_0.avatar,
-        s1_0.create_by,
-        s1_0.create_time,
-        s1_0.dept_id,
-        s1_0.email,
-        s1_0.gender,
-        s1_0.is_deleted,
-        s1_0.last_login_time,
-        s1_0.mobile,
-        s1_0.org_id,
-        s1_0.password,
-        s1_0.position_id,
-        s1_0.real_name,
-        s1_0.status,
-        s1_0.update_by,
-        s1_0.update_time,
-        s1_0.username 
-    from
-        sys_user s1_0 
-    where
-        s1_0.username=?
-[2m2025-07-30T16:43:44.762+08:00[0;39m [33m WARN[0;39m [35m64666[0;39m [2m---[0;39m [2m[nio-8080-exec-1][0;39m [36m.m.m.a.ExceptionHandlerExceptionResolver[0;39m [2m:[0;39m Resolved [io.jsonwebtoken.security.WeakKeyException: The specified key byte array is 104 bits which is not secure enough for any JWT HMAC-SHA algorithm.  The JWT JWA Specification (RFC 7518, Section 3.2) states that keys used with HMAC-SHA algorithms MUST have a size >= 256 bits (the key size must be greater than or equal to the hash output size).  Consider using the io.jsonwebtoken.security.Keys#secretKeyFor(SignatureAlgorithm) method to create a key guaranteed to be secure enough for your preferred HMAC-SHA algorithm.  See https://tools.ietf.org/html/rfc7518#section-3.2 for more information.]
-[2m2025-07-30T16:43:52.821+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[ionShutdownHook][0;39m [36mj.LocalContainerEntityManagerFactoryBean[0;39m [2m:[0;39m Closing JPA EntityManagerFactory for persistence unit 'default'
-[2m2025-07-30T16:43:52.835+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[ionShutdownHook][0;39m [36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Shutdown initiated...
-[2m2025-07-30T16:43:52.839+08:00[0;39m [32m INFO[0;39m [35m64666[0;39m [2m---[0;39m [2m[ionShutdownHook][0;39m [36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Shutdown completed.
+	at org.yaml.snakeyaml.scanner.ScannerImpl.stalePossibleSimpleKeys(ScannerImpl.java:527)
+	at org.yaml.snakeyaml.scanner.ScannerImpl.needMoreTokens(ScannerImpl.java:332)
+	at org.yaml.snakeyaml.scanner.ScannerImpl.checkToken(ScannerImpl.java:262)
+	at org.yaml.snakeyaml.parser.ParserImpl$ParseBlockMappingKey.produce(ParserImpl.java:662)
+	at org.yaml.snakeyaml.parser.ParserImpl.peekEvent(ParserImpl.java:185)
+	at org.yaml.snakeyaml.comments.CommentEventsCollector$1.peek(CommentEventsCollector.java:57)
+	at org.yaml.snakeyaml.comments.CommentEventsCollector$1.peek(CommentEventsCollector.java:43)
+	at org.yaml.snakeyaml.comments.CommentEventsCollector.collectEvents(CommentEventsCollector.java:136)
+	at org.yaml.snakeyaml.comments.CommentEventsCollector.collectEvents(CommentEventsCollector.java:116)
+	at org.yaml.snakeyaml.composer.Composer.composeScalarNode(Composer.java:239)
+	at org.yaml.snakeyaml.composer.Composer.composeNode(Composer.java:208)
+	at org.yaml.snakeyaml.composer.Composer.composeValueNode(Composer.java:357)
+	at org.yaml.snakeyaml.composer.Composer.composeMappingChildren(Composer.java:336)
+	at org.yaml.snakeyaml.composer.Composer.composeMappingNode(Composer.java:311)
+	at org.yaml.snakeyaml.composer.Composer.composeNode(Composer.java:212)
+	at org.yaml.snakeyaml.composer.Composer.composeValueNode(Composer.java:357)
+	at org.yaml.snakeyaml.composer.Composer.composeMappingChildren(Composer.java:336)
+	at org.yaml.snakeyaml.composer.Composer.composeMappingNode(Composer.java:311)
+	at org.yaml.snakeyaml.composer.Composer.composeNode(Composer.java:212)
+	at org.yaml.snakeyaml.composer.Composer.getNode(Composer.java:134)
+	at org.yaml.snakeyaml.constructor.BaseConstructor.getData(BaseConstructor.java:168)
+	at org.springframework.boot.env.OriginTrackedYamlLoader$OriginTrackingConstructor.getData(OriginTrackedYamlLoader.java:99)
+	at org.yaml.snakeyaml.Yaml$1.next(Yaml.java:499)
+	at org.springframework.beans.factory.config.YamlProcessor.process(YamlProcessor.java:199)
+	at org.springframework.beans.factory.config.YamlProcessor.process(YamlProcessor.java:166)
+	at org.springframework.boot.env.OriginTrackedYamlLoader.load(OriginTrackedYamlLoader.java:84)
+	at org.springframework.boot.env.YamlPropertySourceLoader.load(YamlPropertySourceLoader.java:50)
+	at org.springframework.boot.context.config.StandardConfigDataLoader.load(StandardConfigDataLoader.java:54)
+	at org.springframework.boot.context.config.StandardConfigDataLoader.load(StandardConfigDataLoader.java:36)
+	at org.springframework.boot.context.config.ConfigDataLoaders.load(ConfigDataLoaders.java:96)
+	at org.springframework.boot.context.config.ConfigDataImporter.load(ConfigDataImporter.java:132)
+	at org.springframework.boot.context.config.ConfigDataImporter.resolveAndLoad(ConfigDataImporter.java:87)
+	at org.springframework.boot.context.config.ConfigDataEnvironmentContributors.withProcessedImports(ConfigDataEnvironmentContributors.java:115)
+	at org.springframework.boot.context.config.ConfigDataEnvironment.processInitial(ConfigDataEnvironment.java:242)
+	at org.springframework.boot.context.config.ConfigDataEnvironment.processAndApply(ConfigDataEnvironment.java:229)
+	at org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor.postProcessEnvironment(ConfigDataEnvironmentPostProcessor.java:96)
+	at org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor.postProcessEnvironment(ConfigDataEnvironmentPostProcessor.java:89)
+	at org.springframework.boot.env.EnvironmentPostProcessorApplicationListener.onApplicationEnvironmentPreparedEvent(EnvironmentPostProcessorApplicationListener.java:109)
+	at org.springframework.boot.env.EnvironmentPostProcessorApplicationListener.onApplicationEvent(EnvironmentPostProcessorApplicationListener.java:94)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.doInvokeListener(SimpleApplicationEventMulticaster.java:174)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.invokeListener(SimpleApplicationEventMulticaster.java:167)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:145)
+	at org.springframework.context.event.SimpleApplicationEventMulticaster.multicastEvent(SimpleApplicationEventMulticaster.java:133)
+	at org.springframework.boot.context.event.EventPublishingRunListener.multicastInitialEvent(EventPublishingRunListener.java:136)
+	at org.springframework.boot.context.event.EventPublishingRunListener.environmentPrepared(EventPublishingRunListener.java:81)
+	at org.springframework.boot.SpringApplicationRunListeners.lambda$environmentPrepared$2(SpringApplicationRunListeners.java:64)
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:118)
+	at org.springframework.boot.SpringApplicationRunListeners.doWithListeners(SpringApplicationRunListeners.java:112)
+	at org.springframework.boot.SpringApplicationRunListeners.environmentPrepared(SpringApplicationRunListeners.java:63)
+	at org.springframework.boot.SpringApplication.prepareEnvironment(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:311)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295)
+	at com.example.vliascrm.VliascrmApplication.main(VliascrmApplication.java:13)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.898 s
+[INFO] Finished at: 2025-08-04T08:47:53+08:00
+[INFO] ------------------------------------------------------------------------

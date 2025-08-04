@@ -1,8 +1,14 @@
 <template>
   <div class="category-list">
     <!-- 搜索栏 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :model="searchForm" inline>
+    <el-card
+      class="search-card"
+      shadow="never"
+    >
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="分类名称">
           <el-input 
             v-model="searchForm.categoryName" 
@@ -12,19 +18,45 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 120px">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              label="启用"
+              :value="1"
+            />
+            <el-option
+              label="禁用"
+              :value="0"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="显示状态">
-          <el-select v-model="searchForm.isShow" placeholder="请选择显示状态" clearable style="width: 120px">
-            <el-option label="显示" :value="1" />
-            <el-option label="隐藏" :value="0" />
+          <el-select
+            v-model="searchForm.isShow"
+            placeholder="请选择显示状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              label="显示"
+              :value="1"
+            />
+            <el-option
+              label="隐藏"
+              :value="0"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :loading="loading">
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleSearch"
+          >
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
@@ -37,7 +69,10 @@
     </el-card>
 
     <!-- 操作栏 -->
-    <el-card class="operation-card" shadow="never">
+    <el-card
+      class="operation-card"
+      shadow="never"
+    >
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
@@ -48,13 +83,19 @@
             <el-icon><Plus /></el-icon>
             新增分类
           </el-button>
-          <el-button type="success" @click="handleExpandAll">
+          <el-button
+            type="success"
+            @click="handleExpandAll"
+          >
             <el-icon><Sort /></el-icon>
             {{ isExpanded ? '收起全部' : '展开全部' }}
           </el-button>
         </div>
         <div class="right-operations">
-          <el-button type="success" @click="handleRefresh">
+          <el-button
+            type="success"
+            @click="handleRefresh"
+          >
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
@@ -63,17 +104,24 @@
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card class="table-card" shadow="never">
+    <el-card
+      class="table-card"
+      shadow="never"
+    >
       <el-table
-        :data="categoryList"
         v-loading="loading"
+        :data="categoryList"
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="isExpanded"
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="categoryName" label="分类名称" min-width="200">
+        <el-table-column
+          prop="categoryName"
+          label="分类名称"
+          min-width="200"
+        >
           <template #default="{ row }">
             <div class="category-name">
               <el-image
@@ -86,24 +134,47 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="level" label="层级" width="80" />
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          prop="level"
+          label="层级"
+          width="80"
+        />
+        <el-table-column
+          prop="sort"
+          label="排序"
+          width="80"
+        />
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="显示状态" width="100">
+        <el-table-column
+          label="显示状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag :type="row.isShow === 1 ? 'success' : 'info'">
               {{ row.isShow === 1 ? '显示' : '隐藏' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column
+          prop="description"
+          label="描述"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        />
         <el-table-column 
           v-if="hasPermission(PERMISSIONS.PRODUCT.CATEGORY.ADD) || hasPermission(PERMISSIONS.PRODUCT.CATEGORY.EDIT) || hasPermission(PERMISSIONS.PRODUCT.CATEGORY.DELETE)"
           label="操作" 
@@ -158,18 +229,21 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
-      :title="dialogTitle"
       v-model="dialogVisible"
+      :title="dialogTitle"
       width="600px"
       :close-on-click-modal="false"
     >
       <el-form
+        ref="formRef"
         :model="formData"
         :rules="formRules"
-        ref="formRef"
         label-width="100px"
       >
-        <el-form-item label="上级分类" prop="parentId">
+        <el-form-item
+          label="上级分类"
+          prop="parentId"
+        >
           <el-tree-select
             v-model="formData.parentId"
             :data="categoryTreeData"
@@ -180,28 +254,64 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="分类名称" prop="categoryName">
-          <el-input v-model="formData.categoryName" placeholder="请输入分类名称" />
+        <el-form-item
+          label="分类名称"
+          prop="categoryName"
+        >
+          <el-input
+            v-model="formData.categoryName"
+            placeholder="请输入分类名称"
+          />
         </el-form-item>
-        <el-form-item label="分类图片" prop="image">
-          <el-input v-model="formData.image" placeholder="请输入图片URL" />
+        <el-form-item
+          label="分类图片"
+          prop="image"
+        >
+          <el-input
+            v-model="formData.image"
+            placeholder="请输入图片URL"
+          />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="formData.sort" :min="0" style="width: 100%" />
+        <el-form-item
+          label="排序"
+          prop="sort"
+        >
+          <el-input-number
+            v-model="formData.sort"
+            :min="0"
+            style="width: 100%"
+          />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-radio-group v-model="formData.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :label="1">
+              启用
+            </el-radio>
+            <el-radio :label="0">
+              禁用
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="是否显示" prop="isShow">
+        <el-form-item
+          label="是否显示"
+          prop="isShow"
+        >
           <el-radio-group v-model="formData.isShow">
-            <el-radio :label="1">显示</el-radio>
-            <el-radio :label="0">隐藏</el-radio>
+            <el-radio :label="1">
+              显示
+            </el-radio>
+            <el-radio :label="0">
+              隐藏
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="分类描述" prop="description">
+        <el-form-item
+          label="分类描述"
+          prop="description"
+        >
           <el-input 
             v-model="formData.description" 
             type="textarea" 
@@ -212,8 +322,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+          <el-button @click="dialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </div>
@@ -367,8 +483,8 @@ const handleAddChild = (row) => {
 const handleEdit = (row) => {
   Object.keys(formData).forEach(key => {
     formData[key] = row[key] || (key === 'sort' ? 0 : 
-                                 key === 'status' || key === 'isShow' ? (row[key] ?? 1) : 
-                                 key === 'parentId' ? (row[key] || null) : '')
+      key === 'status' || key === 'isShow' ? (row[key] ?? 1) : 
+        key === 'parentId' ? (row[key] || null) : '')
   })
   // 更新树选择器数据，排除当前编辑项
   categoryTreeData.value = buildTreeSelectData(categoryList.value, row.id)
@@ -463,8 +579,8 @@ const handleSubmit = async () => {
 const resetFormData = () => {
   Object.keys(formData).forEach(key => {
     formData[key] = key === 'status' || key === 'isShow' ? 1 :
-                    key === 'sort' ? 0 :
-                    key === 'id' || key === 'parentId' ? null : ''
+      key === 'sort' ? 0 :
+        key === 'id' || key === 'parentId' ? null : ''
   })
 }
 

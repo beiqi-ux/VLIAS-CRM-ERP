@@ -4,74 +4,97 @@
     <div class="login-form">
       <div>
         <label>用户名:</label>
-        <input v-model="username" type="text" placeholder="请输入用户名" />
+        <input
+          v-model="username"
+          type="text"
+          placeholder="请输入用户名"
+        >
       </div>
       <div>
         <label>密码:</label>
-        <input v-model="password" type="password" placeholder="请输入密码" />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="请输入密码"
+        >
       </div>
       <div>
-        <button @click="login" :disabled="loading">{{ loading ? "登录中..." : "登录" }}</button>
+        <button
+          :disabled="loading"
+          @click="login"
+        >
+          {{ loading ? "登录中..." : "登录" }}
+        </button>
       </div>
-      <div v-if="error" class="error">{{ error }}</div>
-      <div v-if="user" class="success">
+      <div
+        v-if="error"
+        class="error"
+      >
+        {{ error }}
+      </div>
+      <div
+        v-if="user"
+        class="success"
+      >
         <h3>登录成功!</h3>
         <p>欢迎, {{ user.realName || user.username }}</p>
         <p>用户ID: {{ user.userId }}</p>
-        <button @click="logout">退出登录</button>
+        <button @click="logout">
+          退出登录
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref } from "vue";
-import axios from "axios";
+import { ref } from 'vue'
+import axios from 'axios'
 
 export default {
   setup() {
-    const username = ref("");
-    const password = ref("");
-    const loading = ref(false);
-    const error = ref("");
-    const user = ref(null);
+    const username = ref('')
+    const password = ref('')
+    const loading = ref(false)
+    const error = ref('')
+    const user = ref(null)
 
     async function login() {
       if (!username.value || !password.value) {
-        error.value = "请输入用户名和密码";
-        return;
+        error.value = '请输入用户名和密码'
+        return
       }
 
-      loading.value = true;
-      error.value = "";
+      loading.value = true
+      error.value = ''
 
       try {
-        const response = await axios.post("/api/auth/login", {
+        const response = await axios.post('/api/auth/login', {
           username: username.value,
           password: password.value,
           rememberMe: true
-        });
+        })
 
         if (response.data.success) {
-          user.value = response.data.data;
+          user.value = response.data.data
           // 存储token
-          localStorage.setItem("token", response.data.data.token);
-          axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.data.token}`;
+          localStorage.setItem('token', response.data.data.token)
+          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.token}`
         } else {
-          error.value = response.data.message || "登录失败";
+          error.value = response.data.message || '登录失败'
         }
       } catch (e) {
-        error.value = e.response?.data?.message || "登录请求失败";
-        console.error("登录错误:", e);
+        error.value = e.response?.data?.message || '登录请求失败'
+        console.error('登录错误:', e)
       } finally {
-        loading.value = false;
+        loading.value = false
       }
     }
 
     function logout() {
-      localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
-      user.value = null;
+      localStorage.removeItem('token')
+      delete axios.defaults.headers.common['Authorization']
+      user.value = null
     }
 
     return {
@@ -82,9 +105,9 @@ export default {
       user,
       login,
       logout
-    };
+    }
   }
-};
+}
 </script>
 
 <style>

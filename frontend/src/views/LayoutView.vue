@@ -1,10 +1,16 @@
 <template>
   <el-container class="app-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar-container">
+    <el-aside
+      :width="isCollapse ? '64px' : '200px'"
+      class="sidebar-container"
+    >
       <!-- 顶部logo -->
       <div class="logo-container">
-        <div class="vlias-logo" :class="{ 'collapsed': isCollapse }">
+        <div
+          class="vlias-logo"
+          :class="{ 'collapsed': isCollapse }"
+        >
           {{ isCollapse ? 'V' : 'VLIAS' }}
         </div>
         <span v-if="!isCollapse">企业管理系统</span>
@@ -24,13 +30,21 @@
         <!-- 首页菜单 -->
         <el-menu-item index="/home">
           <el-icon><House /></el-icon>
-          <template #title>首页</template>
+          <template #title>
+            首页
+          </template>
         </el-menu-item>
         
         <!-- 动态渲染菜单 -->
-        <template v-for="menu in userMenus" :key="menu.id">
+        <template
+          v-for="menu in userMenus"
+          :key="menu.id"
+        >
           <!-- 目录类型菜单 -->
-          <el-sub-menu v-if="menu.menuType === 1" :index="menu.menuCode">
+          <el-sub-menu
+            v-if="menu.menuType === 1"
+            :index="menu.menuCode"
+          >
             <template #title>
               <el-icon v-if="menu.icon && iconMap[menu.icon]">
                 <component :is="iconMap[menu.icon]" />
@@ -52,15 +66,23 @@
               <span>{{ menu.menuName }}</span>
             </template>
             <!-- 子菜单 -->
-            <template v-for="child in menu.children" :key="child.id">
+            <template
+              v-for="child in menu.children"
+              :key="child.id"
+            >
               <el-menu-item :index="child.path">
-                <template #title>{{ child.menuName }}</template>
+                <template #title>
+                  {{ child.menuName }}
+                </template>
               </el-menu-item>
             </template>
           </el-sub-menu>
           
           <!-- 菜单类型 -->
-          <el-menu-item v-else-if="menu.menuType === 2" :index="menu.path">
+          <el-menu-item
+            v-else-if="menu.menuType === 2"
+            :index="menu.path"
+          >
             <el-icon v-if="menu.icon && iconMap[menu.icon]">
               <component :is="iconMap[menu.icon]" />
             </el-icon>
@@ -68,7 +90,9 @@
               <User v-if="menu.menuCode === 'profile'" />
               <View v-else />
             </el-icon>
-            <template #title>{{ menu.menuName }}</template>
+            <template #title>
+              {{ menu.menuName }}
+            </template>
           </el-menu-item>
         </template>
       </el-menu>
@@ -89,7 +113,10 @@
         </div>
         
         <div class="header-right">
-          <el-dropdown trigger="click" @command="handleCommand">
+          <el-dropdown
+            trigger="click"
+            @command="handleCommand"
+          >
             <span class="user-dropdown-link">
               <el-avatar 
                 :key="userInfo.avatar" 
@@ -108,7 +135,10 @@
                   <el-icon><Tools /></el-icon>
                   调试权限
                 </el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">
+                <el-dropdown-item
+                  divided
+                  @click="handleLogout"
+                >
                   <el-icon><SwitchButton /></el-icon>
                   退出登录
                 </el-dropdown-item>
@@ -121,8 +151,14 @@
       <!-- 主内容区域 -->
       <main class="main-content">
         <!-- 权限数据加载中 -->
-        <div v-if="!userStore.permissionsLoaded" class="loading-container">
-          <el-skeleton :rows="8" animated />
+        <div
+          v-if="!userStore.permissionsLoaded"
+          class="loading-container"
+        >
+          <el-skeleton
+            :rows="8"
+            animated
+          />
         </div>
         <!-- 权限数据已加载，显示正常内容 -->
         <RouterView v-else />
@@ -214,19 +250,19 @@ async function fetchUserMenus() {
 // 下拉菜单命令处理
 function handleCommand(command) {
   switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'logout':
-      ElMessageBox.confirm('确定退出登录?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        await userStore.logout()
-        router.push('/login')
-      }).catch(() => {})
-      break
+  case 'profile':
+    router.push('/profile')
+    break
+  case 'logout':
+    ElMessageBox.confirm('确定退出登录?', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(async () => {
+      await userStore.logout()
+      router.push('/login')
+    }).catch(() => {})
+    break
   }
 }
 

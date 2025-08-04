@@ -16,50 +16,116 @@
 
       <!-- 搜索区域 -->
       <div class="search-area">
-        <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form
+          :inline="true"
+          :model="searchForm"
+          class="search-form"
+        >
           <el-form-item label="机构名称">
-            <el-input v-model="searchForm.orgName" placeholder="请输入机构名称" clearable />
+            <el-input
+              v-model="searchForm.orgName"
+              placeholder="请输入机构名称"
+              clearable
+            />
           </el-form-item>
           <el-form-item label="机构编码">
-            <el-input v-model="searchForm.orgCode" placeholder="请输入机构编码" clearable />
+            <el-input
+              v-model="searchForm.orgCode"
+              placeholder="请输入机构编码"
+              clearable
+            />
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-              <el-option label="启用" :value="1" />
-              <el-option label="禁用" :value="0" />
+            <el-select
+              v-model="searchForm.status"
+              placeholder="请选择状态"
+              clearable
+            >
+              <el-option
+                label="启用"
+                :value="1"
+              />
+              <el-option
+                label="禁用"
+                :value="0"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button
+              type="primary"
+              @click="handleSearch"
+            >
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 组织机构列表 -->
-      <el-table :data="filteredOrgList" v-loading="loading" row-key="id" default-expand-all>
-        <el-table-column prop="id" label="ID" width="80">
+      <el-table
+        v-loading="loading"
+        :data="filteredOrgList"
+        row-key="id"
+        default-expand-all
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        >
           <template #default="{ row }">
             {{ $formatId(row.id) }}
           </template>
         </el-table-column>
-        <el-table-column prop="orgName" label="机构名称" width="180" />
-        <el-table-column prop="orgCode" label="机构编码" width="120" />
-        <el-table-column prop="orgType" label="机构类型" width="120">
+        <el-table-column
+          prop="orgName"
+          label="机构名称"
+          width="180"
+        />
+        <el-table-column
+          prop="orgCode"
+          label="机构编码"
+          width="120"
+        />
+        <el-table-column
+          prop="orgType"
+          label="机构类型"
+          width="120"
+        >
           <template #default="{ row }">
             <el-tag>{{ getOrgTypeLabel(row.orgType) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="leader" label="负责人" width="120" />
-        <el-table-column prop="phone" label="联系电话" width="130" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column
+          prop="leader"
+          label="负责人"
+          width="120"
+        />
+        <el-table-column
+          prop="phone"
+          label="联系电话"
+          width="130"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="80"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180">
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.createTime) }}
           </template>
@@ -105,7 +171,10 @@
         :rules="orgRules"
         label-width="100px"
       >
-        <el-form-item label="上级机构" prop="parentId">
+        <el-form-item
+          label="上级机构"
+          prop="parentId"
+        >
           <el-tree-select
             v-model="orgForm.parentId"
             :data="orgTreeOptions"
@@ -116,40 +185,108 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="机构名称" prop="orgName">
-          <el-input v-model="orgForm.orgName" placeholder="请输入机构名称" />
+        <el-form-item
+          label="机构名称"
+          prop="orgName"
+        >
+          <el-input
+            v-model="orgForm.orgName"
+            placeholder="请输入机构名称"
+          />
         </el-form-item>
-        <el-form-item label="机构编码" prop="orgCode">
-          <el-input v-model="orgForm.orgCode" placeholder="请输入机构编码" />
+        <el-form-item
+          label="机构编码"
+          prop="orgCode"
+        >
+          <el-input
+            v-model="orgForm.orgCode"
+            placeholder="请输入机构编码"
+          />
         </el-form-item>
-        <el-form-item label="机构类型" prop="orgType">
-          <el-select v-model="orgForm.orgType" placeholder="请选择机构类型">
-            <el-option label="集团" :value="1" />
-            <el-option label="公司" :value="2" />
-            <el-option label="分公司" :value="3" />
-            <el-option label="部门" :value="4" />
-            <el-option label="其他" :value="5" />
+        <el-form-item
+          label="机构类型"
+          prop="orgType"
+        >
+          <el-select
+            v-model="orgForm.orgType"
+            placeholder="请选择机构类型"
+          >
+            <el-option
+              label="集团"
+              :value="1"
+            />
+            <el-option
+              label="公司"
+              :value="2"
+            />
+            <el-option
+              label="分公司"
+              :value="3"
+            />
+            <el-option
+              label="部门"
+              :value="4"
+            />
+            <el-option
+              label="其他"
+              :value="5"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="orgForm.sort" :min="1" :max="999" />
+        <el-form-item
+          label="排序"
+          prop="sort"
+        >
+          <el-input-number
+            v-model="orgForm.sort"
+            :min="1"
+            :max="999"
+          />
         </el-form-item>
-        <el-form-item label="负责人" prop="leader">
-          <el-input v-model="orgForm.leader" placeholder="请输入负责人" />
+        <el-form-item
+          label="负责人"
+          prop="leader"
+        >
+          <el-input
+            v-model="orgForm.leader"
+            placeholder="请输入负责人"
+          />
         </el-form-item>
-        <el-form-item label="联系电话" prop="phone">
-          <el-input v-model="orgForm.phone" placeholder="请输入联系电话" />
+        <el-form-item
+          label="联系电话"
+          prop="phone"
+        >
+          <el-input
+            v-model="orgForm.phone"
+            placeholder="请输入联系电话"
+          />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="orgForm.email" placeholder="请输入邮箱" />
+        <el-form-item
+          label="邮箱"
+          prop="email"
+        >
+          <el-input
+            v-model="orgForm.email"
+            placeholder="请输入邮箱"
+          />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-radio-group v-model="orgForm.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :label="1">
+              启用
+            </el-radio>
+            <el-radio :label="0">
+              禁用
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item
+          label="备注"
+          prop="remark"
+        >
           <el-input
             v-model="orgForm.remark"
             type="textarea"
@@ -161,7 +298,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          <el-button
+            type="primary"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </span>

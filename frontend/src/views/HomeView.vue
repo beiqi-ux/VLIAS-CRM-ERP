@@ -5,20 +5,34 @@
       <div class="banner-content">
         <div class="welcome-text">
           <h1>欢迎使用 VLIAS 企业级全栈管理系统</h1>
-          <p class="subtitle">一站式企业数字化解决方案，助力企业高效运营</p>
+          <p class="subtitle">
+            一站式企业数字化解决方案，助力企业高效运营
+          </p>
         </div>
         <div class="banner-stats">
           <div class="stat-card">
-            <div class="stat-number">{{ new Date().getFullYear() }}</div>
-            <div class="stat-label">服务年份</div>
+            <div class="stat-number">
+              {{ new Date().getFullYear() }}
+            </div>
+            <div class="stat-label">
+              服务年份
+            </div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">100+</div>
-            <div class="stat-label">企业客户</div>
+            <div class="stat-number">
+              100+
+            </div>
+            <div class="stat-label">
+              企业客户
+            </div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">99.9%</div>
-            <div class="stat-label">系统稳定性</div>
+            <div class="stat-number">
+              99.9%
+            </div>
+            <div class="stat-label">
+              系统稳定性
+            </div>
           </div>
         </div>
       </div>
@@ -26,10 +40,20 @@
 
     <!-- 核心功能模块 -->
     <div class="modules-section">
-      <h2 class="section-title">核心业务模块</h2>
+      <h2 class="section-title">
+        核心业务模块
+      </h2>
       <el-row :gutter="24">
-        <el-col :span="8" :md="8" :sm="12" :xs="24">
-          <div class="module-card" @click="goToModule('crm')">
+        <el-col
+          :span="8"
+          :md="8"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="module-card"
+            @click="goToModule('crm')"
+          >
             <div class="module-icon crm-icon">
               <el-icon><UserFilled /></el-icon>
             </div>
@@ -42,11 +66,19 @@
             </div>
           </div>
         </el-col>
-        <el-col :span="8" :md="8" :sm="12" :xs="24">
-          <div class="module-card" @click="goToModule('inventory')">
-                         <div class="module-icon inventory-icon">
-               <el-icon><Goods /></el-icon>
-             </div>
+        <el-col
+          :span="8"
+          :md="8"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="module-card"
+            @click="goToModule('inventory')"
+          >
+            <div class="module-icon inventory-icon">
+              <el-icon><Goods /></el-icon>
+            </div>
             <h3>进销存管理</h3>
             <p>商品管理、库存控制、采购销售、门店管理、实时库存预警</p>
             <div class="module-features">
@@ -56,8 +88,16 @@
             </div>
           </div>
         </el-col>
-        <el-col :span="8" :md="8" :sm="12" :xs="24">
-          <div class="module-card" @click="goToModule('finance')">
+        <el-col
+          :span="8"
+          :md="8"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="module-card"
+            @click="goToModule('finance')"
+          >
             <div class="module-icon finance-icon">
               <el-icon><Money /></el-icon>
             </div>
@@ -75,29 +115,71 @@
 
     <!-- 快速操作 -->
     <div class="quick-actions-section">
-      <h2 class="section-title">快速操作</h2>
+      <h2 class="section-title">
+        快速操作
+      </h2>
       <el-row :gutter="16">
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
-          <div class="quick-action-card" @click="goToPage('/users')">
-            <el-icon class="action-icon"><User /></el-icon>
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="quick-action-card"
+            @click="goToPage('/users')"
+          >
+            <el-icon class="action-icon">
+              <User />
+            </el-icon>
             <span>用户管理</span>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
-          <div class="quick-action-card" @click="goToPage('/organizations')">
-            <el-icon class="action-icon"><OfficeBuilding /></el-icon>
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="quick-action-card"
+            @click="goToPage('/organizations')"
+          >
+            <el-icon class="action-icon">
+              <OfficeBuilding />
+            </el-icon>
             <span>组织管理</span>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
-          <div class="quick-action-card" @click="goToPage('/roles')">
-            <el-icon class="action-icon"><Lock /></el-icon>
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="quick-action-card"
+            @click="goToPage('/roles')"
+          >
+            <el-icon class="action-icon">
+              <Lock />
+            </el-icon>
             <span>角色权限</span>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
-          <div class="quick-action-card" @click="goToPage('/dicts')">
-            <el-icon class="action-icon"><Setting /></el-icon>
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
+          <div
+            class="quick-action-card"
+            @click="goToPage('/dicts')"
+          >
+            <el-icon class="action-icon">
+              <Setting />
+            </el-icon>
             <span>系统配置</span>
           </div>
         </el-col>
@@ -106,40 +188,62 @@
 
     <!-- 系统优势 -->
     <div class="advantages-section">
-      <h2 class="section-title">系统优势</h2>
+      <h2 class="section-title">
+        系统优势
+      </h2>
       <el-row :gutter="24">
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
           <div class="advantage-card">
-                         <div class="advantage-icon">
-               <el-icon><Timer /></el-icon>
-             </div>
+            <div class="advantage-icon">
+              <el-icon><Timer /></el-icon>
+            </div>
             <h4>高效便捷</h4>
             <p>全业务流程数字化，提升工作效率</p>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
           <div class="advantage-card">
             <div class="advantage-icon">
               <el-icon><DataAnalysis /></el-icon>
             </div>
-                        <h4>数据驱动</h4>
+            <h4>数据驱动</h4>
             <p>智能分析报表，数据驱动决策支持</p>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
           <div class="advantage-card">
-                         <div class="advantage-icon">
-               <el-icon><Connection /></el-icon>
-             </div>
+            <div class="advantage-icon">
+              <el-icon><Connection /></el-icon>
+            </div>
             <h4>一体化协作</h4>
             <p>多部门协同办公，信息实时共享</p>
           </div>
         </el-col>
-        <el-col :span="6" :md="6" :sm="12" :xs="24">
+        <el-col
+          :span="6"
+          :md="6"
+          :sm="12"
+          :xs="24"
+        >
           <div class="advantage-card">
-                         <div class="advantage-icon">
-               <el-icon><Check /></el-icon>
-             </div>
+            <div class="advantage-icon">
+              <el-icon><Check /></el-icon>
+            </div>
             <h4>安全可靠</h4>
             <p>企业级安全保障，数据加密存储</p>
           </div>
@@ -150,7 +254,7 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
+import { useRouter } from 'vue-router'
 import { 
   UserFilled, 
   Goods, 
@@ -163,29 +267,29 @@ import {
   DataAnalysis,
   Connection,
   Check
-} from '@element-plus/icons-vue';
+} from '@element-plus/icons-vue'
 
-const router = useRouter();
+const router = useRouter()
 
 function goToPage(path) {
-  router.push(path);
+  router.push(path)
 }
 
 function goToModule(module) {
   // 根据模块类型跳转到对应页面
   switch(module) {
-    case 'crm':
-      // TODO: 跳转到CRM模块（暂时跳转到用户管理）
-      router.push('/users');
-      break;
-    case 'inventory':
-      // TODO: 跳转到进销存模块
-      console.log('进销存模块开发中...');
-      break;
-    case 'finance':
-      // TODO: 跳转到财务模块
-      console.log('财务模块开发中...');
-      break;
+  case 'crm':
+    // TODO: 跳转到CRM模块（暂时跳转到用户管理）
+    router.push('/users')
+    break
+  case 'inventory':
+    // TODO: 跳转到进销存模块
+    console.log('进销存模块开发中...')
+    break
+  case 'finance':
+    // TODO: 跳转到财务模块
+    console.log('财务模块开发中...')
+    break
   }
 }
 </script>

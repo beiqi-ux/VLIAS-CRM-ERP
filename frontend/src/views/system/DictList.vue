@@ -21,16 +21,29 @@
         clearable
         style="width: 120px; margin-right: 10px"
       >
-        <el-option label="启用" :value="1" />
-        <el-option label="禁用" :value="0" />
+        <el-option
+          label="启用"
+          :value="1"
+        />
+        <el-option
+          label="禁用"
+          :value="0"
+        />
       </el-select>
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button @click="resetSearch">重置</el-button>
+      <el-button
+        type="primary"
+        @click="handleSearch"
+      >
+        搜索
+      </el-button>
+      <el-button @click="resetSearch">
+        重置
+      </el-button>
       <el-button 
         v-if="hasPermission(PERMISSIONS.SYS.DICT.ADD)"
         type="success" 
-        @click="handleAdd" 
-        style="margin-left: 10px"
+        style="margin-left: 10px" 
+        @click="handleAdd"
       >
         新增字典
       </el-button>
@@ -42,20 +55,42 @@
       border
       style="width: 100%; margin-top: 15px"
     >
-      <el-table-column prop="id" label="ID" width="80">
+      <el-table-column
+        prop="id"
+        label="ID"
+        width="80"
+      >
         <template #default="scope">
           {{ $formatId(scope.row.id) }}
         </template>
       </el-table-column>
-      <el-table-column prop="dictName" label="字典名称" />
-      <el-table-column prop="dictCode" label="字典编码" />
-      <el-table-column prop="description" label="描述" show-overflow-tooltip />
-      <el-table-column prop="createTime" label="创建时间" width="180">
+      <el-table-column
+        prop="dictName"
+        label="字典名称"
+      />
+      <el-table-column
+        prop="dictCode"
+        label="字典编码"
+      />
+      <el-table-column
+        prop="description"
+        label="描述"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        prop="createTime"
+        label="创建时间"
+        width="180"
+      >
         <template #default="scope">
           {{ formatDateTime(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column
+        prop="status"
+        label="状态"
+        width="100"
+      >
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
             {{ scope.row.status === 1 ? '启用' : '禁用' }}
@@ -110,9 +145,9 @@
       :total="total"
       :page-size="pageSize"
       :current-page="currentPage"
+      style="margin-top: 15px; justify-content: flex-end"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
-      style="margin-top: 15px; justify-content: flex-end"
     />
 
     <!-- 字典表单对话框 -->
@@ -128,24 +163,39 @@
         :rules="dictRules"
         label-width="100px"
       >
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="dictForm.dictName" placeholder="请输入字典名称" />
+        <el-form-item
+          label="字典名称"
+          prop="dictName"
+        >
+          <el-input
+            v-model="dictForm.dictName"
+            placeholder="请输入字典名称"
+          />
         </el-form-item>
-        <el-form-item label="字典编码" prop="dictCode">
+        <el-form-item
+          label="字典编码"
+          prop="dictCode"
+        >
           <el-input 
             v-model="dictForm.dictCode" 
             placeholder="请输入字典编码"
             :disabled="isEdit"
           />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item
+          label="描述"
+          prop="description"
+        >
           <el-input
             v-model="dictForm.description"
             type="textarea"
             placeholder="请输入描述"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-switch
             v-model="dictForm.status"
             :active-value="1"
@@ -157,8 +207,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+          <el-button @click="dialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             {{ isEdit ? '更新' : '创建' }}
           </el-button>
         </div>
@@ -174,7 +230,13 @@
     >
       <div class="item-header">
         <span>字典：{{ currentDict.dictName }} ({{ currentDict.dictCode }})</span>
-        <el-button type="primary" size="small" @click="handleAddItem">新增字典项</el-button>
+        <el-button
+          type="primary"
+          size="small"
+          @click="handleAddItem"
+        >
+          新增字典项
+        </el-button>
       </div>
       
       <el-table
@@ -183,25 +245,56 @@
         border
         style="width: 100%; margin-top: 15px"
       >
-        <el-table-column prop="id" label="ID" width="80">
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        >
           <template #default="scope">
             {{ $formatId(scope.row.id) }}
           </template>
         </el-table-column>
-        <el-table-column prop="itemText" label="字典项文本" />
-        <el-table-column prop="itemValue" label="字典项值" />
-        <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column
+          prop="itemText"
+          label="字典项文本"
+        />
+        <el-table-column
+          prop="itemValue"
+          label="字典项值"
+        />
+        <el-table-column
+          prop="description"
+          label="描述"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="sort"
+          label="排序"
+          width="80"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
               {{ scope.row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="scope">
-            <el-button size="small" @click="handleEditItem(scope.row)">编辑</el-button>
+            <el-button
+              size="small"
+              @click="handleEditItem(scope.row)"
+            >
+              编辑
+            </el-button>
             <el-button
               size="small"
               :type="scope.row.status === 1 ? 'warning' : 'success'"
@@ -213,7 +306,9 @@
               size="small"
               type="danger"
               @click="handleDeleteItem(scope.row)"
-            >删除</el-button>
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -232,20 +327,38 @@
         :rules="dictItemRules"
         label-width="100px"
       >
-        <el-form-item label="字典项文本" prop="itemText">
-          <el-input v-model="dictItemForm.itemText" placeholder="请输入字典项文本" />
+        <el-form-item
+          label="字典项文本"
+          prop="itemText"
+        >
+          <el-input
+            v-model="dictItemForm.itemText"
+            placeholder="请输入字典项文本"
+          />
         </el-form-item>
-        <el-form-item label="字典项值" prop="itemValue">
-          <el-input v-model="dictItemForm.itemValue" placeholder="请输入字典项值" />
+        <el-form-item
+          label="字典项值"
+          prop="itemValue"
+        >
+          <el-input
+            v-model="dictItemForm.itemValue"
+            placeholder="请输入字典项值"
+          />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item
+          label="描述"
+          prop="description"
+        >
           <el-input
             v-model="dictItemForm.description"
             type="textarea"
             placeholder="请输入描述"
           />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
+        <el-form-item
+          label="排序"
+          prop="sort"
+        >
           <el-input-number 
             v-model="dictItemForm.sort" 
             :min="0" 
@@ -253,7 +366,10 @@
             placeholder="请输入排序"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-switch
             v-model="dictItemForm.status"
             :active-value="1"
@@ -265,8 +381,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="itemFormDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmitItem" :loading="itemSubmitLoading">
+          <el-button @click="itemFormDialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="itemSubmitLoading"
+            @click="handleSubmitItem"
+          >
             {{ isEditItem ? '更新' : '创建' }}
           </el-button>
         </div>

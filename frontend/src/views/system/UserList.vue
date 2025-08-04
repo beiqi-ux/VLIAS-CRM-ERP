@@ -1,10 +1,33 @@
 <template>
   <div class="user-list">
-    <el-card>
+    <!-- 骨架屏 -->
+    <TableSkeleton 
+      v-if="initialLoading"
+      :columns="[
+        { width: '80px', titleWidth: '20px', cellWidth: '40px' },
+        { width: '120px', titleWidth: '40px', cellWidth: '80px' },
+        { width: '120px', titleWidth: '50px', cellWidth: '80px' },
+        { width: '130px', titleWidth: '40px', cellWidth: '100px' },
+        { width: '180px', titleWidth: '30px', cellWidth: '140px' },
+        { width: '150px', titleWidth: '50px', cellWidth: '100px' },
+        { width: '150px', titleWidth: '50px', cellWidth: '100px' },
+        { width: '150px', titleWidth: '50px', cellWidth: '100px' },
+        { width: '80px', titleWidth: '30px', cellWidth: '50px', variant: 'button' },
+        { width: '180px', titleWidth: '60px', cellWidth: '140px' },
+        { width: '150px', titleWidth: '30px', cellWidth: '120px', variant: 'button' }
+      ]"
+      :rows="10"
+      :search-items="3"
+    />
+    
+    <!-- 实际内容 -->
+    <el-card v-else>
       <template #header>
         <div class="card-header">
           <div class="header-left">
-            <el-icon class="header-icon"><User /></el-icon>
+            <el-icon class="header-icon">
+              <User />
+            </el-icon>
             <span class="header-title">用户管理</span>
           </div>
           <el-button 
@@ -20,14 +43,18 @@
 
       <!-- 搜索区域 -->
       <div class="search-area">
-        <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form
+          :inline="true"
+          :model="searchForm"
+          class="search-form"
+        >
           <el-form-item label="用户名">
             <el-input 
               v-model="searchForm.username" 
               placeholder="请输入用户名" 
               clearable 
-              @keyup.enter="handleSearch"
               style="width: 200px;"
+              @keyup.enter="handleSearchClick"
             >
               <template #prefix>
                 <el-icon><User /></el-icon>
@@ -39,8 +66,8 @@
               v-model="searchForm.realName" 
               placeholder="请输入真实姓名" 
               clearable 
-              @keyup.enter="handleSearch"
               style="width: 200px;"
+              @keyup.enter="handleSearchClick"
             >
               <template #prefix>
                 <el-icon><UserFilled /></el-icon>
@@ -58,7 +85,10 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">
+            <el-button
+              type="primary"
+              @click="handleSearchClick"
+            >
               <el-icon><Search /></el-icon>
               搜索
             </el-button>
@@ -66,56 +96,119 @@
               <el-icon><Refresh /></el-icon>
               重置
             </el-button>
+            <el-button
+              :loading="refreshing"
+              @click="handleRefresh"
+            >
+              <el-icon><Refresh /></el-icon>
+              {{ refreshing ? '刷新中' : '刷新' }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 用户列表 -->
       <el-table 
+        v-loading="loading || refreshing" 
         :data="userList" 
-        v-loading="loading" 
+        :element-loading-text="refreshing ? '刷新中...' : '加载中...'"
         stripe 
         border
         style="width: 100%;"
         :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
       >
-        <el-table-column prop="id" label="ID" width="80">
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        >
           <template #default="{ row }">
             {{ $formatId(row.id) }}
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="realName" label="真实姓名" width="120" />
-        <el-table-column prop="mobile" label="手机号" width="130" />
-        <el-table-column prop="email" label="邮箱" width="180" />
-        <el-table-column prop="orgName" label="所属组织" width="150">
+        <el-table-column
+          prop="username"
+          label="用户名"
+          width="120"
+        />
+        <el-table-column
+          prop="realName"
+          label="真实姓名"
+          width="120"
+        />
+        <el-table-column
+          prop="mobile"
+          label="手机号"
+          width="130"
+        />
+        <el-table-column
+          prop="email"
+          label="邮箱"
+          width="180"
+        />
+        <el-table-column
+          prop="orgName"
+          label="所属组织"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.orgName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="deptName" label="所属部门" width="150">
+        <el-table-column
+          prop="deptName"
+          label="所属部门"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.deptName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="positionName" label="所属岗位" width="150">
+        <el-table-column
+          prop="positionName"
+          label="所属岗位"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.positionName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">
+            <el-tag 
+              v-if="!hasPermission(PERMISSIONS.SYS.USER.EDIT)"
+              :type="getStatusType(row.status)"
+            >
+              {{ getStatusText(row.status) }}
+            </el-tag>
+            <el-tag 
+              v-else
+              :type="getStatusType(row.status)"
+              style="cursor: pointer;"
+              @click="handleToggleStatus(row)"
+            >
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录时间" width="180">
+        <el-table-column
+          prop="lastLoginTime"
+          label="最后登录时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ row.lastLoginTime ? formatDateTime(row.lastLoginTime) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180">
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.createTime) }}
           </template>
@@ -148,11 +241,16 @@
               </el-button>
               <el-dropdown 
                 v-if="hasPermission(PERMISSIONS.SYS.USER.DELETE) || hasPermission(PERMISSIONS.SYS.USER.EDIT)"
-                @command="(command) => handleDropdownCommand(command, row)" 
-                trigger="click"
+                trigger="click" 
+                @command="(command) => handleDropdownCommand(command, row)"
               >
-                <el-button type="info" size="small">
-                  更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                <el-button
+                  type="info"
+                  size="small"
+                >
+                  更多<el-icon class="el-icon--right">
+                    <ArrowDown />
+                  </el-icon>
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -213,19 +311,46 @@
         :rules="userRules"
         label-width="100px"
       >
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+        <el-form-item
+          label="用户名"
+          prop="username"
+        >
+          <el-input
+            v-model="userForm.username"
+            placeholder="请输入用户名"
+          />
         </el-form-item>
-        <el-form-item label="真实姓名" prop="realName">
-          <el-input v-model="userForm.realName" placeholder="请输入真实姓名" />
+        <el-form-item
+          label="真实姓名"
+          prop="realName"
+        >
+          <el-input
+            v-model="userForm.realName"
+            placeholder="请输入真实姓名"
+          />
         </el-form-item>
-        <el-form-item label="手机号" prop="mobile">
-          <el-input v-model="userForm.mobile" placeholder="请输入手机号" />
+        <el-form-item
+          label="手机号"
+          prop="mobile"
+        >
+          <el-input
+            v-model="userForm.mobile"
+            placeholder="请输入手机号"
+          />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="userForm.email" placeholder="请输入邮箱" />
+        <el-form-item
+          label="邮箱"
+          prop="email"
+        >
+          <el-input
+            v-model="userForm.email"
+            placeholder="请输入邮箱"
+          />
         </el-form-item>
-        <el-form-item label="性别" prop="gender">
+        <el-form-item
+          label="性别"
+          prop="gender"
+        >
           <DictSelect 
             v-model="userForm.gender" 
             dict-code="GENDER" 
@@ -233,15 +358,25 @@
             value-type="number"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <DictRadio 
             v-model="userForm.status" 
             dict-code="USER_STATUS" 
             value-type="number"
           />
         </el-form-item>
-        <el-form-item label="组织" prop="orgId">
-          <el-select v-model="userForm.orgId" placeholder="请选择组织" @change="handleOrgChange">
+        <el-form-item
+          label="组织"
+          prop="orgId"
+        >
+          <el-select
+            v-model="userForm.orgId"
+            placeholder="请选择组织"
+            @change="handleOrgChange"
+          >
             <el-option
               v-for="org in orgOptions"
               :key="org.id"
@@ -250,8 +385,15 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="部门" prop="deptId">
-          <el-select v-model="userForm.deptId" placeholder="请选择部门" @change="handleDeptChange">
+        <el-form-item
+          label="部门"
+          prop="deptId"
+        >
+          <el-select
+            v-model="userForm.deptId"
+            placeholder="请选择部门"
+            @change="handleDeptChange"
+          >
             <el-option
               v-for="dept in deptOptions"
               :key="dept.id"
@@ -260,8 +402,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="岗位" prop="positionId">
-          <el-select v-model="userForm.positionId" placeholder="请选择岗位">
+        <el-form-item
+          label="岗位"
+          prop="positionId"
+        >
+          <el-select
+            v-model="userForm.positionId"
+            placeholder="请选择岗位"
+          >
             <el-option
               v-for="pos in positionOptions"
               :key="pos.id"
@@ -270,7 +418,11 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="!userForm.id" label="密码" prop="password">
+        <el-form-item
+          v-if="!userForm.id"
+          label="密码"
+          prop="password"
+        >
           <el-input
             v-model="userForm.password"
             type="password"
@@ -282,7 +434,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          <el-button
+            type="primary"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </span>
@@ -290,14 +446,21 @@
     </el-dialog>
 
     <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="400px"
+    >
       <el-form
         ref="passwordFormRef"
         :model="passwordForm"
         :rules="passwordRules"
         label-width="100px"
       >
-        <el-form-item label="旧密码" prop="oldPassword">
+        <el-form-item
+          label="旧密码"
+          prop="oldPassword"
+        >
           <el-input
             v-model="passwordForm.oldPassword"
             type="password"
@@ -305,7 +468,10 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
+        <el-form-item
+          label="新密码"
+          prop="newPassword"
+        >
           <el-input
             v-model="passwordForm.newPassword"
             type="password"
@@ -313,7 +479,10 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
+        <el-form-item
+          label="确认密码"
+          prop="confirmPassword"
+        >
           <el-input
             v-model="passwordForm.confirmPassword"
             type="password"
@@ -325,7 +494,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="passwordDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePasswordSubmit" :loading="submitting">
+          <el-button
+            type="primary"
+            :loading="submitting"
+            @click="handlePasswordSubmit"
+          >
             确定
           </el-button>
         </span>
@@ -339,16 +512,30 @@
       width="500px"
     >
       <div v-loading="roleLoading">
-        <p class="mb-10">当前用户：{{ currentUser.username }} ({{ currentUser.realName || '未设置姓名' }})</p>
+        <p class="mb-10">
+          当前用户：{{ currentUser.username }} ({{ currentUser.realName || '未设置姓名' }})
+        </p>
         <el-checkbox-group v-model="selectedRoles">
-          <el-checkbox v-for="role in roleList" :key="role.id" :label="role.id">
+          <el-checkbox
+            v-for="role in roleList"
+            :key="role.id"
+            :label="role.id"
+          >
             {{ role.roleName }} ({{ role.roleCode }})
           </el-checkbox>
         </el-checkbox-group>
       </div>
       <template #footer>
-        <el-button @click="roleDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="roleSaving" @click="handleSaveUserRoles">保存</el-button>
+        <el-button @click="roleDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="roleSaving"
+          @click="handleSaveUserRoles"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -366,7 +553,8 @@ import {
   updateUser, 
   deleteUser, 
   changePassword, 
-  resetPassword 
+  resetPassword,
+  updateUserStatus
 } from '@/api/user'
 import { getRoleList, getUserRoleIds, assignUserRoles } from '@/api/role'
 import { getOrganizationList } from '@/api/organization'
@@ -374,11 +562,51 @@ import { getDepartmentsByOrgId } from '@/api/department'
 import { getPositionsByDeptId } from '@/api/position'
 import { Edit, UserFilled, ArrowDown, Key, Refresh, Delete, User, Search, Plus } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
+import { useTableLoader } from '@/composables/useTableLoader'
+import TableSkeleton from '@/components/Skeleton/TableSkeleton.vue'
+
+// 使用新的表格加载器
+const {
+  loading,
+  refreshing,
+  initialLoading,
+  tableData: userList,
+  total,
+  pagination,
+  searchForm: searchFormRef,
+  handleSearch,
+  resetSearch,
+  refresh,
+  handleSizeChange,
+  handleCurrentChange,
+  clearCache
+} = useTableLoader({
+  apiFunction: getUserDetailList,
+  cacheKey: 'userList',
+  cacheTTL: 3 * 60 * 1000, // 3分钟缓存
+  defaultPageSize: 20,
+  errorMessage: '获取用户列表失败',
+  preloadEnabled: true // 启用预加载
+})
+
+// 原有的搜索表单（保持向后兼容）
+const searchForm = reactive({
+  username: '',
+  realName: '',
+  status: ''
+})
+
+// 同步搜索表单到新的loader
+function syncSearchForm() {
+  searchFormRef.value = {
+    username: searchForm.username || null,
+    realName: searchForm.realName || null,
+    status: searchForm.status || null
+  }
+}
 
 // 响应式数据
-const loading = ref(false)
 const submitting = ref(false)
-const userList = ref([])
 const dialogVisible = ref(false)
 const passwordDialogVisible = ref(false)
 const dialogTitle = ref('')
@@ -392,20 +620,6 @@ const positionOptions = ref([])
 const loadingOrg = ref(false)
 const loadingDept = ref(false)
 const loadingPosition = ref(false)
-
-// 搜索表单
-const searchForm = reactive({
-  username: '',
-  realName: '',
-  status: ''
-})
-
-// 分页
-const pagination = reactive({
-  current: 1,
-  size: 10,
-  total: 0
-})
 
 // 用户表单
 const userForm = reactive({
@@ -475,54 +689,6 @@ const passwordRules = {
   ]
 }
 
-// 获取用户列表
-const fetchUserList = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.current,
-      size: pagination.size,
-      username: searchForm.username || null,
-      realName: searchForm.realName || null,
-      status: searchForm.status || null
-    }
-    const response = await getUserDetailList(params)
-    userList.value = response.data.data
-    pagination.total = response.data.total
-  } catch (error) {
-    ElMessage.error('获取用户列表失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 搜索
-const handleSearch = () => {
-  pagination.current = 1
-  fetchUserList()
-}
-
-// 重置搜索
-const handleReset = () => {
-  Object.assign(searchForm, {
-    username: '',
-    realName: '',
-    status: ''
-  })
-  handleSearch()
-}
-
-// 分页处理
-const handleSizeChange = (size) => {
-  pagination.size = size
-  fetchUserList()
-}
-
-const handleCurrentChange = (current) => {
-  pagination.current = current
-  fetchUserList()
-}
-
 // 新增用户
 const handleAdd = () => {
   dialogTitle.value = '新增用户'
@@ -542,9 +708,31 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
+// 重新定义搜索和重置函数（兼容新loader）
+const handleSearchClick = () => {
+  syncSearchForm()
+  handleSearch(searchFormRef.value)
+}
+
+const handleReset = () => {
+  Object.assign(searchForm, {
+    username: '',
+    realName: '',
+    status: ''
+  })
+  syncSearchForm()
+  resetSearch()
+}
+
+// 手动刷新（带缓存清理）
+const handleRefresh = () => {
+  clearCache('userList') // 清理用户列表相关缓存
+  refresh()
+}
+
 // 编辑用户
 const handleEdit = async (row) => {
-  dialogTitle.value = '编辑用户';
+  dialogTitle.value = '编辑用户'
   Object.assign(userForm, {
     id: row.id,
     username: row.username,
@@ -556,17 +744,17 @@ const handleEdit = async (row) => {
     orgId: row.orgId,
     deptId: row.deptId,
     positionId: row.positionId
-  });
+  })
   
   // 加载关联数据
   if (row.orgId) {
-    await fetchDepartments(row.orgId);
+    await fetchDepartments(row.orgId)
     if (row.deptId) {
-      await fetchPositions(row.deptId);
+      await fetchPositions(row.deptId)
     }
   }
   
-  dialogVisible.value = true;
+  dialogVisible.value = true
 }
 
 // 删除用户
@@ -580,7 +768,7 @@ const handleDelete = async (row) => {
     
     await deleteUser(row.id)
     ElMessage.success('删除成功')
-    fetchUserList()
+    refresh() // 刷新列表
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -615,6 +803,33 @@ const handleResetPassword = async (row) => {
   }
 }
 
+// 切换用户状态
+const handleToggleStatus = async (row) => {
+  const newStatus = row.status === 1 ? 0 : 1
+  const statusText = newStatus === 1 ? '启用' : '禁用'
+  
+  try {
+    await ElMessageBox.confirm(`确定要${statusText}该用户吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const response = await updateUserStatus(row.id, newStatus)
+    if (response.success) {
+      ElMessage.success(`用户${statusText}成功`)
+      // 更新本地数据
+      row.status = newStatus
+    } else {
+      ElMessage.error(response.message || `用户${statusText}失败`)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(`用户${statusText}失败`)
+    }
+  }
+}
+
 // 提交用户表单
 const handleSubmit = async () => {
   if (!userFormRef.value) return
@@ -632,7 +847,7 @@ const handleSubmit = async () => {
     }
     
     dialogVisible.value = false
-    fetchUserList()
+    refresh() // 刷新列表
   } catch (error) {
     ElMessage.error('操作失败')
   } finally {
@@ -755,24 +970,32 @@ const handleDropdownCommand = async (command, row) => {
   }
 }
 
-// 页面加载时获取数据
+// 初始化
 onMounted(async () => {
-  // 预加载字典数据
-  await preloadDicts(['USER_STATUS', 'GENDER'])
-  
-  fetchUserList()
-  fetchOrganizations()
+  try {
+    // 预加载字典数据
+    await preloadDicts(['USER_STATUS', 'GENDER'])
+    
+    // 初始化搜索表单
+    syncSearchForm()
+    
+    // 加载组织数据
+    await fetchOrganizations()
+  } catch (error) {
+    console.error('初始化失败:', error)
+  }
 })
 
-// 获取组织列表
+// 加载组织数据
 const fetchOrganizations = async () => {
-  loadingOrg.value = true
   try {
-    const res = await getOrganizationList()
-    orgOptions.value = res.data || []
+    loadingOrg.value = true
+    const response = await getOrganizationList({})
+    if (response.success) {
+      orgOptions.value = response.data || []
+    }
   } catch (error) {
-    console.error('Failed to fetch organizations:', error)
-    ElMessage.error('获取组织机构失败')
+    console.error('获取组织列表失败:', error)
   } finally {
     loadingOrg.value = false
   }

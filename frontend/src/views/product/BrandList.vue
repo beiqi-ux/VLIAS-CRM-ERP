@@ -1,8 +1,14 @@
 <template>
   <div class="brand-list">
     <!-- 搜索栏 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :model="searchForm" inline>
+    <el-card
+      class="search-card"
+      shadow="never"
+    >
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="品牌名称">
           <el-input 
             v-model="searchForm.brandName" 
@@ -12,13 +18,28 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 120px">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option
+              label="启用"
+              :value="1"
+            />
+            <el-option
+              label="禁用"
+              :value="0"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :loading="loading">
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleSearch"
+          >
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
@@ -31,7 +52,10 @@
     </el-card>
 
     <!-- 操作栏 -->
-    <el-card class="operation-card" shadow="never">
+    <el-card
+      class="operation-card"
+      shadow="never"
+    >
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
@@ -53,7 +77,10 @@
           </el-button>
         </div>
         <div class="right-operations">
-          <el-button type="success" @click="handleRefresh">
+          <el-button
+            type="success"
+            @click="handleRefresh"
+          >
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
@@ -62,17 +89,30 @@
     </el-card>
 
     <!-- 数据表格 -->
-    <el-card class="table-card" shadow="never">
+    <el-card
+      class="table-card"
+      shadow="never"
+    >
       <el-table
-        :data="brandList"
         v-loading="loading"
-        @selection-change="handleSelectionChange"
+        :data="brandList"
         stripe
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="品牌Logo" width="100">
+        <el-table-column
+          type="selection"
+          width="55"
+        />
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          label="品牌Logo"
+          width="100"
+        >
           <template #default="{ row }">
             <el-image
               v-if="row.brandLogo"
@@ -82,12 +122,29 @@
               :preview-src-list="[row.brandLogo]"
               preview-teleported
             />
-            <div v-else class="no-logo">暂无Logo</div>
+            <div
+              v-else
+              class="no-logo"
+            >
+              暂无Logo
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="brandName" label="品牌名称" min-width="150" />
-        <el-table-column prop="description" label="品牌描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="官网" width="120">
+        <el-table-column
+          prop="brandName"
+          label="品牌名称"
+          min-width="150"
+        />
+        <el-table-column
+          prop="description"
+          label="品牌描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="官网"
+          width="120"
+        >
           <template #default="{ row }">
             <el-link 
               v-if="row.website" 
@@ -97,18 +154,32 @@
             >
               访问官网
             </el-link>
-            <span v-else class="text-gray">-</span>
+            <span
+              v-else
+              class="text-gray"
+            >-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          prop="sort"
+          label="排序"
+          width="80"
+        />
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        />
         <el-table-column 
           v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT) || hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
           label="操作" 
@@ -160,23 +231,38 @@
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
-      :title="dialogTitle"
       v-model="dialogVisible"
+      :title="dialogTitle"
       width="600px"
       :close-on-click-modal="false"
     >
       <el-form
+        ref="formRef"
         :model="formData"
         :rules="formRules"
-        ref="formRef"
         label-width="100px"
       >
-        <el-form-item label="品牌名称" prop="brandName">
-          <el-input v-model="formData.brandName" placeholder="请输入品牌名称" />
+        <el-form-item
+          label="品牌名称"
+          prop="brandName"
+        >
+          <el-input
+            v-model="formData.brandName"
+            placeholder="请输入品牌名称"
+          />
         </el-form-item>
-        <el-form-item label="品牌Logo" prop="brandLogo">
-          <el-input v-model="formData.brandLogo" placeholder="请输入Logo图片URL" />
-          <div v-if="formData.brandLogo" class="logo-preview">
+        <el-form-item
+          label="品牌Logo"
+          prop="brandLogo"
+        >
+          <el-input
+            v-model="formData.brandLogo"
+            placeholder="请输入Logo图片URL"
+          />
+          <div
+            v-if="formData.brandLogo"
+            class="logo-preview"
+          >
             <el-image 
               :src="formData.brandLogo" 
               style="width: 100px; height: 60px; border-radius: 4px; margin-top: 8px;"
@@ -184,19 +270,42 @@
             />
           </div>
         </el-form-item>
-        <el-form-item label="官网地址" prop="website">
-          <el-input v-model="formData.website" placeholder="请输入官网地址（可选）" />
+        <el-form-item
+          label="官网地址"
+          prop="website"
+        >
+          <el-input
+            v-model="formData.website"
+            placeholder="请输入官网地址（可选）"
+          />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="formData.sort" :min="0" style="width: 100%" />
+        <el-form-item
+          label="排序"
+          prop="sort"
+        >
+          <el-input-number
+            v-model="formData.sort"
+            :min="0"
+            style="width: 100%"
+          />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
           <el-radio-group v-model="formData.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :label="1">
+              启用
+            </el-radio>
+            <el-radio :label="0">
+              禁用
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="品牌描述" prop="description">
+        <el-form-item
+          label="品牌描述"
+          prop="description"
+        >
           <el-input 
             v-model="formData.description" 
             type="textarea" 
@@ -207,8 +316,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+          <el-button @click="dialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </div>
@@ -340,8 +455,8 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   Object.keys(formData).forEach(key => {
     formData[key] = row[key] || (key === 'sort' ? 0 : 
-                                 key === 'status' ? (row[key] ?? 1) : 
-                                 key === 'id' ? row[key] : '')
+      key === 'status' ? (row[key] ?? 1) : 
+        key === 'id' ? row[key] : '')
   })
   dialogVisible.value = true
 }
@@ -442,8 +557,8 @@ const handleSubmit = async () => {
 const resetFormData = () => {
   Object.keys(formData).forEach(key => {
     formData[key] = key === 'status' ? 1 :
-                    key === 'sort' ? 0 :
-                    key === 'id' ? null : ''
+      key === 'sort' ? 0 :
+        key === 'id' ? null : ''
   })
 }
 
