@@ -100,6 +100,27 @@ const router = createRouter({
           component: () => import('@/views/product/BrandList.vue'),
           meta: { title: '品牌管理' }
         },
+        // 商品属性管理
+        {
+          path: 'attributes',
+          name: 'attributes',
+          component: () => import('@/views/product/AttributeList.vue'),
+          meta: { title: '商品属性管理' }
+        },
+        // 商品规格管理
+        {
+          path: 'specifications',
+          name: 'specifications',
+          component: () => import('@/views/product/SpecificationList.vue'),
+          meta: { title: '商品规格管理' }
+        },
+        // SKU管理
+        {
+          path: 'skus',
+          name: 'skus',
+          component: () => import('@/views/product/SkuList.vue'),
+          meta: { title: 'SKU管理' }
+        },
         // 个人中心
         {
           path: 'profile',

@@ -115,22 +115,22 @@ export const PERMISSIONS = {
   // 组织架构权限
   ORG: {
     ORGANIZATION: {
-      VIEW: 'organization:view',
-      ADD: 'organization:add',
-      EDIT: 'organization:edit',
-      DELETE: 'organization:delete'
+      VIEW: 'org-management:view',
+      ADD: 'org-management:add',
+      EDIT: 'org-management:edit',
+      DELETE: 'org-management:delete'
     },
     DEPARTMENT: {
-      VIEW: 'department:view',
-      ADD: 'department:add',
-      EDIT: 'department:edit',
-      DELETE: 'department:delete'
+      VIEW: 'dept-management:view',
+      ADD: 'dept-management:add',
+      EDIT: 'dept-management:edit',
+      DELETE: 'dept-management:delete'
     },
     POSITION: {
-      VIEW: 'position:view',
-      ADD: 'position:add',
-      EDIT: 'position:edit',
-      DELETE: 'position:delete'
+      VIEW: 'position-management:view',
+      ADD: 'position-management:add',
+      EDIT: 'position-management:edit',
+      DELETE: 'position-management:delete'
     }
   },
 
@@ -154,6 +154,24 @@ export const PERMISSIONS = {
       ADD: 'brand:add',
       EDIT: 'brand:edit',
       DELETE: 'brand:delete'
+    },
+    ATTRIBUTE: {
+      VIEW: 'product-attribute:view',
+      ADD: 'product-attribute:add',
+      EDIT: 'product-attribute:edit',
+      DELETE: 'product-attribute:delete'
+    },
+    SPECIFICATION: {
+      VIEW: 'product-specification:view',
+      ADD: 'product-specification:add',
+      EDIT: 'product-specification:edit',
+      DELETE: 'product-specification:delete'
+    },
+    SKU: {
+      VIEW: 'product-sku:view',
+      ADD: 'product-sku:add',
+      EDIT: 'product-sku:edit',
+      DELETE: 'product-sku:delete'
     }
   }
 } 

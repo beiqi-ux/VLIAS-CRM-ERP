@@ -178,7 +178,7 @@ import {
   Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
   Bell, Message, Calendar, Location, Phone, Link, StarFilled,
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
-  Money, ChatDotRound, Tools, SwitchButton
+  Money, ChatDotRound, Tools, SwitchButton, DataBoard
 } from '@element-plus/icons-vue'
 
 // 创建图标组件映射
@@ -188,7 +188,7 @@ const iconMap = {
   Document, Edit, Delete, Search, Plus, Refresh, Download, Upload,
   Bell, Message, Calendar, Location, Phone, Link, StarFilled,
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
-  Money, ChatDotRound, Tools, SwitchButton
+  Money, ChatDotRound, Tools, SwitchButton, DataBoard
 }
 import { getUserMenuTree, getMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
