@@ -12,6 +12,17 @@ export function getPermissionTree() {
 }
 
 /**
+ * 获取权限管理专用的权限树（包括禁用的权限）
+ * @returns {Promise}
+ */
+export function getPermissionTreeForAdmin() {
+  return request({
+    url: '/api/sys/permissions/tree/admin',
+    method: 'get'
+  })
+}
+
+/**
  * 根据ID获取权限详情
  * @param {Number} id - 权限ID
  * @returns {Promise}

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * 商品信息实体类
- * 适用于眼镜镜片行业，支持特殊属性和价格权限控制
+ * 严格按照数据库设计方案 prod_goods 表结构
  */
 @Data
 @Entity
@@ -25,66 +25,34 @@ public class ProdGoods extends BaseEntity {
     private String goodsName;
 
     /**
-     * 商品编码/SKU
+     * 商品编码
      */
-    @Column(name = "goods_code", nullable = false, length = 50, unique = true)
+    @Column(name = "goods_code", length = 50)
     private String goodsCode;
 
     /**
-     * 商品分类ID
+     * 分类ID
      */
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
     /**
-     * 商品品牌ID
+     * 品牌ID
      */
     @Column(name = "brand_id")
     private Long brandId;
 
-
-
     /**
-     * 商品规格
+     * 商品类型 1-实物商品 2-虚拟商品
      */
-    @Column(name = "specification", length = 200)
-    private String specification;
+    @Column(name = "goods_type")
+    private Integer goodsType = 1;
 
     /**
-     * 商品型号
-     */
-    @Column(name = "model", length = 100)
-    private String model;
-
-    /**
-     * 计量单位
+     * 单位
      */
     @Column(name = "unit", length = 20)
-    private String unit = "件";
-
-    /**
-     * 原价
-     */
-    @Column(name = "original_price", precision = 10, scale = 2)
-    private BigDecimal originalPrice;
-
-    /**
-     * 售价（员工可见）
-     */
-    @Column(name = "selling_price", precision = 10, scale = 2, nullable = false)
-    private BigDecimal sellingPrice;
-
-    /**
-     * 成本价（只有管理员可见）
-     */
-    @Column(name = "cost_price", precision = 10, scale = 2)
-    private BigDecimal costPrice;
-
-    /**
-     * 最低售价
-     */
-    @Column(name = "min_price", precision = 10, scale = 2)
-    private BigDecimal minPrice;
+    private String unit;
 
     /**
      * 重量(kg)
@@ -97,6 +65,30 @@ public class ProdGoods extends BaseEntity {
      */
     @Column(name = "volume", precision = 10, scale = 2)
     private BigDecimal volume;
+
+    /**
+     * 原价
+     */
+    @Column(name = "original_price", precision = 10, scale = 2)
+    private BigDecimal originalPrice;
+
+    /**
+     * 售价
+     */
+    @Column(name = "selling_price", precision = 10, scale = 2, nullable = false)
+    private BigDecimal sellingPrice;
+
+    /**
+     * 成本价
+     */
+    @Column(name = "cost_price", precision = 10, scale = 2)
+    private BigDecimal costPrice;
+
+    /**
+     * 最低售价
+     */
+    @Column(name = "min_price", precision = 10, scale = 2)
+    private BigDecimal minPrice;
 
     /**
      * 库存数量
@@ -117,6 +109,30 @@ public class ProdGoods extends BaseEntity {
     private Integer saleQty = 0;
 
     /**
+     * 状态 0-下架 1-上架
+     */
+    @Column(name = "status")
+    private Integer status = 1;
+
+    /**
+     * 是否推荐 0-否 1-是
+     */
+    @Column(name = "is_recommended")
+    private Integer isRecommended = 0;
+
+    /**
+     * 是否热销 0-否 1-是
+     */
+    @Column(name = "is_hot")
+    private Integer isHot = 0;
+
+    /**
+     * 是否新品 0-否 1-是
+     */
+    @Column(name = "is_new")
+    private Integer isNew = 0;
+
+    /**
      * 关键词
      */
     @Column(name = "keywords", length = 200)
@@ -129,7 +145,7 @@ public class ProdGoods extends BaseEntity {
     private String tags;
 
     /**
-     * 商品主图
+     * 主图
      */
     @Column(name = "main_image", length = 255)
     private String mainImage;
@@ -157,30 +173,6 @@ public class ProdGoods extends BaseEntity {
      */
     @Column(name = "remark", columnDefinition = "TEXT")
     private String remark;
-
-    /**
-     * 商品状态 0-下架 1-上架
-     */
-    @Column(name = "status")
-    private Integer status = 1;
-
-    /**
-     * 是否热销 0-否 1-是
-     */
-    @Column(name = "is_hot")
-    private Integer isHot = 0;
-
-    /**
-     * 是否推荐 0-否 1-是
-     */
-    @Column(name = "is_recommended")
-    private Integer isRecommended = 0;
-
-    /**
-     * 是否新品 0-否 1-是
-     */
-    @Column(name = "is_new")
-    private Integer isNew = 0;
 
     /**
      * 排序
@@ -211,12 +203,6 @@ public class ProdGoods extends BaseEntity {
      */
     @Column(name = "audit_remark", length = 200)
     private String auditRemark;
-
-    /**
-     * 商品类型 1-实物商品 2-虚拟商品
-     */
-    @Column(name = "goods_type")
-    private Integer goodsType = 1;
 
     /**
      * 非持久化字段 - 分类名称

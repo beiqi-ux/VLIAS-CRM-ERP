@@ -71,6 +71,19 @@ public class SysPermissionController {
     }
 
     /**
+     * 获取权限管理专用的权限树（包括禁用的权限）
+     * @return 权限树
+     */
+    @GetMapping("/tree/admin")
+    public ApiResponse<List<PermissionDTO>> getPermissionTreeForAdmin() {
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getPermissionTreeForAdmin());
+        }
+        // 如果不是预期的实现类，返回普通权限树
+        return ApiResponse.success(permissionService.getPermissionTree());
+    }
+
+    /**
      * 获取所有权限
      * @return 权限列表
      */

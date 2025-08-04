@@ -62,4 +62,10 @@ public class SysPermission extends BaseEntity {
      */
     @Column
     private Integer status = 1;
+
+    /**
+     * 是否核心权限 0-否 1-是
+     */
+    @Column(name = "is_core")
+    private Integer isCore = 0;
 } 

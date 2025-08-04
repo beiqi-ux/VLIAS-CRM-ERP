@@ -44,6 +44,7 @@
         </el-form-item>
         <el-form-item>
           <el-button
+            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.VIEW)"
             type="primary"
             :loading="loading"
             @click="handleSearch"
@@ -67,6 +68,7 @@
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.ADD)"
             type="primary" 
             @click="handleAdd"
           >
@@ -74,6 +76,7 @@
             新增SKU
           </el-button>
           <el-button 
+            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.DELETE)"
             type="danger" 
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
@@ -126,16 +129,16 @@
           min-width="120"
         />
         <el-table-column
-          prop="price"
+          prop="sellingPrice"
           label="价格"
           width="100"
         >
           <template #default="{ row }">
-            ¥{{ row.price }}
+            ¥{{ row.sellingPrice }}
           </template>
         </el-table-column>
         <el-table-column
-          prop="stock"
+          prop="stockQty"
           label="库存"
           width="100"
         />
@@ -160,11 +163,12 @@
         />
         <el-table-column
           label="操作"
-          width="200"
+          width="260"
           fixed="right"
         >
           <template #default="{ row }">
             <el-button
+              v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.EDIT)"
               type="primary"
               size="small"
               @click="handleEdit(row)"
@@ -173,6 +177,7 @@
               编辑
             </el-button>
             <el-button
+              v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.DELETE)"
               type="danger"
               size="small"
               @click="handleDelete(row)"
@@ -231,10 +236,10 @@
         </el-form-item>
         <el-form-item
           label="价格"
-          prop="price"
+          prop="sellingPrice"
         >
           <el-input-number
-            v-model="form.price"
+            v-model="form.sellingPrice"
             :min="0"
             :precision="2"
             style="width: 100%"
@@ -242,18 +247,15 @@
         </el-form-item>
         <el-form-item
           label="库存"
-          prop="stock"
+          prop="stockQty"
         >
           <el-input-number
-            v-model="form.stock"
+            v-model="form.stockQty"
             :min="0"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item
-          label="状态"
-          prop="status"
-        >
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -279,7 +281,15 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  getSkuList,
+  createSku,
+  updateSku,
+  deleteSku,
+  batchDeleteSkus
+} from '@/api/sku'
 import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 响应式数据
 const loading = ref(false)
@@ -309,8 +319,8 @@ const form = reactive({
   id: null,
   skuName: '',
   skuCode: '',
-  price: 0,
-  stock: 0,
+  sellingPrice: 0,
+  stockQty: 0,
   status: 1
 })
 
@@ -322,10 +332,10 @@ const formRules = {
   skuCode: [
     { required: true, message: '请输入SKU编码', trigger: 'blur' }
   ],
-  price: [
+  sellingPrice: [
     { required: true, message: '请输入价格', trigger: 'blur' }
   ],
-  stock: [
+  stockQty: [
     { required: true, message: '请输入库存', trigger: 'blur' }
   ]
 }
@@ -334,40 +344,18 @@ const formRules = {
 async function fetchSkuList() {
   try {
     loading.value = true
-    // TODO: 调用API获取SKU列表
-    // const { data } = await getSkuList({
-    //   ...searchForm,
-    //   page: pagination.currentPage,
-    //   size: pagination.pageSize
-    // })
+    const data = await getSkuList({
+      ...searchForm,
+      pageNum: pagination.currentPage,
+      pageSize: pagination.pageSize
+    })
     
-    // 模拟数据
-    const mockData = {
-      content: [
-        {
-          id: 1,
-          skuName: 'iPhone 15 红色 128GB',
-          skuCode: 'IP15-RED-128',
-          price: 5999.00,
-          stock: 100,
-          status: 1,
-          createTime: '2024-01-01 10:00:00'
-        },
-        {
-          id: 2,
-          skuName: 'iPhone 15 蓝色 256GB',
-          skuCode: 'IP15-BLUE-256',
-          price: 6999.00,
-          stock: 50,
-          status: 1,
-          createTime: '2024-01-01 11:00:00'
-        }
-      ],
-      totalElements: 2
+    if (data.success) {
+      skuList.value = data.data.content || []
+      pagination.total = data.data.totalElements || 0
+    } else {
+      ElMessage.error(data.message || '获取SKU列表失败')
     }
-    
-    skuList.value = mockData.content
-    pagination.total = mockData.totalElements
   } catch (error) {
     console.error('获取SKU列表失败:', error)
     ElMessage.error('获取SKU列表失败')
@@ -408,7 +396,15 @@ function handleAdd() {
 // 编辑
 function handleEdit(row) {
   isEdit.value = true
-  Object.assign(form, row)
+  // 只复制需要编辑的业务字段，避免包含时间戳等系统字段
+  Object.assign(form, {
+    id: row.id,
+    skuName: row.skuName,
+    skuCode: row.skuCode,
+    sellingPrice: row.sellingPrice,
+    stockQty: row.stockQty,
+    status: row.status
+  })
   dialogVisible.value = true
 }
 
@@ -424,10 +420,13 @@ function handleDelete(row) {
     }
   ).then(async () => {
     try {
-      // TODO: 调用删除API
-      // await deleteSku(row.id)
+      const data = await deleteSku(row.id)
+      if (data.success) {
       ElMessage.success('删除成功')
       fetchSkuList()
+      } else {
+        ElMessage.error(data.message || '删除失败')
+      }
     } catch (error) {
       console.error('删除失败:', error)
       ElMessage.error('删除失败')
@@ -452,17 +451,22 @@ function handleBatchDelete() {
     }
   ).then(async () => {
     try {
-      // TODO: 调用批量删除API
-      // const ids = selectedRows.value.map(row => row.id)
-      // await batchDeleteSkus(ids)
+      const ids = selectedRows.value.map(row => row.id)
+      const data = await batchDeleteSkus(ids)
+      if (data.success) {
       ElMessage.success('批量删除成功')
       fetchSkuList()
+      } else {
+        ElMessage.error(data.message || '批量删除失败')
+      }
     } catch (error) {
       console.error('批量删除失败:', error)
       ElMessage.error('批量删除失败')
     }
   })
 }
+
+
 
 // 表格选择变化
 function handleSelectionChange(selection) {
@@ -488,13 +492,18 @@ async function handleSubmit() {
     await formRef.value.validate()
     submitLoading.value = true
     
-    // TODO: 调用保存API
+    let result
     if (isEdit.value) {
-      // await updateSku(form.id, form)
-      ElMessage.success('更新成功')
+      result = await updateSku(form.id, form)
     } else {
-      // await createSku(form)
-      ElMessage.success('创建成功')
+      result = await createSku(form)
+    }
+    
+    if (result.success) {
+      ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
+    } else {
+      ElMessage.error(result.message || '操作失败')
+      return
     }
     
     dialogVisible.value = false
@@ -515,8 +524,8 @@ function resetForm() {
     id: null,
     skuName: '',
     skuCode: '',
-    price: 0,
-    stock: 0,
+    sellingPrice: 0,
+    stockQty: 0,
     status: 1
   })
   formRef.value?.clearValidate()

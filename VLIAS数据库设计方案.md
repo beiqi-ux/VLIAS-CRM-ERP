@@ -528,14 +528,21 @@ CREATE TABLE prod_sku (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'SKU ID',
     goods_id BIGINT NOT NULL COMMENT '商品ID',
     sku_code VARCHAR(50) COMMENT 'SKU编码',
+    sku_name VARCHAR(100) NOT NULL COMMENT 'SKU名称',
     spec_values TEXT COMMENT '规格值JSON',
     original_price DECIMAL(10,2) COMMENT '原价',
     selling_price DECIMAL(10,2) NOT NULL COMMENT '售价',
     cost_price DECIMAL(10,2) COMMENT '成本价',
     stock_qty INT DEFAULT 0 COMMENT '库存数量',
     warn_stock INT DEFAULT 0 COMMENT '库存预警值',
+    sale_qty INT DEFAULT 0 COMMENT '已售数量',
+    weight DECIMAL(10,2) COMMENT '重量(kg)',
+    volume DECIMAL(10,2) COMMENT '体积(cm³)',
     sku_image VARCHAR(255) COMMENT 'SKU图片',
+    barcode VARCHAR(50) COMMENT '条形码',
     status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1-正常',
+    sort INT DEFAULT 0 COMMENT '排序',
+    remark VARCHAR(500) COMMENT '备注',
     create_time DATETIME NOT NULL COMMENT '创建时间',
     update_time DATETIME COMMENT '更新时间',
     create_by BIGINT COMMENT '创建人',
@@ -2998,3 +3005,47 @@ INSERT INTO sys_role (role_name, role_code, description, status, create_time, is
 VALUES ('超级管理员', 'admin', '系统最高权限', 1, NOW(), 0);
 
 
+// 系统主菜单结构
+{
+  "商品管理": {
+    icon: "el-icon-goods",
+    children: [
+      { name: "商品列表", path: "/product/goods" },        // ✅ 已有
+      { name: "商品分类", path: "/product/category" },     // ✅ 已有
+      { name: "商品品牌", path: "/product/brand" },        // ✅ 已有
+      { name: "规格管理", path: "/product/specification" }, // ❌ 需开发
+      { name: "属性管理", path: "/product/attribute" },    // ❌ 需开发
+      { name: "SKU管理", path: "/product/sku" }            // ❌ 需开发
+    ]
+  },
+  
+  "库存管理": {
+    icon: "el-icon-box",
+    children: [
+      { name: "库存查询", path: "/inventory/stock" },       // ❌ 需开发
+      { name: "仓库管理", path: "/inventory/warehouse" },   // ❌ 需开发
+      { name: "库存盘点", path: "/inventory/check" },      // ❌ 需开发
+      { name: "库存调拨", path: "/inventory/transfer" },   // ❌ 需开发
+      { name: "批次管理", path: "/inventory/batch" }       // ❌ 需开发
+    ]
+  },
+  
+  "采购管理": {
+    icon: "el-icon-shopping-cart-2",
+    children: [
+      { name: "供应商管理", path: "/purchase/supplier" },   // ❌ 需开发
+      { name: "采购订单", path: "/purchase/order" },       // ❌ 需开发
+      { name: "采购入库", path: "/purchase/receipt" },     // ❌ 需开发
+      { name: "采购退货", path: "/purchase/return" }       // ❌ 需开发
+    ]
+  },
+  
+  "客户服务": {
+    icon: "el-icon-service",
+    children: [
+      { name: "商品评价", path: "/service/review" },       // ❌ 需开发
+      { name: "售后工单", path: "/service/ticket" },      // ❌ 需开发
+      { name: "客服评价", path: "/service/evaluation" }   // ❌ 需开发
+    ]
+  }
+}

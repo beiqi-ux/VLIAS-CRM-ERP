@@ -108,4 +108,15 @@ public class SysMenuController {
     public ApiResponse<List<MenuDTO>> getUserMenuTree(@PathVariable Long userId) {
         return ApiResponse.success(menuService.getUserMenuTree(userId));
     }
+
+    /**
+     * 切换菜单状态
+     * @param id 菜单ID
+     * @return 操作结果
+     */
+    @PutMapping("/{id}/toggle-status")
+    public ApiResponse<Void> toggleMenuStatus(@PathVariable Long id) {
+        menuService.toggleMenuStatus(id);
+        return ApiResponse.success(null);
+    }
 } 

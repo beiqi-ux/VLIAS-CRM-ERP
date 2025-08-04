@@ -50,6 +50,14 @@
               <component :is="scope.row.icon" />
             </el-icon>
             <span>{{ scope.row.menuName }}</span>
+            <el-tag 
+              v-if="isCoreMenu(scope.row.menuCode)"
+              type="danger" 
+              size="small" 
+              class="core-menu-tag"
+            >
+              核心
+            </el-tag>
           </div>
         </template>
       </el-table-column>
@@ -119,10 +127,20 @@
             添加子菜单
           </el-button>
           <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+            size="small" 
+            :type="scope.row.status === 1 ? 'warning' : 'success'"
+            @click="handleToggleStatus(scope.row)"
+            :disabled="isCoreMenu(scope.row.menuCode) && scope.row.status === 1"
+          >
+            {{ scope.row.status === 1 ? '禁用' : '启用' }}
+          </el-button>
+          <el-button 
             v-if="hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
             size="small" 
             type="danger" 
             @click="handleDelete(scope.row)"
+            :disabled="isCoreMenu(scope.row.menuCode)"
           >
             删除
           </el-button>
@@ -296,7 +314,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu } from '@/api/menu'
+import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, toggleMenuStatus } from '@/api/menu'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
 // 表格数据和加载状态
@@ -467,8 +485,52 @@ const submitForm = async () => {
   }
 }
 
+// 核心菜单编码列表
+const CORE_MENU_CODES = [
+  'system',           // 系统管理
+  'system:user',      // 用户管理
+  'system:role',      // 角色管理
+  'system:permission',// 权限管理
+  'system:menu',      // 菜单管理
+  'profile'           // 个人中心
+]
+
+// 判断是否为核心菜单
+const isCoreMenu = (menuCode) => {
+  return CORE_MENU_CODES.includes(menuCode)
+}
+
+// 切换菜单状态
+const handleToggleStatus = (row) => {
+  if (isCoreMenu(row.menuCode) && row.status === 1) {
+    ElMessage.warning('系统核心菜单不允许禁用')
+    return
+  }
+  
+  const statusText = row.status === 1 ? '禁用' : '启用'
+  ElMessageBox.confirm(`确定要${statusText}该菜单吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await toggleMenuStatus(row.id)
+      ElMessage.success(`${statusText}成功`)
+      fetchMenuList()
+    } catch (error) {
+      ElMessage.error(`${statusText}失败`)
+      console.error(error)
+    }
+  }).catch(() => {})
+}
+
 // 删除菜单
 const handleDelete = (row) => {
+  if (isCoreMenu(row.menuCode)) {
+    ElMessage.warning('系统核心菜单不允许删除')
+    return
+  }
+  
   if (row.children && row.children.length > 0) {
     ElMessage.warning('该菜单下有子菜单，请先删除子菜单')
     return
@@ -503,8 +565,12 @@ const handleDelete = (row) => {
 .menu-name {
   display: flex;
   align-items: center;
+  gap: 5px;
 }
 .menu-icon {
   margin-right: 5px;
+}
+.core-menu-tag {
+  margin-left: 8px;
 }
 </style> 

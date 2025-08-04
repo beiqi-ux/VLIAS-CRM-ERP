@@ -135,7 +135,7 @@
             添加子权限
           </el-button>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE)"
+            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(scope.row)"
             size="small" 
             type="danger" 
             @click="handleDelete(scope.row)"
@@ -245,7 +245,11 @@
             :inactive-value="0"
             active-text="启用"
             inactive-text="禁用"
+            :disabled="isCorePermission(permissionForm)"
           />
+          <div v-if="isCorePermission(permissionForm)" class="text-gray-500 text-sm mt-1">
+            核心模块不允许禁用
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -266,7 +270,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getPermissionTree, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
+import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
 import { Refresh, Tools, Delete } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
@@ -323,7 +327,7 @@ const formatDateTime = (dateTimeStr) => {
 const fetchPermissionList = async () => {
   try {
     tableLoading.value = true
-    const { data } = await getPermissionTree()
+    const { data } = await getPermissionTreeForAdmin()
     tableData.value = data || []
     // 获取一级权限作为选项
     parentOptions.value = data.filter(item => item.permissionType === 1) || []
@@ -564,6 +568,18 @@ const handleResetPermissions = async () => {
     resetLoading.value = false
   }
 }
+
+// 判断是否为核心权限（不能被禁用或删除）
+const isCorePermission = (permission) => {
+  if (!permission || !permission.permissionCode) {
+    return false
+  }
+  
+  const corePermissions = ['system', 'profile']
+  return corePermissions.includes(permission.permissionCode)
+}
+
+
 
 
 </script>

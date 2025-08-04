@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * 商品分类实体类
- * 支持多级分类，适用于眼镜镜片行业
+ * 严格按照数据库设计方案 prod_category 表结构
  */
 @Data
 @Entity
@@ -23,8 +23,6 @@ public class ProdCategory extends BaseEntity {
     @Column(name = "category_name", nullable = false, length = 50)
     private String categoryName;
 
-
-
     /**
      * 父分类ID，0表示顶级分类
      */
@@ -32,22 +30,16 @@ public class ProdCategory extends BaseEntity {
     private Long parentId = 0L;
 
     /**
-     * 分类级别 1-一级分类 2-二级分类 3-三级分类
+     * 层级 1-一级 2-二级 3-三级
      */
     @Column(name = "level")
     private Integer level = 1;
 
     /**
-     * 分类图标
+     * 图标
      */
-    @Column(name = "icon", length = 100)
+    @Column(name = "icon", length = 255)
     private String icon;
-
-    /**
-     * 分类图片
-     */
-    @Column(name = "image", length = 255)
-    private String image;
 
     /**
      * 排序
@@ -62,16 +54,10 @@ public class ProdCategory extends BaseEntity {
     private Integer status = 1;
 
     /**
-     * 是否显示 0-隐藏 1-显示
+     * 是否显示 0-否 1-是
      */
     @Column(name = "is_show")
     private Integer isShow = 1;
-
-    /**
-     * 分类描述
-     */
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
 
     /**
      * 子分类列表（非持久化字段）

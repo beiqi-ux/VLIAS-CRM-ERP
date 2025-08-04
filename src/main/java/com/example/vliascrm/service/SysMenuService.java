@@ -70,4 +70,10 @@ public interface SysMenuService {
      * @return 菜单树
      */
     List<MenuDTO> getUserMenuTree(Long userId);
+
+    /**
+     * 切换菜单状态
+     * @param id 菜单ID
+     */
+    void toggleMenuStatus(Long id);
 } 

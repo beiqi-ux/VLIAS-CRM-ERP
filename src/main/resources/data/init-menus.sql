@@ -26,7 +26,10 @@ INSERT INTO sys_menu (parent_id, menu_name, menu_code, menu_type, path, componen
 (0, '商品管理', 'product', 1, '/product', null, 'Goods', 3, 1, 1, 'product', 0, NOW(), NOW(), 1, 1, 0),
 (11, '商品管理', 'product:goods', 2, '/goods', 'product/GoodsList', 'Box', 1, 1, 1, 'product:goods:list', 0, NOW(), NOW(), 1, 1, 0),
 (11, '分类管理', 'product:category', 2, '/categories', 'product/CategoryList', 'Grid', 2, 1, 1, 'product:category:list', 0, NOW(), NOW(), 1, 1, 0),
-(11, '品牌管理', 'product:brand', 2, '/brands', 'product/BrandList', 'Star', 3, 1, 1, 'product:brand:list', 0, NOW(), NOW(), 1, 1, 0);
+(11, '品牌管理', 'product:brand', 2, '/brands', 'product/BrandList', 'Star', 3, 1, 1, 'product:brand:list', 0, NOW(), NOW(), 1, 1, 0),
+(11, 'SKU管理', 'product:sku', 2, '/skus', 'product/SkuList', 'PriceTag', 4, 1, 1, 'product:sku:list', 0, NOW(), NOW(), 1, 1, 0),
+(11, '属性管理', 'product:attribute', 2, '/attributes', 'product/AttributeList', 'Menu', 5, 1, 1, 'product:attribute:list', 0, NOW(), NOW(), 1, 1, 0),
+(11, '规格管理', 'product:specification', 2, '/specifications', 'product/SpecificationList', 'List', 6, 1, 1, 'product:specification:list', 0, NOW(), NOW(), 1, 1, 0);
 
 -- 客户管理模块
 INSERT INTO sys_menu (parent_id, menu_name, menu_code, menu_type, path, component, icon, sort, visible, status, permission_code, is_frame, create_time, update_time, create_by, update_by, is_deleted) VALUES

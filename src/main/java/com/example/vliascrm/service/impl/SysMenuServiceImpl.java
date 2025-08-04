@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.HashSet;
+import java.util.Arrays;
 
 /**
  * 菜单服务实现类
@@ -27,6 +28,16 @@ import java.util.HashSet;
 public class SysMenuServiceImpl implements SysMenuService {
 
     private final SysMenuRepository menuRepository;
+    
+    // 核心菜单编码，不允许删除和禁用
+    private static final Set<String> CORE_MENU_CODES = new HashSet<>(Arrays.asList(
+        "system",           // 系统管理
+        "system:user",      // 用户管理
+        "system:role",      // 角色管理
+        "system:permission",// 权限管理
+        "system:menu",      // 菜单管理
+        "profile"           // 个人中心
+    ));
 
     @Override
     @Transactional
@@ -51,6 +62,18 @@ public class SysMenuServiceImpl implements SysMenuService {
         SysMenu menu = menuRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
 
+        // 检查是否为核心菜单
+        if (isCoreMenu(menu.getMenuCode())) {
+            // 核心菜单不允许禁用
+            if (menuDTO.getStatus() != null && menuDTO.getStatus() == 0) {
+                throw new BusinessException("系统核心菜单不允许禁用");
+            }
+            // 核心菜单不允许修改菜单编码
+            if (!menu.getMenuCode().equals(menuDTO.getMenuCode())) {
+                throw new BusinessException("系统核心菜单不允许修改编码");
+            }
+        }
+
         // 如果修改了菜单编码，需要检查是否存在
         if (!menu.getMenuCode().equals(menuDTO.getMenuCode()) &&
                 menuRepository.existsByMenuCode(menuDTO.getMenuCode())) {
@@ -69,6 +92,11 @@ public class SysMenuServiceImpl implements SysMenuService {
         SysMenu menu = menuRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
 
+        // 检查是否为核心菜单
+        if (isCoreMenu(menu.getMenuCode())) {
+            throw new BusinessException("系统核心菜单不允许删除");
+        }
+
         // 检查是否有子菜单
         List<SysMenu> children = menuRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAsc(id, 1, false);
         if (!children.isEmpty()) {
@@ -79,6 +107,15 @@ public class SysMenuServiceImpl implements SysMenuService {
         menu.setIsDeleted(true);
         menu.setUpdateTime(LocalDateTime.now());
         menuRepository.save(menu);
+    }
+
+    /**
+     * 判断是否为核心菜单
+     * @param menuCode 菜单编码
+     * @return 是否为核心菜单
+     */
+    private boolean isCoreMenu(String menuCode) {
+        return CORE_MENU_CODES.contains(menuCode);
     }
 
     @Override
@@ -194,5 +231,22 @@ public class SysMenuServiceImpl implements SysMenuService {
             visibleMenuIds.add(menu.getParentId());
             addParentMenuIds(menu.getParentId(), menuMap, visibleMenuIds);
         }
+    }
+
+    @Override
+    @Transactional
+    public void toggleMenuStatus(Long id) {
+        SysMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+
+        // 检查是否为核心菜单，核心菜单不允许禁用
+        if (isCoreMenu(menu.getMenuCode()) && menu.getStatus() == 1) {
+            throw new BusinessException("系统核心菜单不允许禁用");
+        }
+
+        // 切换状态
+        menu.setStatus(menu.getStatus() == 1 ? 0 : 1);
+        menu.setUpdateTime(LocalDateTime.now());
+        menuRepository.save(menu);
     }
 } 
