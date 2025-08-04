@@ -52,6 +52,12 @@ public class SysPermission extends BaseEntity {
     private String description;
 
     /**
+     * 排序
+     */
+    @Column(name = "sort")
+    private Integer sort = 0;
+
+    /**
      * 状态 0-禁用 1-正常
      */
     @Column

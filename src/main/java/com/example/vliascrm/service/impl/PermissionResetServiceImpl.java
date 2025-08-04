@@ -244,92 +244,112 @@ public class PermissionResetServiceImpl {
     }
     
     /**
-     * 一次性创建所有权限（模块权限和操作权限）
+     * 创建所有权限数据（一次性创建）
      */
     private List<SysPermission> createAllPermissionsAtOnce() {
-        List<SysPermission> allPermissions = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
-        
-        // 定义所有权限数据（模块和操作一起）
-        Object[][] allPermissionData = {
-            // 格式：{权限编码, 权限名称, 权限类型(1=模块,2=操作), 父权限编码, 描述}
-            {"system", "系统管理", 1, "", "系统基础功能管理"},
-            {"system:view", "查看", 2, "system", "查看系统信息"},
-            {"system:config", "配置", 2, "system", "系统配置管理"},
-            
-            {"user", "用户管理", 1, "", "用户账户管理"},
-            {"user:view", "查看", 2, "user", "查看用户列表"},
-            {"user:add", "新增", 2, "user", "新增用户"},
-            {"user:edit", "编辑", 2, "user", "编辑用户信息"},
-            {"user:delete", "删除", 2, "user", "删除用户"},
-            {"user:reset-password", "重置密码", 2, "user", "重置用户密码"},
-            {"user:assign-role", "分配角色", 2, "user", "为用户分配角色"},
-            
-            {"role", "角色管理", 1, "", "角色权限管理"},
-            {"role:view", "查看", 2, "role", "查看角色列表"},
-            {"role:add", "新增", 2, "role", "新增角色"},
-            {"role:edit", "编辑", 2, "role", "编辑角色信息"},
-            {"role:delete", "删除", 2, "role", "删除角色"},
-            {"role:assign", "分配权限", 2, "role", "为角色分配权限"},
-            
-            {"permission", "权限管理", 1, "", "权限配置管理"},
-            {"permission:view", "查看", 2, "permission", "查看权限列表"},
-            {"permission:add", "新增", 2, "permission", "新增权限"},
-            {"permission:edit", "编辑", 2, "permission", "编辑权限信息"},
-            {"permission:delete", "删除", 2, "permission", "删除权限"},
-            {"permission:sync", "同步", 2, "permission", "同步权限数据"},
-            
-            {"menu", "菜单管理", 1, "", "系统菜单管理"},
-            {"menu:view", "查看", 2, "menu", "查看菜单列表"},
-            {"menu:add", "新增", 2, "menu", "新增菜单"},
-            {"menu:edit", "编辑", 2, "menu", "编辑菜单信息"},
-            {"menu:delete", "删除", 2, "menu", "删除菜单"},
-            
-            {"org", "组织管理", 1, "", "组织架构管理"},
-            {"org:view", "查看", 2, "org", "查看组织列表"},
-            {"org:add", "新增", 2, "org", "新增组织"},
-            {"org:edit", "编辑", 2, "org", "编辑组织信息"},
-            {"org:delete", "删除", 2, "org", "删除组织"},
-            
-            {"dept", "部门管理", 1, "", "部门信息管理"},
-            {"dept:view", "查看", 2, "dept", "查看部门列表"},
-            {"dept:add", "新增", 2, "dept", "新增部门"},
-            {"dept:edit", "编辑", 2, "dept", "编辑部门信息"},
-            {"dept:delete", "删除", 2, "dept", "删除部门"},
-            
-            {"position", "岗位管理", 1, "", "岗位信息管理"},
-            {"position:view", "查看", 2, "position", "查看岗位列表"},
-            {"position:add", "新增", 2, "position", "新增岗位"},
-            {"position:edit", "编辑", 2, "position", "编辑岗位信息"},
-            {"position:delete", "删除", 2, "position", "删除岗位"},
-            
-            {"dict", "字典管理", 1, "", "系统字典管理"},
-            {"dict:view", "查看", 2, "dict", "查看字典列表"},
-            {"dict:add", "新增", 2, "dict", "新增字典"},
-            {"dict:edit", "编辑", 2, "dict", "编辑字典信息"},
-            {"dict:delete", "删除", 2, "dict", "删除字典"},
-            
-            {"product", "商品管理", 1, "", "商品信息管理"},
-            {"product:view", "查看", 2, "product", "查看商品列表"},
-            {"product:add", "新增", 2, "product", "新增商品"},
-            {"product:edit", "编辑", 2, "product", "编辑商品信息"},
-            {"product:delete", "删除", 2, "product", "删除商品"},
-            
-            {"brand", "品牌管理", 1, "", "商品品牌管理"},
-            {"brand:view", "查看", 2, "brand", "查看品牌列表"},
-            {"brand:add", "新增", 2, "brand", "新增品牌"},
-            {"brand:edit", "编辑", 2, "brand", "编辑品牌信息"},
-            {"brand:delete", "删除", 2, "brand", "删除品牌"},
-            
-            {"category", "分类管理", 1, "", "商品分类管理"},
-            {"category:view", "查看", 2, "category", "查看分类列表"},
-            {"category:add", "新增", 2, "category", "新增分类"},
-            {"category:edit", "编辑", 2, "category", "编辑分类信息"},
-            {"category:delete", "删除", 2, "category", "删除分类"}
-        };
-        
-        // 先创建所有模块权限并建立ID映射
+        List<SysPermission> allPermissions = new ArrayList<>();
         Map<String, Long> moduleCodeToIdMap = new HashMap<>();
+        
+        // 定义所有权限数据：{权限编码, 权限名称, 权限类型, 父权限编码, 描述, 排序}
+        Object[][] allPermissionData = {
+            // 一级权限（模块权限）
+            {"system", "系统管理", 1, null, "系统基础功能管理", 1},
+            {"user", "用户管理", 1, null, "用户账户管理", 2},
+            {"role", "角色管理", 1, null, "角色权限管理", 3},
+            {"permission", "权限管理", 1, null, "权限配置管理", 4},
+            {"menu", "菜单管理", 1, null, "系统菜单管理", 5},
+            {"org", "组织管理", 1, null, "组织架构管理", 6},
+            {"dept", "部门管理", 1, null, "部门信息管理", 7},
+            {"position", "岗位管理", 1, null, "岗位信息管理", 8},
+            {"dict", "字典管理", 1, null, "系统字典管理", 9},
+            {"product", "商品管理", 1, null, "商品信息管理", 10},
+            {"brand", "品牌管理", 1, null, "商品品牌管理", 11},
+            {"category", "分类管理", 1, null, "商品分类管理", 12},
+            {"profile", "个人中心", 1, null, "个人信息管理", 999}, // 个人中心设置最大sort值
+            
+            // 二级权限（操作权限）
+            // 系统管理操作
+            {"system:view", "查看", 2, "system", "查看系统信息", 1},
+            {"system:config", "配置", 2, "system", "系统配置管理", 2},
+            
+            // 用户管理操作
+            {"user:view", "查看", 2, "user", "查看用户列表", 1},
+            {"user:add", "新增", 2, "user", "新增用户", 2},
+            {"user:edit", "编辑", 2, "user", "编辑用户信息", 3},
+            {"user:delete", "删除", 2, "user", "删除用户", 4},
+            {"user:reset-password", "重置密码", 2, "user", "重置用户密码", 5},
+            {"user:assign-role", "分配角色", 2, "user", "为用户分配角色", 6},
+            
+            // 角色管理操作
+            {"role:view", "查看", 2, "role", "查看角色列表", 1},
+            {"role:add", "新增", 2, "role", "新增角色", 2},
+            {"role:edit", "编辑", 2, "role", "编辑角色信息", 3},
+            {"role:delete", "删除", 2, "role", "删除角色", 4},
+            {"role:assign", "分配权限", 2, "role", "为角色分配权限", 5},
+            
+            // 权限管理操作
+            {"permission:view", "查看", 2, "permission", "查看权限列表", 1},
+            {"permission:add", "新增", 2, "permission", "新增权限", 2},
+            {"permission:edit", "编辑", 2, "permission", "编辑权限信息", 3},
+            {"permission:delete", "删除", 2, "permission", "删除权限", 4},
+            {"permission:sync", "同步", 2, "permission", "同步权限数据", 5},
+            {"permission:reset", "重置", 2, "permission", "重置权限数据", 6},
+            {"permission:validate", "验证", 2, "permission", "验证权限配置", 7},
+            
+            // 菜单管理操作
+            {"menu:view", "查看", 2, "menu", "查看菜单列表", 1},
+            {"menu:add", "新增", 2, "menu", "新增菜单", 2},
+            {"menu:edit", "编辑", 2, "menu", "编辑菜单信息", 3},
+            {"menu:delete", "删除", 2, "menu", "删除菜单", 4},
+            
+            // 组织管理操作
+            {"org:view", "查看", 2, "org", "查看组织列表", 1},
+            {"org:add", "新增", 2, "org", "新增组织", 2},
+            {"org:edit", "编辑", 2, "org", "编辑组织信息", 3},
+            {"org:delete", "删除", 2, "org", "删除组织", 4},
+            
+            // 部门管理操作
+            {"dept:view", "查看", 2, "dept", "查看部门列表", 1},
+            {"dept:add", "新增", 2, "dept", "新增部门", 2},
+            {"dept:edit", "编辑", 2, "dept", "编辑部门信息", 3},
+            {"dept:delete", "删除", 2, "dept", "删除部门", 4},
+            
+            // 岗位管理操作
+            {"position:view", "查看", 2, "position", "查看岗位列表", 1},
+            {"position:add", "新增", 2, "position", "新增岗位", 2},
+            {"position:edit", "编辑", 2, "position", "编辑岗位信息", 3},
+            {"position:delete", "删除", 2, "position", "删除岗位", 4},
+            
+            // 字典管理操作
+            {"dict:view", "查看", 2, "dict", "查看字典列表", 1},
+            {"dict:add", "新增", 2, "dict", "新增字典", 2},
+            {"dict:edit", "编辑", 2, "dict", "编辑字典信息", 3},
+            {"dict:delete", "删除", 2, "dict", "删除字典", 4},
+            
+            // 商品管理操作
+            {"product:view", "查看", 2, "product", "查看商品列表", 1},
+            {"product:add", "新增", 2, "product", "新增商品", 2},
+            {"product:edit", "编辑", 2, "product", "编辑商品信息", 3},
+            {"product:delete", "删除", 2, "product", "删除商品", 4},
+            
+            // 品牌管理操作
+            {"brand:view", "查看", 2, "brand", "查看品牌列表", 1},
+            {"brand:add", "新增", 2, "brand", "新增品牌", 2},
+            {"brand:edit", "编辑", 2, "brand", "编辑品牌信息", 3},
+            {"brand:delete", "删除", 2, "brand", "删除品牌", 4},
+            
+            // 分类管理操作
+            {"category:view", "查看", 2, "category", "查看分类列表", 1},
+            {"category:add", "新增", 2, "category", "新增分类", 2},
+            {"category:edit", "编辑", 2, "category", "编辑分类信息", 3},
+            {"category:delete", "删除", 2, "category", "删除分类", 4},
+            
+            // 个人中心操作
+            {"profile:view", "查看", 2, "profile", "查看个人信息", 1},
+            {"profile:edit", "编辑", 2, "profile", "编辑个人信息", 2},
+            {"profile:password", "修改密码", 2, "profile", "修改个人密码", 3}
+        };
         
         // 第一次遍历：创建模块权限
         for (Object[] data : allPermissionData) {
@@ -341,6 +361,7 @@ public class PermissionResetServiceImpl {
                 permission.setPermissionType(permissionType);
                 permission.setParentId(0L);
                 permission.setDescription((String) data[4]);
+                permission.setSort((Integer) data[5]); // 设置排序值
                 permission.setStatus(1);
                 permission.setCreateTime(now);
                 permission.setUpdateTime(now);
@@ -371,6 +392,7 @@ public class PermissionResetServiceImpl {
                     permission.setPermissionType(permissionType);
                     permission.setParentId(parentId);
                     permission.setDescription((String) data[4]);
+                    permission.setSort((Integer) data[5]); // 设置排序值
                     permission.setStatus(1);
                     permission.setCreateTime(now);
                     permission.setUpdateTime(now);

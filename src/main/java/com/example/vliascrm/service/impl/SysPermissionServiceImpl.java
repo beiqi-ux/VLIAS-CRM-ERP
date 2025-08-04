@@ -70,7 +70,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
                 .orElseThrow(() -> new ResourceNotFoundException("权限不存在"));
 
         // 检查是否有子权限
-        List<SysPermission> children = permissionRepository.findByParentIdAndStatusAndIsDeletedOrderByIdAsc(id, 1, false);
+        List<SysPermission> children = permissionRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAscIdAsc(id, 1, false);
         if (!children.isEmpty()) {
             throw new BusinessException("请先删除子权限");
         }
@@ -98,7 +98,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
     @Override
     public List<PermissionDTO> getPermissionTree() {
         // 获取所有未删除且启用的权限
-        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderByIdAsc(false).stream()
+        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderBySortAscIdAsc(false).stream()
                 .filter(p -> p.getStatus() == 1)
                 .collect(Collectors.toList());
 

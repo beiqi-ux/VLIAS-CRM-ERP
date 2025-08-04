@@ -153,6 +153,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
             // 更新现有权限
             permission.setPermissionName(module.getName());
             permission.setDescription(module.getDescription());
+            permission.setSort(module.getSort() != null ? module.getSort() : 0);
             permission.setStatus(1);
             permission.setIsDeleted(false);
             permission.setUpdateTime(LocalDateTime.now());
@@ -164,6 +165,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
             permission.setPermissionType(1); // 一级权限（模块）
             permission.setParentId(0L);
             permission.setDescription(module.getDescription());
+            permission.setSort(module.getSort() != null ? module.getSort() : 0);
             permission.setStatus(1);
             permission.setCreateTime(LocalDateTime.now());
             permission.setUpdateTime(LocalDateTime.now());
@@ -187,6 +189,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
             permission.setPermissionName(operation.getName());
             permission.setDescription(operation.getDescription());
             permission.setParentId(parentPermission.getId());
+            permission.setSort(operation.getSort() != null ? operation.getSort() : 0);
             permission.setStatus(1);
             permission.setIsDeleted(false);
             permission.setUpdateTime(LocalDateTime.now());
@@ -198,6 +201,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
             permission.setPermissionType(2); // 二级权限（操作）
             permission.setParentId(parentPermission.getId());
             permission.setDescription(operation.getDescription());
+            permission.setSort(operation.getSort() != null ? operation.getSort() : 0);
             permission.setStatus(1);
             permission.setCreateTime(LocalDateTime.now());
             permission.setUpdateTime(LocalDateTime.now());

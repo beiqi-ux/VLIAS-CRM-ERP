@@ -353,4 +353,23 @@ vlias:
             description: "删除品牌"
             sort: 4 
 
+      # 个人中心模块
+      - name: "个人中心"
+        code: "profile"
+        description: "个人信息管理功能"
+        sort: 999  # 设置最大排序值，确保显示在最后
+        operations:
+          - name: "查看"
+            code: "view"
+            description: "查看个人信息"
+            sort: 1
+          - name: "编辑"
+            code: "edit"
+            description: "编辑个人信息"
+            sort: 2
+          - name: "修改密码"
+            code: "password"
+            description: "修改个人密码"
+            sort: 3 
+
  

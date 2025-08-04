@@ -49,7 +49,7 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      * @param roleId 角色ID
      * @return 权限列表
      */
-    @Query("SELECT p FROM SysPermission p JOIN SysRolePermission rp ON p.id = rp.permissionId WHERE rp.roleId = ?1 AND p.status = 1 AND p.isDeleted = false")
+    @Query("SELECT p FROM SysPermission p JOIN SysRolePermission rp ON p.id = rp.permissionId WHERE rp.roleId = ?1 AND p.status = 1 AND p.isDeleted = false ORDER BY p.sort ASC, p.id ASC")
     List<SysPermission> findPermissionsByRoleId(Long roleId);
 
     /**
@@ -62,7 +62,8 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
            "JOIN SysUserRole ur ON rp.roleId = ur.roleId " +
            "JOIN SysRole r ON ur.roleId = r.id " +
            "WHERE ur.userId = ?1 AND p.status = 1 AND p.isDeleted = false " +
-           "AND r.status = 1 AND r.isDeleted = false")
+           "AND r.status = 1 AND r.isDeleted = false " +
+           "ORDER BY p.sort ASC, p.id ASC")
     List<SysPermission> findPermissionsByUserId(Long userId);
 
     /**
@@ -72,11 +73,11 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      * @param isDeleted 是否删除
      * @return 权限列表
      */
-    List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderByIdAsc(Long parentId, Integer status, Boolean isDeleted);
+    List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderBySortAscIdAsc(Long parentId, Integer status, Boolean isDeleted);
 
     /**
      * 查询所有未删除的权限
      * @return 权限列表
      */
-    List<SysPermission> findByIsDeletedOrderByIdAsc(Boolean isDeleted);
+    List<SysPermission> findByIsDeletedOrderBySortAscIdAsc(Boolean isDeleted);
 } 
