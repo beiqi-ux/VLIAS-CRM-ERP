@@ -41,6 +41,12 @@ public class SysPermissionServiceImpl implements SysPermissionService {
         permission.setCreateTime(LocalDateTime.now());
         permission.setUpdateTime(LocalDateTime.now());
         permission.setIsDeleted(false);
+        
+        // 设置层级深度
+        permission.setLevelDepth(permissionDTO.getPermissionType());
+        
+        // 生成权限路径
+        permission.setPermissionPath(generatePermissionPath(permission));
 
         return permissionRepository.save(permission);
     }
@@ -65,8 +71,21 @@ public class SysPermissionServiceImpl implements SysPermissionService {
             }
         }
 
+        // 记录原有的权限编码和父ID，用于判断是否需要更新路径
+        String oldPermissionCode = permission.getPermissionCode();
+        Long oldParentId = permission.getParentId();
+        
         BeanUtils.copyProperties(permissionDTO, permission);
         permission.setUpdateTime(LocalDateTime.now());
+        
+        // 更新层级深度
+        permission.setLevelDepth(permissionDTO.getPermissionType());
+        
+        // 如果权限编码或父ID发生变化，需要重新生成路径
+        if (!oldPermissionCode.equals(permission.getPermissionCode()) || 
+            !oldParentId.equals(permission.getParentId())) {
+            updatePermissionPath(permission);
+        }
 
         return permissionRepository.save(permission);
     }
@@ -84,7 +103,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
         }
 
         // 检查是否有子权限
-        List<SysPermission> children = permissionRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAscIdAsc(id, 1, false);
+        List<SysPermission> children = permissionRepository.findByParentIdAndStatusAndIsDeletedOrderBySortOrderAscIdAsc(id, 1, false);
         if (!children.isEmpty()) {
             throw new BusinessException("请先删除子权限");
         }
@@ -106,13 +125,14 @@ public class SysPermissionServiceImpl implements SysPermissionService {
 
     @Override
     public List<SysPermission> getAllPermissions() {
-        return permissionRepository.findAll();
+        // 按照3级权限结构排序：权限类型 → 排序字段 → ID
+        return permissionRepository.findAllPermissionsOrderByTypeAndSort(false);
     }
 
     @Override
     public List<PermissionDTO> getPermissionTree() {
         // 获取所有未删除且启用的权限
-        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderBySortAscIdAsc(false).stream()
+        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderBySortOrderAscIdAsc(false).stream()
                 .filter(p -> p.getStatus() == 1)
                 .collect(Collectors.toList());
 
@@ -142,7 +162,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
      */
     public List<PermissionDTO> getPermissionTreeForAdmin() {
         // 获取所有未删除的权限（包括禁用的）
-        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderBySortAscIdAsc(false);
+        List<SysPermission> allPermissions = permissionRepository.findByIsDeletedOrderBySortOrderAscIdAsc(false);
 
         // 转换为DTO
         List<PermissionDTO> dtoList = allPermissions.stream().map(p -> {
@@ -207,5 +227,140 @@ public class SysPermissionServiceImpl implements SysPermissionService {
         }
         
         return false;
+    }
+
+    /**
+     * 生成权限路径
+     * @param permission 权限对象
+     * @return 权限路径
+     */
+    private String generatePermissionPath(SysPermission permission) {
+        if (permission.getParentId() == null || permission.getParentId() == 0) {
+            // 一级权限，直接使用权限编码
+            return "/" + permission.getPermissionCode();
+        }
+        
+        // 查找父权限
+        SysPermission parent = permissionRepository.findById(permission.getParentId()).orElse(null);
+        if (parent == null) {
+            return "/" + permission.getPermissionCode();
+        }
+        
+        // 递归构建路径
+        String parentPath = parent.getPermissionPath();
+        if (parentPath == null || parentPath.isEmpty()) {
+            parentPath = generatePermissionPath(parent);
+        }
+        
+        return parentPath + "/" + permission.getPermissionCode();
+    }
+
+    /**
+     * 更新权限路径
+     * @param permission 权限对象
+     */
+    private void updatePermissionPath(SysPermission permission) {
+        permission.setPermissionPath(generatePermissionPath(permission));
+        permissionRepository.save(permission);
+        
+        // 更新所有子权限的路径
+        updateChildrenPaths(permission.getId());
+    }
+
+    /**
+     * 递归更新子权限路径
+     * @param parentId 父权限ID
+     */
+    private void updateChildrenPaths(Long parentId) {
+        List<SysPermission> children = permissionRepository.findByParentIdAndStatusAndIsDeletedOrderBySortOrderAscIdAsc(parentId, 1, false);
+        for (SysPermission child : children) {
+            child.setPermissionPath(generatePermissionPath(child));
+            permissionRepository.save(child);
+            updateChildrenPaths(child.getId());
+        }
+    }
+
+    /**
+     * 检查权限继承关系
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermission 需要检查的权限编码
+     * @return 是否有权限
+     */
+    public boolean hasPermissionWithInheritance(List<String> userPermissions, String requiredPermission) {
+        // 1. 直接权限检查
+        if (userPermissions.contains(requiredPermission)) {
+            return true;
+        }
+        
+        // 2. 继承权限检查
+        // 如果是三级权限（操作权限），检查是否有二级权限
+        if (requiredPermission.contains(":")) {
+            String[] parts = requiredPermission.split(":");
+            if (parts.length == 2) {
+                String submoduleCode = parts[0];
+                if (userPermissions.contains(submoduleCode)) {
+                    return true;
+                }
+                
+                // 检查是否有一级权限
+                String[] subParts = submoduleCode.split("-");
+                if (subParts.length > 0) {
+                    String moduleCode = subParts[0];
+                    if (userPermissions.contains(moduleCode)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // 如果是二级权限，检查是否有一级权限
+        else if (requiredPermission.contains("-")) {
+            String[] parts = requiredPermission.split("-");
+            if (parts.length > 0) {
+                String moduleCode = parts[0];
+                if (userPermissions.contains(moduleCode)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * 获取指定类型的权限列表
+     * @param permissionType 权限类型
+     * @return 权限列表
+     */
+    public List<PermissionDTO> getPermissionsByType(Integer permissionType) {
+        List<SysPermission> permissions = permissionRepository.findByPermissionTypeAndIsDeletedOrderBySortOrderAscIdAsc(permissionType, false);
+        return permissions.stream().map(p -> {
+            PermissionDTO dto = new PermissionDTO();
+            BeanUtils.copyProperties(p, dto);
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取权限的所有子孙权限
+     * @param permissionId 权限ID
+     * @return 子孙权限列表
+     */
+    public List<PermissionDTO> getDescendantPermissions(Long permissionId) {
+        SysPermission permission = permissionRepository.findById(permissionId).orElse(null);
+        if (permission == null) {
+            return new ArrayList<>();
+        }
+        
+        String pathPrefix = permission.getPermissionPath();
+        if (pathPrefix == null || pathPrefix.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<SysPermission> descendants = permissionRepository.findByPermissionPathStartingWithAndIsDeleted(pathPrefix + "/", false);
+        return descendants.stream().map(p -> {
+            PermissionDTO dto = new PermissionDTO();
+            BeanUtils.copyProperties(p, dto);
+            return dto;
+        }).collect(Collectors.toList());
     }
 } 

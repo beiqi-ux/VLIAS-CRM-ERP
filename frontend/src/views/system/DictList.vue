@@ -40,7 +40,7 @@
         重置
       </el-button>
       <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.DICT.ADD)"
+        v-if="hasPermission(PERMISSIONS.SYS.DICT.CREATE)"
         type="success" 
         style="margin-left: 10px" 
         @click="handleAdd"

@@ -31,7 +31,7 @@
             <span class="header-title">用户管理</span>
           </div>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.USER.ADD)"
+            v-if="hasPermission(PERMISSIONS.SYS.USER.CREATE)"
             type="primary" 
             @click="handleAdd"
           >
@@ -183,7 +183,7 @@
               v-if="!hasPermission(PERMISSIONS.SYS.USER.EDIT)"
               :type="getStatusType(row.status)"
             >
-              {{ getStatusText(row.status) }}
+              {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
             <el-tag 
               v-else
@@ -191,7 +191,7 @@
               style="cursor: pointer;"
               @click="handleToggleStatus(row)"
             >
-              {{ getStatusText(row.status) }}
+              {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -214,7 +214,7 @@
           </template>
         </el-table-column>
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT) || hasPermission(PERMISSIONS.SYS.USER.DELETE) || hasPermission(PERMISSIONS.SYS.USER.ROLE)"
+          v-if="hasPermission(PERMISSIONS.SYS.USER.EDIT) || hasPermission(PERMISSIONS.SYS.USER.DELETE) || hasPermission(PERMISSIONS.SYS.USER.RESET_PASSWORD)"
           label="操作" 
           width="220" 
           fixed="right"
@@ -231,7 +231,7 @@
                 编辑
               </el-button>
               <el-button 
-                v-if="hasPermission(PERMISSIONS.SYS.USER.ROLE)"
+                v-if="hasPermission(PERMISSIONS.SYS.USER.RESET_PASSWORD)"
                 type="success" 
                 size="small" 
                 @click="handleAssignRole(row)"
@@ -355,16 +355,6 @@
             v-model="userForm.gender" 
             dict-code="GENDER" 
             placeholder="请选择性别"
-            value-type="number"
-          />
-        </el-form-item>
-        <el-form-item
-          label="状态"
-          prop="status"
-        >
-          <DictRadio 
-            v-model="userForm.status" 
-            dict-code="USER_STATUS" 
             value-type="number"
           />
         </el-form-item>

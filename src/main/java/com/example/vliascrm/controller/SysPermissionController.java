@@ -111,4 +111,51 @@ public class SysPermissionController {
     public ApiResponse<List<SysPermission>> getPermissionsByUserId(@PathVariable Long userId) {
         return ApiResponse.success(permissionService.getPermissionsByUserId(userId));
     }
+
+    /**
+     * 根据权限类型获取权限列表
+     * @param permissionType 权限类型
+     * @return 权限列表
+     */
+    @GetMapping("/type/{permissionType}")
+    public ApiResponse<List<PermissionDTO>> getPermissionsByType(@PathVariable Integer permissionType) {
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getPermissionsByType(permissionType));
+        }
+        return ApiResponse.success(new java.util.ArrayList<>());
+    }
+
+    /**
+     * 获取权限的所有子孙权限
+     * @param permissionId 权限ID
+     * @return 子孙权限列表
+     */
+    @GetMapping("/{permissionId}/descendants")
+    public ApiResponse<List<PermissionDTO>> getDescendantPermissions(@PathVariable Long permissionId) {
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getDescendantPermissions(permissionId));
+        }
+        return ApiResponse.success(new java.util.ArrayList<>());
+    }
+
+    /**
+     * 检查权限继承关系
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermission 需要检查的权限编码
+     * @return 是否有权限
+     */
+    @PostMapping("/check-inheritance")
+    public ApiResponse<Boolean> checkPermissionWithInheritance(
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        @SuppressWarnings("unchecked")
+        java.util.List<String> userPermissions = (java.util.List<String>) requestBody.get("userPermissions");
+        String requiredPermission = (String) requestBody.get("requiredPermission");
+        
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            boolean hasPermission = ((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService)
+                    .hasPermissionWithInheritance(userPermissions, requiredPermission);
+            return ApiResponse.success(hasPermission);
+        }
+        return ApiResponse.success(false);
+    }
 } 

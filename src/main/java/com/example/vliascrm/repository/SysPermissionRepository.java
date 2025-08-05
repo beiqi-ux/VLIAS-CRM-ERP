@@ -49,7 +49,7 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      * @param roleId 角色ID
      * @return 权限列表
      */
-    @Query("SELECT p FROM SysPermission p JOIN SysRolePermission rp ON p.id = rp.permissionId WHERE rp.roleId = ?1 AND p.status = 1 AND p.isDeleted = false ORDER BY p.sort ASC, p.id ASC")
+    @Query("SELECT p FROM SysPermission p JOIN SysRolePermission rp ON p.id = rp.permissionId WHERE rp.roleId = ?1 AND p.status = 1 AND p.isDeleted = false ORDER BY p.sortOrder ASC, p.id ASC")
     List<SysPermission> findPermissionsByRoleId(Long roleId);
 
     /**
@@ -63,7 +63,7 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
            "JOIN SysRole r ON ur.roleId = r.id " +
            "WHERE ur.userId = ?1 AND p.status = 1 AND p.isDeleted = false " +
            "AND r.status = 1 AND r.isDeleted = false " +
-           "ORDER BY p.sort ASC, p.id ASC")
+           "ORDER BY p.sortOrder ASC, p.id ASC")
     List<SysPermission> findPermissionsByUserId(Long userId);
 
     /**
@@ -73,11 +73,44 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      * @param isDeleted 是否删除
      * @return 权限列表
      */
-    List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderBySortAscIdAsc(Long parentId, Integer status, Boolean isDeleted);
+    List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderBySortOrderAscIdAsc(Long parentId, Integer status, Boolean isDeleted);
 
     /**
      * 查询所有未删除的权限
      * @return 权限列表
      */
-    List<SysPermission> findByIsDeletedOrderBySortAscIdAsc(Boolean isDeleted);
+    List<SysPermission> findByIsDeletedOrderBySortOrderAscIdAsc(Boolean isDeleted);
+
+    /**
+     * 根据权限类型查询权限列表
+     * @param permissionType 权限类型
+     * @param isDeleted 是否删除
+     * @return 权限列表
+     */
+    List<SysPermission> findByPermissionTypeAndIsDeletedOrderBySortOrderAscIdAsc(Integer permissionType, Boolean isDeleted);
+
+    /**
+     * 根据层级深度查询权限列表
+     * @param levelDepth 层级深度
+     * @param isDeleted 是否删除
+     * @return 权限列表
+     */
+    List<SysPermission> findByLevelDepthAndIsDeletedOrderBySortOrderAscIdAsc(Integer levelDepth, Boolean isDeleted);
+
+    /**
+     * 根据权限路径前缀查询权限列表
+     * @param pathPrefix 路径前缀
+     * @param isDeleted 是否删除
+     * @return 权限列表
+     */
+    @Query("SELECT p FROM SysPermission p WHERE p.permissionPath LIKE CONCAT(?1, '%') AND p.isDeleted = ?2 ORDER BY p.sortOrder ASC, p.id ASC")
+    List<SysPermission> findByPermissionPathStartingWithAndIsDeleted(String pathPrefix, Boolean isDeleted);
+
+    /**
+     * 查询所有权限并按3级结构排序
+     * @param isDeleted 是否删除
+     * @return 权限列表
+     */
+    @Query("SELECT p FROM SysPermission p WHERE p.isDeleted = ?1 ORDER BY p.permissionType ASC, p.sortOrder ASC, p.id ASC")
+    List<SysPermission> findAllPermissionsOrderByTypeAndSort(Boolean isDeleted);
 } 

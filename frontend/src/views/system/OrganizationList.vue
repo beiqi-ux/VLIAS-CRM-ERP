@@ -5,7 +5,7 @@
         <div class="card-header">
           <span>组织机构管理</span>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.ADD)"
+            v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.CREATE)"
             type="primary" 
             @click="handleAdd"
           >
@@ -131,14 +131,14 @@
           </template>
         </el-table-column>
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.EDIT) || hasPermission(PERMISSIONS.ORG.ORGANIZATION.DELETE)"
+          v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
           label="操作" 
           width="200" 
           fixed="right"
         >
           <template #default="{ row }">
             <el-button 
-              v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.EDIT)"
+              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT)"
               type="primary" 
               size="small" 
               @click="handleEdit(row)"
@@ -146,7 +146,7 @@
               编辑
             </el-button>
             <el-button 
-              v-if="hasPermission(PERMISSIONS.ORG.ORGANIZATION.DELETE)"
+              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
               type="danger" 
               size="small" 
               @click="handleDelete(row)"

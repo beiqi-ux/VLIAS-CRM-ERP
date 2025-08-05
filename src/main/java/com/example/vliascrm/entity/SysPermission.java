@@ -18,20 +18,32 @@ public class SysPermission extends BaseEntity {
     /**
      * 权限名称
      */
-    @Column(name = "permission_name", nullable = false, length = 50)
+    @Column(name = "permission_name", nullable = false, length = 100)
     private String permissionName;
 
     /**
      * 权限编码
      */
-    @Column(name = "permission_code", nullable = false, length = 50, unique = true)
+    @Column(name = "permission_code", nullable = false, length = 200, unique = true)
     private String permissionCode;
 
     /**
-     * 权限类型 1-一级权限(模块) 2-二级权限(操作)
+     * 权限路径，格式：/parent1/parent2/current
+     */
+    @Column(name = "permission_path", length = 500)
+    private String permissionPath;
+
+    /**
+     * 权限类型 1-一级权限(模块) 2-二级权限(子模块) 3-三级权限(操作)
      */
     @Column(name = "permission_type", nullable = false)
     private Integer permissionType;
+
+    /**
+     * 权限层级深度 1-一级 2-二级 3-三级
+     */
+    @Column(name = "level_depth")
+    private Integer levelDepth = 1;
 
     /**
      * 父权限ID
@@ -52,10 +64,10 @@ public class SysPermission extends BaseEntity {
     private String description;
 
     /**
-     * 排序
+     * 排序字段
      */
-    @Column(name = "sort")
-    private Integer sort = 0;
+    @Column(name = "sort_order")
+    private Integer sortOrder = 0;
 
     /**
      * 状态 0-禁用 1-正常

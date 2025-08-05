@@ -48,7 +48,35 @@ public class PermissionSyncConfig {
         private Integer sort;
         
         /**
-         * 操作权限列表
+         * 子模块列表（二级权限）
+         */
+        private List<SubmoduleConfig> submodules;
+    }
+
+    @Data
+    public static class SubmoduleConfig {
+        /**
+         * 子模块名称
+         */
+        private String name;
+        
+        /**
+         * 子模块编码
+         */
+        private String code;
+        
+        /**
+         * 子模块描述
+         */
+        private String description;
+        
+        /**
+         * 排序
+         */
+        private Integer sort;
+        
+        /**
+         * 操作权限列表（三级权限）
          */
         private List<OperationConfig> operations;
     }

@@ -361,7 +361,7 @@ public class PermissionResetServiceImpl {
                 permission.setPermissionType(permissionType);
                 permission.setParentId(0L);
                 permission.setDescription((String) data[4]);
-                permission.setSort((Integer) data[5]); // 设置排序值
+                permission.setSortOrder((Integer) data[5]); // 设置排序值
                 permission.setStatus(1);
                 permission.setCreateTime(now);
                 permission.setUpdateTime(now);
@@ -392,7 +392,7 @@ public class PermissionResetServiceImpl {
                     permission.setPermissionType(permissionType);
                     permission.setParentId(parentId);
                     permission.setDescription((String) data[4]);
-                    permission.setSort((Integer) data[5]); // 设置排序值
+                    permission.setSortOrder((Integer) data[5]); // 设置排序值
                     permission.setStatus(1);
                     permission.setCreateTime(now);
                     permission.setUpdateTime(now);

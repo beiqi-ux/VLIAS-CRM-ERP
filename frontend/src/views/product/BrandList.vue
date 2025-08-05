@@ -59,7 +59,7 @@
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
-            v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.ADD)"
+            v-if="hasPermission(PERMISSIONS.GOODS.BRAND.CREATE)"
             type="primary" 
             @click="handleAdd"
           >
@@ -67,7 +67,7 @@
             新增品牌
           </el-button>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
+            v-if="hasPermission(PERMISSIONS.GOODS.BRAND.DELETE)"
             type="danger" 
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
@@ -181,14 +181,14 @@
           width="180"
         />
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT) || hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
+          v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT) || hasPermission(PERMISSIONS.GOODS.BRAND.DELETE)"
           label="操作" 
           width="220" 
           fixed="right"
         >
           <template #default="{ row }">
             <el-button 
-              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT)"
+              v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT)"
               type="primary" 
               text 
               @click="handleEdit(row)"
@@ -196,7 +196,7 @@
               编辑
             </el-button>
             <el-button 
-              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.EDIT)"
+              v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT)"
               :type="row.status === 1 ? 'warning' : 'success'" 
               text 
               @click="handleToggleStatus(row)"
@@ -204,7 +204,7 @@
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
             <el-button 
-              v-if="hasPermission(PERMISSIONS.PRODUCT.BRAND.DELETE)"
+              v-if="hasPermission(PERMISSIONS.GOODS.BRAND.DELETE)"
               type="danger" 
               text 
               @click="handleDelete(row)"

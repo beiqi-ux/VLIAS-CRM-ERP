@@ -2,7 +2,7 @@
   <div class="menu-container">
     <div class="action-bar">
       <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.MENU.ADD)"
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.CREATE)"
         type="primary" 
         @click="handleAddTopLevel"
       >
@@ -105,7 +105,7 @@
         </template>
       </el-table-column>
       <el-table-column 
-        v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT) || hasPermission(PERMISSIONS.SYS.MENU.ADD) || hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT) || hasPermission(PERMISSIONS.SYS.MENU.CREATE) || hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
         label="操作" 
         width="300" 
         fixed="right"
@@ -119,7 +119,7 @@
             编辑
           </el-button>
           <el-button 
-            v-if="scope.row.menuType !== 3 && hasPermission(PERMISSIONS.SYS.MENU.ADD)" 
+            v-if="scope.row.menuType !== 3 && hasPermission(PERMISSIONS.SYS.MENU.CREATE)" 
             size="small" 
             type="success" 
             @click="handleAddChild(scope.row)"

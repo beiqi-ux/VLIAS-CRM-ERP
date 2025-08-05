@@ -43,14 +43,27 @@ public class SkuInitServiceImpl implements SkuInitService, CommandLineRunner {
         try {
             // 读取SQL文件
             ClassPathResource resource = new ClassPathResource("data/init-sku.sql");
-            List<String> sqlLines = new BufferedReader(
-                new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)
-            ).lines().collect(Collectors.toList());
-
+            StringBuilder sqlContent = new StringBuilder();
+            
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // 跳过注释行和空行
+                    if (!line.trim().isEmpty() && !line.trim().startsWith("--")) {
+                        sqlContent.append(line).append(" ");
+                    }
+                }
+            }
+            
+            // 按分号分割SQL语句
+            String[] sqlStatements = sqlContent.toString().split(";");
+            
             // 执行SQL语句
-            for (String sql : sqlLines) {
-                if (!sql.trim().isEmpty() && !sql.trim().startsWith("--")) {
-                    jdbcTemplate.execute(sql);
+            for (String sql : sqlStatements) {
+                String trimmedSql = sql.trim();
+                if (!trimmedSql.isEmpty()) {
+                    jdbcTemplate.execute(trimmedSql);
                 }
             }
             

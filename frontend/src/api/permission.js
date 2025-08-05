@@ -152,4 +152,45 @@ export function getUserPermissions(userId) {
     url: `/api/sys/permissions/users/${userId}`,
     method: 'get'
   })
+}
+
+/**
+ * 根据权限类型获取权限列表
+ * @param {Number} permissionType - 权限类型 1-一级 2-二级 3-三级
+ * @returns {Promise}
+ */
+export function getPermissionsByType(permissionType) {
+  return request({
+    url: `/api/sys/permissions/type/${permissionType}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取权限的所有子孙权限
+ * @param {Number} permissionId - 权限ID
+ * @returns {Promise}
+ */
+export function getDescendantPermissions(permissionId) {
+  return request({
+    url: `/api/sys/permissions/${permissionId}/descendants`,
+    method: 'get'
+  })
+}
+
+/**
+ * 检查权限继承关系
+ * @param {Array} userPermissions - 用户权限编码列表
+ * @param {String} requiredPermission - 需要检查的权限编码
+ * @returns {Promise}
+ */
+export function checkPermissionWithInheritance(userPermissions, requiredPermission) {
+  return request({
+    url: '/api/sys/permissions/check-inheritance',
+    method: 'post',
+    data: {
+      userPermissions,
+      requiredPermission
+    }
+  })
 } 

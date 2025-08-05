@@ -18,7 +18,7 @@
         重置
       </el-button>
       <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.ROLE.ADD)"
+        v-if="hasPermission(PERMISSIONS.SYS.ROLE.CREATE)"
         type="success" 
         style="margin-left: 10px" 
         @click="handleAdd"
@@ -75,7 +75,7 @@
         </template>
       </el-table-column>
       <el-table-column 
-        v-if="hasPermission(PERMISSIONS.SYS.ROLE.EDIT) || hasPermission(PERMISSIONS.SYS.ROLE.DELETE) || hasPermission(PERMISSIONS.SYS.ROLE.PERMISSION)"
+        v-if="hasPermission(PERMISSIONS.SYS.ROLE.EDIT) || hasPermission(PERMISSIONS.SYS.ROLE.DELETE) || hasPermission(PERMISSIONS.SYS.ROLE.ASSIGN_PERMISSION)"
         label="操作" 
         width="280" 
         fixed="right"
@@ -89,7 +89,7 @@
             编辑
           </el-button>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.ROLE.PERMISSION)"
+            v-if="hasPermission(PERMISSIONS.SYS.ROLE.ASSIGN_PERMISSION)"
             size="small" 
             type="primary" 
             @click="handleAssignPermission(scope.row)"
@@ -199,9 +199,25 @@
           :data="permissionTree"
           show-checkbox
           node-key="id"
-          :props="{ label: 'permissionName' }"
+          :props="{ label: 'permissionName', children: 'children' }"
           :default-expanded-keys="expandedPermissionIds"
-        />
+          check-strictly
+        >
+          <template #default="{ node, data }">
+            <div class="permission-tree-node">
+              <span class="permission-name">{{ data.permissionName }}</span>
+              <el-tag 
+                :type="getPermissionTypeTag(data.permissionType)" 
+                size="small" 
+                class="permission-type-tag"
+              >
+                {{ getPermissionTypeLabel(data.permissionType) }}
+              </el-tag>
+              <span class="permission-code">{{ data.permissionCode }}</span>
+              <span v-if="data.permissionPath" class="permission-path">{{ data.permissionPath }}</span>
+            </div>
+          </template>
+        </el-tree>
       </div>
       <template #footer>
         <el-button @click="permissionDialogVisible = false">
@@ -565,6 +581,27 @@ const submitPermission = async () => {
     console.error(error)
   }
 }
+
+// 获取权限类型标签颜色
+const getPermissionTypeTag = (type) => {
+  switch (type) {
+    case 1: return 'primary'
+    case 2: return 'success'
+    case 3: return 'warning'
+    default: return 'info'
+  }
+}
+
+// 获取权限类型标签文本
+const getPermissionTypeLabel = (type) => {
+  switch (type) {
+    case 1: return '模块'
+    case 2: return '子模块'
+    case 3: return '操作'
+    default: return '未知'
+  }
+}
+
 </script>
 
 <style scoped>
@@ -575,5 +612,33 @@ const submitPermission = async () => {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
+}
+.permission-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.permission-name {
+  font-weight: 500;
+  color: #303133;
+  min-width: 120px;
+}
+.permission-type-tag {
+  margin-left: 8px;
+}
+.permission-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #909399;
+  background-color: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.permission-path {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 11px;
+  color: #b3b3b3;
+  margin-left: auto;
 }
 </style> 

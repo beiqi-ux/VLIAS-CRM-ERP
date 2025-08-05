@@ -44,7 +44,7 @@
         </el-form-item>
         <el-form-item>
           <el-button
-            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.VIEW)"
+            v-if="hasPermission(PERMISSIONS.GOODS.SKU.VIEW)"
             type="primary"
             :loading="loading"
             @click="handleSearch"
@@ -68,7 +68,7 @@
       <div class="operation-row">
         <div class="left-operations">
           <el-button 
-            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.ADD)"
+            v-if="hasPermission(PERMISSIONS.GOODS.SKU.CREATE)"
             type="primary" 
             @click="handleAdd"
           >
@@ -76,7 +76,7 @@
             新增SKU
           </el-button>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.DELETE)"
+            v-if="hasPermission(PERMISSIONS.GOODS.SKU.DELETE)"
             type="danger" 
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
@@ -168,7 +168,7 @@
         >
           <template #default="{ row }">
             <el-button
-              v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.EDIT)"
+              v-if="hasPermission(PERMISSIONS.GOODS.SKU.EDIT)"
               type="primary"
               size="small"
               @click="handleEdit(row)"
@@ -177,7 +177,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="hasPermission(PERMISSIONS.PRODUCT.SKU.DELETE)"
+              v-if="hasPermission(PERMISSIONS.GOODS.SKU.DELETE)"
               type="danger"
               size="small"
               @click="handleDelete(row)"

@@ -27,9 +27,19 @@ public class PermissionDTO {
     private String permissionCode;
 
     /**
-     * 权限类型 1-一级权限(模块) 2-二级权限(操作)
+     * 权限类型 1-一级权限(模块) 2-二级权限(子模块) 3-三级权限(操作)
      */
     private Integer permissionType;
+
+    /**
+     * 权限层级深度 1-一级 2-二级 3-三级
+     */
+    private Integer levelDepth;
+
+    /**
+     * 权限路径，格式：/parent1/parent2/current
+     */
+    private String permissionPath;
 
     /**
      * 父权限ID
@@ -50,6 +60,16 @@ public class PermissionDTO {
      * 状态 0-禁用 1-正常
      */
     private Integer status;
+
+    /**
+     * 排序字段
+     */
+    private Integer sortOrder;
+
+    /**
+     * 是否核心权限 0-否 1-是
+     */
+    private Integer isCore;
 
     /**
      * 创建时间
