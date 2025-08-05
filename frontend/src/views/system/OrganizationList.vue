@@ -131,12 +131,20 @@
           </template>
         </el-table-column>
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
+          v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.VIEW) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
           label="操作" 
-          width="200" 
+          width="250" 
           fixed="right"
         >
           <template #default="{ row }">
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.VIEW)"
+              type="primary" 
+              size="small" 
+              @click="handleView(row)"
+            >
+              查看
+            </el-button>
             <el-button 
               v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT)"
               type="primary" 
@@ -183,6 +191,7 @@
             placeholder="请选择上级机构"
             check-strictly
             clearable
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -192,6 +201,7 @@
           <el-input
             v-model="orgForm.orgName"
             placeholder="请输入机构名称"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -201,6 +211,7 @@
           <el-input
             v-model="orgForm.orgCode"
             placeholder="请输入机构编码"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -210,6 +221,7 @@
           <el-select
             v-model="orgForm.orgType"
             placeholder="请选择机构类型"
+            :disabled="isViewMode"
           >
             <el-option
               label="集团"
@@ -241,6 +253,7 @@
             v-model="orgForm.sort"
             :min="1"
             :max="999"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -250,6 +263,7 @@
           <el-input
             v-model="orgForm.leader"
             placeholder="请输入负责人"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -259,6 +273,7 @@
           <el-input
             v-model="orgForm.phone"
             placeholder="请输入联系电话"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
@@ -268,13 +283,14 @@
           <el-input
             v-model="orgForm.email"
             placeholder="请输入邮箱"
+            :disabled="isViewMode"
           />
         </el-form-item>
         <el-form-item
           label="状态"
           prop="status"
         >
-          <el-radio-group v-model="orgForm.status">
+          <el-radio-group v-model="orgForm.status" :disabled="isViewMode">
             <el-radio :label="1">
               启用
             </el-radio>
@@ -292,13 +308,17 @@
             type="textarea"
             placeholder="请输入备注"
             :rows="3"
+            :disabled="isViewMode"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">
+            {{ isViewMode ? '关闭' : '取消' }}
+          </el-button>
           <el-button
+            v-if="!isViewMode"
             type="primary"
             :loading="submitting"
             @click="handleSubmit"
@@ -334,6 +354,7 @@ const orgTreeOptions = ref([])
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const orgFormRef = ref()
+const isViewMode = ref(false) // 新增：控制表单是否为查看模式
 
 // 搜索表单
 const searchForm = reactive({
@@ -459,6 +480,17 @@ const handleAdd = () => {
     status: 1,
     remark: ''
   })
+  // 设置为编辑模式
+  isViewMode.value = false
+  dialogVisible.value = true
+}
+
+// 查看组织机构详情
+const handleView = (row) => {
+  dialogTitle.value = '查看组织机构详情'
+  Object.assign(orgForm, { ...row })
+  // 设置为只读模式
+  isViewMode.value = true
   dialogVisible.value = true
 }
 
@@ -466,6 +498,8 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   dialogTitle.value = '编辑组织机构'
   Object.assign(orgForm, { ...row })
+  // 设置为编辑模式
+  isViewMode.value = false
   dialogVisible.value = true
 }
 
@@ -557,6 +591,7 @@ const handleSubmit = async () => {
 // 关闭对话框
 const handleDialogClose = () => {
   orgFormRef.value?.resetFields()
+  isViewMode.value = false // 关闭对话框时重置查看模式
 }
 
 // 页面加载时获取数据

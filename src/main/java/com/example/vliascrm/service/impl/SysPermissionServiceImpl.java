@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Optional;
 
 /**
  * 权限服务实现类
@@ -197,7 +200,65 @@ public class SysPermissionServiceImpl implements SysPermissionService {
 
     @Override
     public List<SysPermission> getPermissionsByUserId(Long userId) {
-        return permissionRepository.findPermissionsByUserId(userId);
+        // 获取用户直接分配的权限
+        List<SysPermission> directPermissions = permissionRepository.findPermissionsByUserId(userId);
+        
+        // 如果没有直接权限，直接返回空列表
+        if (directPermissions.isEmpty()) {
+            return directPermissions;
+        }
+        
+        // 关键修复：获取所有相关的父级权限
+        // 当用户有子权限时，应该自动获得访问父级权限的能力
+        Set<SysPermission> allAccessiblePermissions = new HashSet<>(directPermissions);
+        
+        // 为每个直接权限添加其所有父级权限
+        for (SysPermission permission : directPermissions) {
+            addParentPermissions(permission, allAccessiblePermissions);
+        }
+        
+        // 转换为列表并按排序规则排序
+        return allAccessiblePermissions.stream()
+                .sorted((p1, p2) -> {
+                    // 先按权限类型排序（1级 -> 2级 -> 3级）
+                    int typeCompare = Integer.compare(p1.getPermissionType(), p2.getPermissionType());
+                    if (typeCompare != 0) return typeCompare;
+                    
+                    // 再按排序字段排序
+                    int sortCompare = Integer.compare(p1.getSortOrder(), p2.getSortOrder());
+                    if (sortCompare != 0) return sortCompare;
+                    
+                    // 最后按ID排序
+                    return Long.compare(p1.getId(), p2.getId());
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 递归添加父级权限
+     * 当用户有子权限时，应该自动获得访问所有父级权限的能力
+     * 
+     * @param permission 当前权限
+     * @param allPermissions 所有权限集合
+     */
+    private void addParentPermissions(SysPermission permission, Set<SysPermission> allPermissions) {
+        if (permission.getParentId() != null && permission.getParentId() > 0) {
+            // 查找父权限
+            Optional<SysPermission> parentPermission = permissionRepository.findById(permission.getParentId());
+            if (parentPermission.isPresent() && 
+                parentPermission.get().getStatus() == 1 && 
+                !parentPermission.get().getIsDeleted()) {
+                
+                SysPermission parent = parentPermission.get();
+                
+                // 如果父权限还未添加，则添加并继续查找其父权限
+                if (!allPermissions.contains(parent)) {
+                    allPermissions.add(parent);
+                    // 递归添加父权限的父权限
+                    addParentPermissions(parent, allPermissions);
+                }
+            }
+        }
     }
 
     /**

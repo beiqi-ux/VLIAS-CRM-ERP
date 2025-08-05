@@ -51,6 +51,22 @@
       </el-button>
     </div>
 
+    <!-- 层级说明 -->
+    <div class="level-info-card">
+      <div class="level-info-item">
+        <el-tag size="small" type="primary" class="level-tag-1">1级</el-tag>
+        <span class="level-desc">一级权限(模块) - 系统主要功能模块</span>
+      </div>
+      <div class="level-info-item">
+        <el-tag size="small" type="success" class="level-tag-2">2级</el-tag>
+        <span class="level-desc">二级权限(子模块) - 模块下的功能分组</span>
+      </div>
+      <div class="level-info-item">
+        <el-tag size="small" type="warning" class="level-tag-3">3级</el-tag>
+        <span class="level-desc">三级权限(操作) - 具体的操作权限</span>
+      </div>
+    </div>
+
     <el-table
       ref="permissionTableRef"
       v-loading="tableLoading"
@@ -58,12 +74,17 @@
       row-key="id"
       border
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+      :default-expand-all="false"
       style="width: 100%; margin-top: 15px"
+      :row-style="{ height: '50px' }"
+      :cell-style="{ padding: '12px 8px' }"
+      :row-class-name="getRowClassName"
     >
       <el-table-column
         prop="id"
         label="ID"
-        width="80"
+        width="90"
+        align="center"
       >
         <template #default="scope">
           {{ $formatId(scope.row.id) }}
@@ -72,40 +93,65 @@
       <el-table-column
         prop="permissionName"
         label="权限名称"
-      />
+        width="200"
+        show-overflow-tooltip
+      >
+        <template #default="scope">
+          <div class="permission-name-wrapper" :class="`level-${scope.row.levelDepth}`">
+            <!-- 层级缩进 -->
+            <span 
+              v-for="i in (scope.row.levelDepth - 1)" 
+              :key="i" 
+              class="level-indent"
+            ></span>
+            
+            <!-- 层级图标 -->
+            <span class="level-icon" v-if="scope.row.levelDepth > 1">
+              <span v-if="scope.row.levelDepth === 2" class="level-2-icon">├─</span>
+              <span v-if="scope.row.levelDepth === 3" class="level-3-icon">└─</span>
+            </span>
+            
+            <!-- 权限名称 -->
+            <span class="permission-name-text">{{ scope.row.permissionName }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="permissionCode"
         label="权限编码"
-      />
+        width="220"
+        show-overflow-tooltip
+      >
+        <template #default="scope">
+          <div class="permission-code-wrapper" :class="`level-${scope.row.levelDepth}`">
+            <code class="permission-code">{{ scope.row.permissionCode }}</code>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="permissionType"
         label="权限类型"
-        width="140"
+        width="110"
+        align="center"
       >
         <template #default="scope">
-          <el-tag :type="getPermissionTypeTag(scope.row.permissionType)">
+          <el-tag :type="getPermissionTypeTag(scope.row.permissionType)" size="small">
             {{ getPermissionTypeName(scope.row.permissionType) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column
-        prop="permissionPath"
-        label="权限路径"
-        width="200"
-        show-overflow-tooltip
-      >
-        <template #default="scope">
-          <span class="permission-path">{{ scope.row.permissionPath }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
         prop="levelDepth"
-        label="层级深度"
-        width="100"
+        label="层级"
+        width="80"
         align="center"
       >
         <template #default="scope">
-          <el-tag size="small" type="info">
+          <el-tag 
+            size="small" 
+            :type="getLevelTagType(scope.row.levelDepth)"
+            :class="`level-tag-${scope.row.levelDepth}`"
+          >
             {{ scope.row.levelDepth }}级
           </el-tag>
         </template>
@@ -113,14 +159,17 @@
       <el-table-column
         prop="description"
         label="描述"
+        min-width="150"
+        show-overflow-tooltip
       />
       <el-table-column
         prop="status"
         label="状态"
-        width="100"
+        width="90"
+        align="center"
       >
         <template #default="scope">
-          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
+          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
             {{ scope.row.status === 1 ? '启用' : '禁用' }}
           </el-tag>
         </template>
@@ -128,7 +177,8 @@
       <el-table-column
         prop="createTime"
         label="创建时间"
-        width="180"
+        width="160"
+        align="center"
       >
         <template #default="scope">
           {{ formatDateTime(scope.row.createTime) }}
@@ -137,10 +187,12 @@
       <el-table-column 
         v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT) || hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) || hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE)"
         label="操作" 
-        width="280" 
+        width="180" 
         fixed="right"
+        align="center"
       >
         <template #default="scope">
+          <div class="action-buttons">
           <el-button 
             v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
             size="small" 
@@ -154,7 +206,7 @@
             type="success" 
             @click="handleAddSubmodule(scope.row)"
           >
-            添加子模块
+              +子模块
           </el-button>
           <el-button 
             v-if="scope.row.permissionType === 2 && hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE)" 
@@ -162,7 +214,7 @@
             type="warning" 
             @click="handleAddAction(scope.row)"
           >
-            添加操作
+              +操作
           </el-button>
           <el-button 
             v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(scope.row)"
@@ -172,6 +224,7 @@
           >
             删除
           </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -327,7 +380,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
@@ -388,10 +441,22 @@ const fetchPermissionList = async () => {
   try {
     tableLoading.value = true
     const { data } = await getPermissionTreeForAdmin()
+    console.log('权限数据结构:', JSON.stringify(data, null, 2))
     tableData.value = data || []
     
     // 获取不同级别的权限作为选项
     updatePermissionOptions(data)
+    
+    // 确保表格默认折叠状态
+    nextTick(() => {
+      if (permissionTableRef.value) {
+        // 强制折叠所有行
+        tableData.value.forEach(row => {
+          permissionTableRef.value.toggleRowExpansion(row, false)
+        })
+        console.log('已强制折叠所有表格行')
+      }
+    })
   } catch (error) {
     ElMessage.error('获取权限列表失败')
     console.error(error)
@@ -691,6 +756,25 @@ const getPermissionTypeTag = (type) => {
   }
 }
 
+// 获取层级标签类型
+const getLevelTagType = (level) => {
+  switch (level) {
+    case 1: return 'primary'    // 一级权限 - 蓝色
+    case 2: return 'success'    // 二级权限 - 绿色
+    case 3: return 'warning'    // 三级权限 - 橙色
+    default: return 'info'
+  }
+}
+
+// 获取表格行的类名
+const getRowClassName = ({ row }) => {
+  let className = `level-${row.levelDepth}`
+  if (row.status === 0) {
+    className += ' disabled-row'
+  }
+  return className
+}
+
 // 权限类型变化处理
 const onPermissionTypeChange = (newType) => {
   // 清空父级权限选择
@@ -730,5 +814,237 @@ const onPermissionTypeChange = (newType) => {
 }
 .text-sm p {
   margin: 2px 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  font-size: 14px;
+}
+
+:deep(.el-table .el-table__header-wrapper th) {
+  background-color: #fafafa;
+  color: #606266;
+  font-weight: 600;
+  border-bottom: 2px solid #e4e7ed;
+}
+
+:deep(.el-table .el-table__row) {
+  transition: all 0.2s ease;
+}
+
+:deep(.el-table .el-table__row:hover) {
+  background-color: #f8f9fa;
+}
+
+/* 禁用行样式 */
+:deep(.el-table .el-table__row.disabled-row) {
+  opacity: 0.6;
+  background-color: #fef0f0 !important;
+}
+
+:deep(.el-table .el-table__row.disabled-row:hover) {
+  background-color: #fde2e2 !important;
+}
+
+:deep(.el-table .el-table__row.disabled-row .permission-name-text) {
+  text-decoration: line-through;
+  color: #c0c4cc !important;
+}
+
+/* 权限编码样式 */
+.permission-code-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.permission-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  background-color: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+}
+
+.level-1 .permission-code {
+  background-color: #ecf5ff;
+  border-color: #b3d8ff;
+  color: #409eff;
+  font-weight: 600;
+}
+
+.level-2 .permission-code {
+  background-color: #f0f9ff;
+  border-color: #b3e19d;
+  color: #67c23a;
+  font-weight: 500;
+}
+
+.level-3 .permission-code {
+  background-color: #fdf6ec;
+  border-color: #f5dab1;
+  color: #e6a23c;
+  font-weight: 400;
+}
+
+/* 层级说明卡片 */
+.level-info-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 15px 0;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.level-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-desc {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* 按钮间距优化 */
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
+}
+
+/* 操作按钮样式优化 */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+  font-size: 12px;
+  padding: 5px 8px;
+  min-width: auto;
+}
+
+.action-buttons .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 权限名称层级样式 */
+.permission-name-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.level-indent {
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+}
+
+.level-icon {
+  margin-right: 6px;
+  color: #909399;
+  font-size: 12px;
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-family: monospace;
+}
+
+.level-2-icon {
+  color: #67c23a;
+  font-weight: bold;
+}
+
+.level-3-icon {
+  color: #e6a23c;
+  font-weight: bold;
+}
+
+.permission-name-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 不同层级的权限名称样式 */
+.level-1 .permission-name-text {
+  font-weight: 600;
+  color: #303133;
+  font-size: 14px;
+}
+
+.level-2 .permission-name-text {
+  font-weight: 500;
+  color: #606266;
+  font-size: 13px;
+}
+
+.level-3 .permission-name-text {
+  font-weight: 400;
+  color: #909399;
+  font-size: 12px;
+}
+
+/* 层级标签样式 */
+.level-tag-1 {
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  font-weight: 600 !important;
+}
+
+.level-tag-2 {
+  background-color: #67c23a !important;
+  border-color: #67c23a !important;
+  font-weight: 500 !important;
+}
+
+.level-tag-3 {
+  background-color: #e6a23c !important;
+  border-color: #e6a23c !important;
+  font-weight: 400 !important;
+}
+
+/* 表格行的层级背景色 */
+:deep(.el-table .el-table__row.level-1) {
+  background-color: #f8fbff;
+}
+
+:deep(.el-table .el-table__row.level-2) {
+  background-color: #f8fff8;
+}
+
+:deep(.el-table .el-table__row.level-3) {
+  background-color: #fffbf0;
+}
+
+:deep(.el-table .el-table__row.level-1:hover) {
+  background-color: #ecf5ff;
+}
+
+:deep(.el-table .el-table__row.level-2:hover) {
+  background-color: #f0f9ff;
+}
+
+:deep(.el-table .el-table__row.level-3:hover) {
+  background-color: #fdf6ec;
 }
 </style> 

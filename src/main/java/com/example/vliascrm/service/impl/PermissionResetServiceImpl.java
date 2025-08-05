@@ -16,6 +16,7 @@ import java.util.Map;
 /**
  * 权限重置服务实现类
  * 提供基础权限数据的重置功能
+ * 支持3级权限结构：模块权限(1级) -> 子模块权限(2级) -> 操作权限(3级)
  */
 @Slf4j
 @Service
@@ -58,8 +59,8 @@ public class PermissionResetServiceImpl {
         permissionRepository.flush(); // 强制同步到数据库
         
         log.info("第二步：创建基础权限数据");
-        // 第二步：创建基础权限数据（简化版，直接创建不分步）
-        List<SysPermission> newPermissions = createAllPermissionsAtOnce();
+        // 第二步：创建基础权限数据（3级权限结构）
+        List<SysPermission> newPermissions = createAllPermissionsThreeLevel();
         List<SysPermission> savedPermissions = permissionRepository.saveAll(newPermissions);
         
         log.info("权限重置完成，逻辑删除 {} 个旧权限，新创建 {} 个基础权限", 
@@ -70,25 +71,36 @@ public class PermissionResetServiceImpl {
     }
 
     /**
-     * 创建基础权限数据
+     * 创建三级权限结构的所有权限数据
      */
-    private List<SysPermission> createBasePermissions() {
-        List<SysPermission> allPermissions = new ArrayList<>();
+    private List<SysPermission> createAllPermissionsThreeLevel() {
         LocalDateTime now = LocalDateTime.now();
+        List<SysPermission> allPermissions = new ArrayList<>();
+        Map<String, Long> moduleCodeToIdMap = new HashMap<>();
+        Map<String, Long> subModuleCodeToIdMap = new HashMap<>();
         
-        // 第一步：创建并保存一级权限（模块权限）
-        List<SysPermission> modulePermissions = createModulePermissions(now);
+        // 第一步：创建一级权限（模块权限）
+        List<SysPermission> modulePermissions = createModulePermissionsThreeLevel(now);
         List<SysPermission> savedModules = permissionRepository.saveAll(modulePermissions);
         allPermissions.addAll(savedModules);
         
         // 建立模块编码到ID的映射
-        Map<String, Long> moduleCodeToIdMap = new HashMap<>();
         for (SysPermission module : savedModules) {
             moduleCodeToIdMap.put(module.getPermissionCode(), module.getId());
         }
         
-        // 第二步：创建二级权限（操作权限）
-        List<SysPermission> operationPermissions = createOperationPermissions(moduleCodeToIdMap, now);
+        // 第二步：创建二级权限（子模块权限）
+        List<SysPermission> subModulePermissions = createSubModulePermissions(moduleCodeToIdMap, now);
+        List<SysPermission> savedSubModules = permissionRepository.saveAll(subModulePermissions);
+        allPermissions.addAll(savedSubModules);
+        
+        // 建立子模块编码到ID的映射
+        for (SysPermission subModule : savedSubModules) {
+            subModuleCodeToIdMap.put(subModule.getPermissionCode(), subModule.getId());
+        }
+        
+        // 第三步：创建三级权限（操作权限）
+        List<SysPermission> operationPermissions = createOperationPermissionsThreeLevel(subModuleCodeToIdMap, now);
         List<SysPermission> savedOperations = permissionRepository.saveAll(operationPermissions);
         allPermissions.addAll(savedOperations);
         
@@ -98,34 +110,39 @@ public class PermissionResetServiceImpl {
     /**
      * 创建一级权限（模块权限）
      */
-    private List<SysPermission> createModulePermissions(LocalDateTime now) {
+    private List<SysPermission> createModulePermissionsThreeLevel(LocalDateTime now) {
         List<SysPermission> modules = new ArrayList<>();
         
-        // 定义基础权限模块
+        // 定义一级权限模块（与系统设计文档保持一致）
         Object[][] moduleData = {
-            {"system", "系统管理", "系统基础功能管理"},
-            {"user", "用户管理", "用户账户管理"},
-            {"role", "角色管理", "角色权限管理"},
-            {"permission", "权限管理", "权限配置管理"},
-            {"menu", "菜单管理", "系统菜单管理"},
-            {"org", "组织管理", "组织架构管理"},
-            {"dept", "部门管理", "部门信息管理"},
-            {"position", "岗位管理", "岗位信息管理"},
-            {"dict", "字典管理", "系统字典管理"},
-            {"product", "商品管理", "商品信息管理"},
-            {"brand", "品牌管理", "商品品牌管理"},
-            {"category", "分类管理", "商品分类管理"}
+            {"system", "系统管理", "系统基础功能管理", 1},
+            {"org", "组织架构", "组织架构管理", 2},
+            {"product", "商品管理", "商品信息管理", 3},
+            {"customer", "客户管理", "客户信息管理", 4},
+            {"sales", "销售管理", "销售业务管理", 5},
+            {"purchase", "采购管理", "采购业务管理", 6},
+            {"inventory", "库存管理", "库存业务管理", 7},
+            {"finance", "财务管理", "财务业务管理", 8},
+            {"report", "报表管理", "报表统计管理", 9},
+            {"marketing", "营销管理", "营销活动管理", 10},
+            {"workflow", "工作流管理", "工作流程管理", 11},
+            {"notification", "消息通知", "通知消息管理", 12},
+            {"log", "日志管理", "系统日志管理", 13},
+            {"config", "配置管理", "系统配置管理", 14},
+            {"profile", "个人中心", "个人信息管理", 15}
         };
         
         for (Object[] data : moduleData) {
             SysPermission module = new SysPermission();
-            // 不设置ID，让JPA自动生成
             module.setPermissionName((String) data[1]);
             module.setPermissionCode((String) data[0]);
             module.setPermissionType(1); // 一级权限
+            module.setLevelDepth(1);
             module.setParentId(0L);
             module.setDescription((String) data[2]);
+            module.setSortOrder((Integer) data[3]);
             module.setStatus(1);
+            module.setIsCore(1);
             module.setCreateTime(now);
             module.setUpdateTime(now);
             module.setIsDeleted(false);
@@ -137,276 +154,165 @@ public class PermissionResetServiceImpl {
     }
     
     /**
-     * 创建二级权限（操作权限）
+     * 创建二级权限（子模块权限）
      */
-    private List<SysPermission> createOperationPermissions(Map<String, Long> moduleCodeToIdMap, LocalDateTime now) {
-        List<SysPermission> operations = new ArrayList<>();
+    private List<SysPermission> createSubModulePermissions(Map<String, Long> moduleCodeToIdMap, LocalDateTime now) {
+        List<SysPermission> subModules = new ArrayList<>();
         
-        // 定义二级权限（操作权限）
-        Object[][] operationData = {
-            // 系统管理操作
-            {"system", "view", "查看", "查看系统信息"},
-            {"system", "config", "配置", "系统配置管理"},
+        // 定义二级权限（子模块权限）
+        Object[][] subModuleData = {
+            // 系统管理子模块
+            {"user-management", "用户管理", "system", "用户账户管理", 1},
+            {"role-management", "角色管理", "system", "角色权限管理", 2},
+            {"permission-management", "权限管理", "system", "权限配置管理", 3},
+            {"menu-management", "菜单管理", "system", "系统菜单管理", 4},
+            {"dict-management", "数据字典管理", "system", "系统字典管理", 5},
             
-            // 用户管理操作
-            {"user", "view", "查看", "查看用户列表"},
-            {"user", "add", "新增", "新增用户"},
-            {"user", "edit", "编辑", "编辑用户信息"},
-            {"user", "delete", "删除", "删除用户"},
-            {"user", "reset-password", "重置密码", "重置用户密码"},
-            {"user", "assign-role", "分配角色", "为用户分配角色"},
+            // 组织架构子模块
+            {"org-management", "组织机构管理", "org", "组织机构管理", 1},
+            {"dept-management", "部门管理", "org", "部门信息管理", 2},
+            {"position-management", "岗位管理", "org", "岗位信息管理", 3},
             
-            // 角色管理操作
-            {"role", "view", "查看", "查看角色列表"},
-            {"role", "add", "新增", "新增角色"},
-            {"role", "edit", "编辑", "编辑角色信息"},
-            {"role", "delete", "删除", "删除角色"},
-            {"role", "assign", "分配权限", "为角色分配权限"},
+            // 商品管理子模块
+            {"product-info-management", "商品信息管理", "product", "商品基础信息管理", 1},
+            {"product-category-management", "商品分类管理", "product", "商品分类管理", 2},
+            {"product-brand-management", "商品品牌管理", "product", "商品品牌管理", 3},
+            {"product-specification-management", "商品规格管理", "product", "商品规格管理", 4},
+            {"product-attribute-management", "商品属性管理", "product", "商品属性管理", 5},
+            {"product-sku-management", "商品SKU管理", "product", "商品SKU管理", 6},
             
-            // 权限管理操作
-            {"permission", "view", "查看", "查看权限列表"},
-            {"permission", "add", "新增", "新增权限"},
-            {"permission", "edit", "编辑", "编辑权限信息"},
-            {"permission", "delete", "删除", "删除权限"},
-            {"permission", "sync", "同步", "同步权限数据"},
+            // 客户管理子模块
+            {"customer-info-management", "客户信息管理", "customer", "客户基础信息管理", 1},
+            {"customer-category-management", "客户分类管理", "customer", "客户分类管理", 2},
+            {"customer-contact-management", "客户联系人管理", "customer", "客户联系人管理", 3},
+            {"customer-follow-management", "客户跟进管理", "customer", "客户跟进管理", 4},
             
-            // 菜单管理操作
-            {"menu", "view", "查看", "查看菜单列表"},
-            {"menu", "add", "新增", "新增菜单"},
-            {"menu", "edit", "编辑", "编辑菜单信息"},
-            {"menu", "delete", "删除", "删除菜单"},
+            // 销售管理子模块
+            {"sales-order-management", "销售订单管理", "sales", "销售订单管理", 1},
+            {"sales-quote-management", "销售报价管理", "sales", "销售报价管理", 2},
+            {"sales-statistics-management", "销售统计管理", "sales", "销售统计管理", 3},
+            {"sales-performance-management", "销售业绩管理", "sales", "销售业绩管理", 4},
             
-            // 组织管理操作
-            {"org", "view", "查看", "查看组织列表"},
-            {"org", "add", "新增", "新增组织"},
-            {"org", "edit", "编辑", "编辑组织信息"},
-            {"org", "delete", "删除", "删除组织"},
+            // 采购管理子模块
+            {"purchase-order-management", "采购订单管理", "purchase", "采购订单管理", 1},
+            {"supplier-management", "供应商管理", "purchase", "供应商管理", 2},
+            {"purchase-request-management", "采购申请管理", "purchase", "采购申请管理", 3},
+            {"purchase-statistics-management", "采购统计管理", "purchase", "采购统计管理", 4},
             
-            // 部门管理操作
-            {"dept", "view", "查看", "查看部门列表"},
-            {"dept", "add", "新增", "新增部门"},
-            {"dept", "edit", "编辑", "编辑部门信息"},
-            {"dept", "delete", "删除", "删除部门"},
+            // 库存管理子模块
+            {"inventory-query-management", "库存查询管理", "inventory", "库存查询管理", 1},
+            {"inbound-management", "入库管理", "inventory", "入库管理", 2},
+            {"outbound-management", "出库管理", "inventory", "出库管理", 3},
+            {"inventory-check-management", "库存盘点管理", "inventory", "库存盘点管理", 4},
             
-            // 岗位管理操作
-            {"position", "view", "查看", "查看岗位列表"},
-            {"position", "add", "新增", "新增岗位"},
-            {"position", "edit", "编辑", "编辑岗位信息"},
-            {"position", "delete", "删除", "删除岗位"},
+            // 财务管理子模块
+            {"finance-report-management", "财务报表管理", "finance", "财务报表管理", 1},
+            {"receivable-management", "应收账款管理", "finance", "应收账款管理", 2},
+            {"payable-management", "应付账款管理", "finance", "应付账款管理", 3},
+            {"expense-management", "费用管理", "finance", "费用管理", 4},
             
-            // 字典管理操作
-            {"dict", "view", "查看", "查看字典列表"},
-            {"dict", "add", "新增", "新增字典"},
-            {"dict", "edit", "编辑", "编辑字典信息"},
-            {"dict", "delete", "删除", "删除字典"},
+            // 报表管理子模块
+            {"sales-report-management", "销售报表管理", "report", "销售报表管理", 1},
+            {"inventory-report-management", "库存报表管理", "report", "库存报表管理", 2},
+            {"financial-report-management", "财务报表管理", "report", "财务报表管理", 3},
+            {"custom-report-management", "自定义报表管理", "report", "自定义报表管理", 4},
             
-            // 商品管理操作
-            {"product", "view", "查看", "查看商品列表"},
-            {"product", "add", "新增", "新增商品"},
-            {"product", "edit", "编辑", "编辑商品信息"},
-            {"product", "delete", "删除", "删除商品"},
+            // 营销管理子模块
+            {"promotion-management", "促销活动管理", "marketing", "促销活动管理", 1},
+            {"marketing-strategy-management", "营销策略管理", "marketing", "营销策略管理", 2},
+            {"customer-care-management", "客户关怀管理", "marketing", "客户关怀管理", 3},
             
-            // 品牌管理操作
-            {"brand", "view", "查看", "查看品牌列表"},
-            {"brand", "add", "新增", "新增品牌"},
-            {"brand", "edit", "编辑", "编辑品牌信息"},
-            {"brand", "delete", "删除", "删除品牌"},
+            // 工作流管理子模块
+            {"workflow-definition-management", "流程定义管理", "workflow", "流程定义管理", 1},
+            {"workflow-instance-management", "流程实例管理", "workflow", "流程实例管理", 2},
+            {"approval-task-management", "审批任务管理", "workflow", "审批任务管理", 3},
             
-            // 分类管理操作
-            {"category", "view", "查看", "查看分类列表"},
-            {"category", "add", "新增", "新增分类"},
-            {"category", "edit", "编辑", "编辑分类信息"},
-            {"category", "delete", "删除", "删除分类"}
+            // 消息通知子模块
+            {"system-message-management", "系统消息管理", "notification", "系统消息管理", 1},
+            {"email-notification-management", "邮件通知管理", "notification", "邮件通知管理", 2},
+            {"sms-notification-management", "短信通知管理", "notification", "短信通知管理", 3},
+            
+            // 日志管理子模块
+            {"operation-log-management", "操作日志管理", "log", "操作日志管理", 1},
+            {"system-log-management", "系统日志管理", "log", "系统日志管理", 2},
+            {"login-log-management", "登录日志管理", "log", "登录日志管理", 3},
+            
+            // 配置管理子模块
+            {"system-config-management", "系统配置管理", "config", "系统配置管理", 1},
+            {"parameter-config-management", "参数配置管理", "config", "参数配置管理", 2},
+            {"api-config-management", "接口配置管理", "config", "接口配置管理", 3},
+            
+            // 个人中心子模块
+            {"profile-info-management", "个人信息管理", "profile", "个人信息管理", 1},
+            {"password-management", "密码管理", "profile", "密码管理", 2}
         };
         
-        for (Object[] data : operationData) {
-            String moduleCode = (String) data[0];
+        for (Object[] data : subModuleData) {
+            String moduleCode = (String) data[2];
             Long parentId = moduleCodeToIdMap.get(moduleCode);
             
             if (parentId != null) {
-                SysPermission operation = new SysPermission();
-                // 不设置ID，让JPA自动生成
-                operation.setPermissionName((String) data[2]);
-                operation.setPermissionCode(moduleCode + ":" + data[1]);
-                operation.setPermissionType(2); // 二级权限
-                operation.setParentId(parentId);
-                operation.setDescription((String) data[3]);
-                operation.setStatus(1);
-                operation.setCreateTime(now);
-                operation.setUpdateTime(now);
-                operation.setIsDeleted(false);
+                SysPermission subModule = new SysPermission();
+                subModule.setPermissionName((String) data[1]);
+                subModule.setPermissionCode((String) data[0]);
+                subModule.setPermissionType(2); // 二级权限
+                subModule.setLevelDepth(2);
+                subModule.setParentId(parentId);
+                subModule.setDescription((String) data[3]);
+                subModule.setSortOrder((Integer) data[4]);
+                subModule.setStatus(1);
+                                 subModule.setIsCore(1);
+                subModule.setCreateTime(now);
+                subModule.setUpdateTime(now);
+                subModule.setIsDeleted(false);
                 
-                operations.add(operation);
+                subModules.add(subModule);
+            }
+        }
+        
+        return subModules;
+    }
+    
+    /**
+     * 创建三级权限（操作权限）
+     */
+    private List<SysPermission> createOperationPermissionsThreeLevel(Map<String, Long> subModuleCodeToIdMap, LocalDateTime now) {
+        List<SysPermission> operations = new ArrayList<>();
+        
+        // 定义基础操作权限模板
+        String[][] baseOperations = {
+            {"view", "查看", "查看数据权限"},
+            {"create", "新增", "新增数据权限"},
+            {"edit", "编辑", "编辑数据权限"},
+            {"delete", "删除", "删除数据权限"},
+            {"export", "导出", "导出数据权限"}
+        };
+        
+        // 为每个二级权限创建对应的三级操作权限
+        for (String subModuleCode : subModuleCodeToIdMap.keySet()) {
+            Long parentId = subModuleCodeToIdMap.get(subModuleCode);
+            
+            for (int i = 0; i < baseOperations.length; i++) {
+                String[] operation = baseOperations[i];
+                
+                SysPermission operationPermission = new SysPermission();
+                operationPermission.setPermissionName(operation[1]);
+                operationPermission.setPermissionCode(subModuleCode + ":" + operation[0]);
+                operationPermission.setPermissionType(3); // 三级权限
+                operationPermission.setLevelDepth(3);
+                operationPermission.setParentId(parentId);
+                operationPermission.setDescription(operation[2]);
+                operationPermission.setSortOrder((i + 1) * 10);
+                operationPermission.setStatus(1);
+                                 operationPermission.setIsCore(1);
+                operationPermission.setCreateTime(now);
+                operationPermission.setUpdateTime(now);
+                operationPermission.setIsDeleted(false);
+                    
+                operations.add(operationPermission);
             }
         }
         
         return operations;
-    }
-    
-    /**
-     * 创建所有权限数据（一次性创建）
-     */
-    private List<SysPermission> createAllPermissionsAtOnce() {
-        LocalDateTime now = LocalDateTime.now();
-        List<SysPermission> allPermissions = new ArrayList<>();
-        Map<String, Long> moduleCodeToIdMap = new HashMap<>();
-        
-        // 定义所有权限数据：{权限编码, 权限名称, 权限类型, 父权限编码, 描述, 排序}
-        Object[][] allPermissionData = {
-            // 一级权限（模块权限）
-            {"system", "系统管理", 1, null, "系统基础功能管理", 1},
-            {"user", "用户管理", 1, null, "用户账户管理", 2},
-            {"role", "角色管理", 1, null, "角色权限管理", 3},
-            {"permission", "权限管理", 1, null, "权限配置管理", 4},
-            {"menu", "菜单管理", 1, null, "系统菜单管理", 5},
-            {"org", "组织管理", 1, null, "组织架构管理", 6},
-            {"dept", "部门管理", 1, null, "部门信息管理", 7},
-            {"position", "岗位管理", 1, null, "岗位信息管理", 8},
-            {"dict", "字典管理", 1, null, "系统字典管理", 9},
-            {"product", "商品管理", 1, null, "商品信息管理", 10},
-            {"brand", "品牌管理", 1, null, "商品品牌管理", 11},
-            {"category", "分类管理", 1, null, "商品分类管理", 12},
-            {"profile", "个人中心", 1, null, "个人信息管理", 999}, // 个人中心设置最大sort值
-            
-            // 二级权限（操作权限）
-            // 系统管理操作
-            {"system:view", "查看", 2, "system", "查看系统信息", 1},
-            {"system:config", "配置", 2, "system", "系统配置管理", 2},
-            
-            // 用户管理操作
-            {"user:view", "查看", 2, "user", "查看用户列表", 1},
-            {"user:add", "新增", 2, "user", "新增用户", 2},
-            {"user:edit", "编辑", 2, "user", "编辑用户信息", 3},
-            {"user:delete", "删除", 2, "user", "删除用户", 4},
-            {"user:reset-password", "重置密码", 2, "user", "重置用户密码", 5},
-            {"user:assign-role", "分配角色", 2, "user", "为用户分配角色", 6},
-            
-            // 角色管理操作
-            {"role:view", "查看", 2, "role", "查看角色列表", 1},
-            {"role:add", "新增", 2, "role", "新增角色", 2},
-            {"role:edit", "编辑", 2, "role", "编辑角色信息", 3},
-            {"role:delete", "删除", 2, "role", "删除角色", 4},
-            {"role:assign", "分配权限", 2, "role", "为角色分配权限", 5},
-            
-            // 权限管理操作
-            {"permission:view", "查看", 2, "permission", "查看权限列表", 1},
-            {"permission:add", "新增", 2, "permission", "新增权限", 2},
-            {"permission:edit", "编辑", 2, "permission", "编辑权限信息", 3},
-            {"permission:delete", "删除", 2, "permission", "删除权限", 4},
-            {"permission:sync", "同步", 2, "permission", "同步权限数据", 5},
-            {"permission:reset", "重置", 2, "permission", "重置权限数据", 6},
-            {"permission:validate", "验证", 2, "permission", "验证权限配置", 7},
-            
-            // 菜单管理操作
-            {"menu:view", "查看", 2, "menu", "查看菜单列表", 1},
-            {"menu:add", "新增", 2, "menu", "新增菜单", 2},
-            {"menu:edit", "编辑", 2, "menu", "编辑菜单信息", 3},
-            {"menu:delete", "删除", 2, "menu", "删除菜单", 4},
-            
-            // 组织管理操作
-            {"org:view", "查看", 2, "org", "查看组织列表", 1},
-            {"org:add", "新增", 2, "org", "新增组织", 2},
-            {"org:edit", "编辑", 2, "org", "编辑组织信息", 3},
-            {"org:delete", "删除", 2, "org", "删除组织", 4},
-            
-            // 部门管理操作
-            {"dept:view", "查看", 2, "dept", "查看部门列表", 1},
-            {"dept:add", "新增", 2, "dept", "新增部门", 2},
-            {"dept:edit", "编辑", 2, "dept", "编辑部门信息", 3},
-            {"dept:delete", "删除", 2, "dept", "删除部门", 4},
-            
-            // 岗位管理操作
-            {"position:view", "查看", 2, "position", "查看岗位列表", 1},
-            {"position:add", "新增", 2, "position", "新增岗位", 2},
-            {"position:edit", "编辑", 2, "position", "编辑岗位信息", 3},
-            {"position:delete", "删除", 2, "position", "删除岗位", 4},
-            
-            // 字典管理操作
-            {"dict:view", "查看", 2, "dict", "查看字典列表", 1},
-            {"dict:add", "新增", 2, "dict", "新增字典", 2},
-            {"dict:edit", "编辑", 2, "dict", "编辑字典信息", 3},
-            {"dict:delete", "删除", 2, "dict", "删除字典", 4},
-            
-            // 商品管理操作
-            {"product:view", "查看", 2, "product", "查看商品列表", 1},
-            {"product:add", "新增", 2, "product", "新增商品", 2},
-            {"product:edit", "编辑", 2, "product", "编辑商品信息", 3},
-            {"product:delete", "删除", 2, "product", "删除商品", 4},
-            
-            // 品牌管理操作
-            {"brand:view", "查看", 2, "brand", "查看品牌列表", 1},
-            {"brand:add", "新增", 2, "brand", "新增品牌", 2},
-            {"brand:edit", "编辑", 2, "brand", "编辑品牌信息", 3},
-            {"brand:delete", "删除", 2, "brand", "删除品牌", 4},
-            
-            // 分类管理操作
-            {"category:view", "查看", 2, "category", "查看分类列表", 1},
-            {"category:add", "新增", 2, "category", "新增分类", 2},
-            {"category:edit", "编辑", 2, "category", "编辑分类信息", 3},
-            {"category:delete", "删除", 2, "category", "删除分类", 4},
-            
-            // 个人中心操作
-            {"profile:view", "查看", 2, "profile", "查看个人信息", 1},
-            {"profile:edit", "编辑", 2, "profile", "编辑个人信息", 2},
-            {"profile:password", "修改密码", 2, "profile", "修改个人密码", 3}
-        };
-        
-        // 第一次遍历：创建模块权限
-        for (Object[] data : allPermissionData) {
-            Integer permissionType = (Integer) data[2];
-            if (permissionType == 1) { // 只处理模块权限
-                SysPermission permission = new SysPermission();
-                permission.setPermissionName((String) data[1]);
-                permission.setPermissionCode((String) data[0]);
-                permission.setPermissionType(permissionType);
-                permission.setParentId(0L);
-                permission.setDescription((String) data[4]);
-                permission.setSortOrder((Integer) data[5]); // 设置排序值
-                permission.setStatus(1);
-                permission.setCreateTime(now);
-                permission.setUpdateTime(now);
-                permission.setIsDeleted(false);
-                
-                allPermissions.add(permission);
-            }
-        }
-        
-        // 保存模块权限并获取ID
-        List<SysPermission> savedModules = permissionRepository.saveAll(allPermissions);
-        for (SysPermission module : savedModules) {
-            moduleCodeToIdMap.put(module.getPermissionCode(), module.getId());
-        }
-        
-        // 第二次遍历：创建操作权限
-        List<SysPermission> operationPermissions = new ArrayList<>();
-        for (Object[] data : allPermissionData) {
-            Integer permissionType = (Integer) data[2];
-            if (permissionType == 2) { // 只处理操作权限
-                String parentCode = (String) data[3];
-                Long parentId = moduleCodeToIdMap.get(parentCode);
-                
-                if (parentId != null) {
-                    SysPermission permission = new SysPermission();
-                    permission.setPermissionName((String) data[1]);
-                    permission.setPermissionCode((String) data[0]);
-                    permission.setPermissionType(permissionType);
-                    permission.setParentId(parentId);
-                    permission.setDescription((String) data[4]);
-                    permission.setSortOrder((Integer) data[5]); // 设置排序值
-                    permission.setStatus(1);
-                    permission.setCreateTime(now);
-                    permission.setUpdateTime(now);
-                    permission.setIsDeleted(false);
-                    
-                    operationPermissions.add(permission);
-                }
-            }
-        }
-        
-        // 保存操作权限
-        List<SysPermission> savedOperations = permissionRepository.saveAll(operationPermissions);
-        allPermissions.addAll(savedOperations);
-        
-        return allPermissions;
     }
 } 

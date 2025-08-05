@@ -201,7 +201,7 @@
           node-key="id"
           :props="{ label: 'permissionName', children: 'children' }"
           :default-expanded-keys="expandedPermissionIds"
-          check-strictly
+          @check="handlePermissionCheck"
         >
           <template #default="{ node, data }">
             <div class="permission-tree-node">
@@ -552,28 +552,77 @@ const findParentNode = (tree, nodeId) => {
   return null
 }
 
+// 权限树节点选中/取消选中时触发
+const handlePermissionCheck = (data, checked, indeterminate) => {
+  const permissionId = data.id;
+  if (checked) {
+    // 选中
+    if (!checkedPermissionIds.value.includes(permissionId)) {
+      checkedPermissionIds.value.push(permissionId);
+    }
+  } else {
+    // 取消选中
+    checkedPermissionIds.value = checkedPermissionIds.value.filter(id => id !== permissionId);
+  }
+  console.log('当前选中权限ID:', checkedPermissionIds.value);
+};
+
 // 提交权限分配
 const submitPermission = async () => {
-  if (!permissionTreeRef.value || !currentRoleId.value) return
-  
   try {
+    // 获取完全选中的权限节点和半选状态的权限节点
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
     const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
-    const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
     
-    console.log('提交权限分配:', {
-      roleId: currentRoleId.value,
-      checkedKeys,
-      halfCheckedKeys,
-      allPermissionIds
-    })
+    console.log('=== 权限提交分析 ===')
+    console.log('用户选择的权限数量:', '5个') // 根据用户描述
+    console.log('完全选中的权限ID (checkedKeys):', checkedKeys)
+    console.log('半选状态的权限ID (halfCheckedKeys):', halfCheckedKeys)
+    console.log('完全选中权限数量:', checkedKeys.length)
+    console.log('半选状态权限数量:', halfCheckedKeys.length)
     
-    await assignPermissions(currentRoleId.value, allPermissionIds)
+    // 分析权限树结构，找出哪些是叶子节点权限
+    const leafPermissions = []
+    const parentPermissions = []
+    
+    const analyzePermissions = (nodes) => {
+      for (const node of nodes) {
+        if (node.children && node.children.length > 0) {
+          parentPermissions.push(node.id)
+          analyzePermissions(node.children)
+        } else {
+          leafPermissions.push(node.id)
+        }
+      }
+    }
+    
+    analyzePermissions(permissionTree.value)
+    
+    console.log('叶子节点权限ID:', leafPermissions)
+    console.log('父级节点权限ID:', parentPermissions)
+    
+    // 合并完全选中的权限和半选状态的权限
+    // 这样可以确保用户实际选择的所有权限节点都被保存
+    const allSelectedPermissions = [...new Set([...checkedKeys, ...halfCheckedKeys])]
+    
+    console.log('用户实际选中的权限ID:', allSelectedPermissions)
+    console.log('实际选中权限数量:', allSelectedPermissions.length)
+    
+    // 提交所有被选中的权限（包括完全选中和半选状态的）
+    const finalPermissionIds = allSelectedPermissions
+    
+    console.log('最终提交的权限ID:', finalPermissionIds)
+    console.log('最终提交权限数量:', finalPermissionIds.length)
+    console.log('=== 权限提交分析结束 ===')
+    
+    // 提交所有选中的权限
+    await assignPermissions(currentRoleId.value, finalPermissionIds)
     ElMessage.success('权限分配成功')
     
     // 提交成功后，重新获取权限状态以确保数据一致性
     const { data: updatedPermissionIds } = await getRolePermissionIds(currentRoleId.value)
     console.log('提交后重新获取的权限ID:', updatedPermissionIds)
+    console.log('提交后权限数量:', updatedPermissionIds ? updatedPermissionIds.length : 0)
     
     permissionDialogVisible.value = false
   } catch (error) {
