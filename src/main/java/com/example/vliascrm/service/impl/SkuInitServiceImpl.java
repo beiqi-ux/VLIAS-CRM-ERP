@@ -21,22 +21,23 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SkuInitServiceImpl implements SkuInitService, CommandLineRunner {
+public class SkuInitServiceImpl implements SkuInitService {  // 移除 CommandLineRunner
 
     private final ProdSkuRepository skuRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public void run(String... args) throws Exception {
-        // 检查是否需要初始化SKU数据
-        if (skuRepository.count() == 0) {
-            log.info("检测到SKU表为空，开始初始化SKU数据...");
-            initSkus();
-            log.info("SKU数据初始化完成");
-        } else {
-            log.info("SKU数据已存在，跳过初始化");
-        }
-    }
+    // 注释掉自动初始化，等待手动导入准确数据
+    // @Override
+    // public void run(String... args) throws Exception {
+    //     // 检查是否需要初始化SKU数据
+    //     if (skuRepository.count() == 0) {
+    //         log.info("检测到SKU表为空，开始初始化SKU数据...");
+    //         initSkus();
+    //         log.info("SKU数据初始化完成");
+    //     } else {
+    //         log.info("SKU数据已存在，跳过初始化");
+    //     }
+    // }
 
     @Override
     public void initSkus() {

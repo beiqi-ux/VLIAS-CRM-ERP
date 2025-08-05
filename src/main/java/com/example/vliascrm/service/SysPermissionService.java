@@ -2,6 +2,9 @@ package com.example.vliascrm.service;
 
 import com.example.vliascrm.dto.PermissionDTO;
 import com.example.vliascrm.entity.SysPermission;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
@@ -43,6 +46,14 @@ public interface SysPermissionService {
      * @return 权限列表
      */
     List<SysPermission> getAllPermissions();
+
+    /**
+     * 分页查询权限列表
+     * @param specification 查询条件
+     * @param pageable 分页参数
+     * @return 分页结果
+     */
+    Page<SysPermission> getPermissionPage(Specification<SysPermission> specification, Pageable pageable);
 
     /**
      * 获取权限树

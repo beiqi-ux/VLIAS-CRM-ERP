@@ -12,6 +12,7 @@ import DictSelect from './components/DictSelect.vue'
 import DictRadio from './components/DictRadio.vue'
 
 import './assets/main.css'
+import './styles/layout.css'
 
 const app = createApp(App)
 

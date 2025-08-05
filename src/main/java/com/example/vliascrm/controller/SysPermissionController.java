@@ -5,9 +5,17 @@ import com.example.vliascrm.dto.PermissionDTO;
 import com.example.vliascrm.entity.SysPermission;
 import com.example.vliascrm.service.SysPermissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 权限管理控制器
@@ -18,6 +26,83 @@ import java.util.List;
 public class SysPermissionController {
 
     private final SysPermissionService permissionService;
+
+    /**
+     * 分页查询权限列表
+     * @param page 页码，从0开始
+     * @param size 每页大小
+     * @param permissionName 权限名称（模糊查询）
+     * @param permissionCode 权限编码（模糊查询）
+     * @param permissionType 权限类型
+     * @param status 状态
+     * @param parentId 父权限ID
+     * @return 分页结果
+     */
+    @GetMapping("/page")
+    public ApiResponse<Map<String, Object>> getPermissionPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String permissionName,
+            @RequestParam(required = false) String permissionCode,
+            @RequestParam(required = false) Integer permissionType,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long parentId) {
+
+        // 构建查询条件
+        Specification<SysPermission> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 权限名称模糊查询
+            if (permissionName != null && !permissionName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("permissionName"), "%" + permissionName + "%"));
+            }
+
+            // 权限编码模糊查询
+            if (permissionCode != null && !permissionCode.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("permissionCode"), "%" + permissionCode + "%"));
+            }
+
+            // 权限类型查询
+            if (permissionType != null) {
+                predicates.add(criteriaBuilder.equal(root.get("permissionType"), permissionType));
+            }
+
+            // 状态查询
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            // 父权限ID查询
+            if (parentId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("parentId"), parentId));
+            }
+
+            // 只查询未删除的权限
+            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // 创建分页对象，按权限类型、排序字段、ID排序
+        Pageable pageable = PageRequest.of(page, size, 
+            Sort.by(Sort.Direction.ASC, "permissionType")
+                .and(Sort.by(Sort.Direction.ASC, "sortOrder"))
+                .and(Sort.by(Sort.Direction.ASC, "id")));
+
+        // 执行查询
+        Page<SysPermission> permissionPage = permissionService.getPermissionPage(spec, pageable);
+
+        // 构造返回结果
+        Map<String, Object> result = Map.of(
+            "data", permissionPage.getContent(),
+            "total", permissionPage.getTotalElements(),
+            "current", page,
+            "size", size,
+            "pages", permissionPage.getTotalPages()
+        );
+
+        return ApiResponse.success(result);
+    }
 
     /**
      * 创建权限

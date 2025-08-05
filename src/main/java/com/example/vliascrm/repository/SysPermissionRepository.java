@@ -2,6 +2,7 @@ package com.example.vliascrm.repository;
 
 import com.example.vliascrm.entity.SysPermission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
  * 权限数据访问接口
  */
 @Repository
-public interface SysPermissionRepository extends JpaRepository<SysPermission, Long> {
+public interface SysPermissionRepository extends JpaRepository<SysPermission, Long>, JpaSpecificationExecutor<SysPermission> {
 
     /**
      * 根据权限编码查询

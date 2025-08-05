@@ -1,183 +1,332 @@
 <template>
   <div class="permission-display">
-    <div class="permission-item">
-      <span class="permission-name">{{ permission.permissionName }}</span>
-      <el-tag 
-        :type="getPermissionTypeTag(permission.permissionType)" 
-        size="small" 
-        class="permission-type-tag"
+    <!-- 权限标签显示 -->
+    <template v-if="displayMode === 'tag'">
+      <el-tag
+        v-for="permission in formattedPermissions"
+        :key="permission.code"
+        :type="getTagType(permission.type)"
+        :size="size"
+        class="permission-tag"
+        :closable="closable"
+        @close="handleClose(permission.code)"
       >
-        {{ getPermissionTypeLabel(permission.permissionType) }}
+        <el-icon v-if="showIcon" class="permission-icon">
+          <Lock v-if="permission.type === '操作权限'" />
+          <Grid v-else-if="permission.type === '功能模块'" />
+          <Menu v-else />
+        </el-icon>
+        {{ permission.displayName }}
       </el-tag>
-      <span class="permission-code">{{ permission.permissionCode }}</span>
-      <span v-if="permission.permissionPath" class="permission-path">
-        {{ permission.permissionPath }}
+    </template>
+
+    <!-- 列表显示 -->
+    <template v-else-if="displayMode === 'list'">
+      <div class="permission-list">
+        <div
+          v-for="permission in formattedPermissions"
+          :key="permission.code"
+          class="permission-item"
+        >
+          <el-icon class="permission-icon">
+            <Lock v-if="permission.type === '操作权限'" />
+            <Grid v-else-if="permission.type === '功能模块'" />
+            <Menu v-else />
+          </el-icon>
+          <span class="permission-name">{{ permission.displayName }}</span>
+          <el-tag
+            :type="getTagType(permission.type)"
+            size="small"
+            class="permission-type-tag"
+          >
+            {{ permission.type }}
+          </el-tag>
+          <span v-if="showCode" class="permission-code">{{ permission.code }}</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- 树形显示 -->
+    <template v-else-if="displayMode === 'tree'">
+      <el-tree
+        :data="treeData"
+        :props="treeProps"
+        :default-expand-all="expandAll"
+        :show-checkbox="showCheckbox"
+        :check-strictly="checkStrictly"
+        node-key="code"
+        class="permission-tree"
+        @check="handleTreeCheck"
+      >
+        <template #default="{ node, data }">
+          <div class="tree-node">
+            <el-icon class="tree-icon">
+              <Lock v-if="data.type === '操作权限'" />
+              <Grid v-else-if="data.type === '功能模块'" />
+              <Menu v-else />
+            </el-icon>
+            <span class="tree-label">{{ data.displayName }}</span>
+            <el-tag
+              :type="getTagType(data.type)"
+              size="small"
+              class="tree-type-tag"
+            >
+              {{ data.type }}
+            </el-tag>
+          </div>
+        </template>
+      </el-tree>
+    </template>
+
+    <!-- 简单文本显示 -->
+    <template v-else>
+      <span class="permission-text">
+        {{ formattedPermissions.map(p => p.displayName).join(', ') }}
       </span>
-      <span v-if="showInheritance && hasInheritedPermission" class="inherited-indicator">
-        <el-icon><Promotion /></el-icon> 继承
-      </span>
-    </div>
-    <div v-if="permission.description" class="permission-description">
-      {{ permission.description }}
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { Promotion } from '@element-plus/icons-vue'
+import { Lock, Grid, Menu } from '@element-plus/icons-vue'
+import { batchConvertPermissions } from '@/utils/displayMapping'
 
+// Props定义
 const props = defineProps({
-  permission: {
-    type: Object,
-    required: true
-  },
-  userPermissions: {
-    type: Array,
+  // 权限编码，可以是字符串或数组
+  permissions: {
+    type: [String, Array],
     default: () => []
   },
-  showInheritance: {
+  // 显示模式：tag, list, tree, text
+  displayMode: {
+    type: String,
+    default: 'tag',
+    validator: (value) => ['tag', 'list', 'tree', 'text'].includes(value)
+  },
+  // 标签大小
+  size: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['large', 'default', 'small'].includes(value)
+  },
+  // 是否可关闭（仅tag模式）
+  closable: {
+    type: Boolean,
+    default: false
+  },
+  // 是否显示图标
+  showIcon: {
+    type: Boolean,
+    default: true
+  },
+  // 是否显示编码（仅list模式）
+  showCode: {
+    type: Boolean,
+    default: false
+  },
+  // 是否展开全部（仅tree模式）
+  expandAll: {
+    type: Boolean,
+    default: false
+  },
+  // 是否显示复选框（仅tree模式）
+  showCheckbox: {
+    type: Boolean,
+    default: false
+  },
+  // 是否严格模式（仅tree模式）
+  checkStrictly: {
     type: Boolean,
     default: false
   }
 })
 
-// 获取权限类型标签颜色
-const getPermissionTypeTag = (type) => {
-  switch (type) {
-    case 1: return 'primary'
-    case 2: return 'success'
-    case 3: return 'warning'
-    default: return 'info'
-  }
-}
+// 事件定义
+const emit = defineEmits(['close', 'tree-check'])
 
-// 获取权限类型标签文本
-const getPermissionTypeLabel = (type) => {
-  switch (type) {
-    case 1: return '一级(模块)'
-    case 2: return '二级(子模块)'
-    case 3: return '三级(操作)'
-    default: return '未知'
-  }
-}
-
-// 检查是否为继承权限
-const hasInheritedPermission = computed(() => {
-  if (!props.showInheritance || !props.userPermissions.length) {
-    return false
-  }
+// 格式化权限数据
+const formattedPermissions = computed(() => {
+  const permissionArray = Array.isArray(props.permissions) 
+    ? props.permissions 
+    : [props.permissions].filter(Boolean)
   
-  // 直接拥有权限
-  if (props.userPermissions.includes(props.permission.permissionCode)) {
-    return false
-  }
-  
-  // 检查继承权限
-  const permissionType = getPermissionType(props.permission.permissionCode)
-  
-  if (permissionType === 3) {
-    // 三级权限检查二级和一级
-    const submoduleCode = extractSubmoduleCode(props.permission.permissionCode)
-    if (submoduleCode && props.userPermissions.includes(submoduleCode)) {
-      return true
-    }
-    const moduleCode = extractModuleCode(props.permission.permissionCode)
-    if (moduleCode && props.userPermissions.includes(moduleCode)) {
-      return true
-    }
-  } else if (permissionType === 2) {
-    // 二级权限检查一级
-    const moduleCode = extractModuleCode(props.permission.permissionCode)
-    if (moduleCode && props.userPermissions.includes(moduleCode)) {
-      return true
-    }
-  }
-  
-  return false
+  return batchConvertPermissions(permissionArray)
 })
 
-// 辅助函数
-const getPermissionType = (permissionCode) => {
-  if (!permissionCode) return null
-  if (permissionCode.includes(':')) return 3
-  if (permissionCode.includes('-')) return 2
-  return 1
+// 树形数据（仅tree模式使用）
+const treeData = computed(() => {
+  if (props.displayMode !== 'tree') return []
+  
+  const permissions = formattedPermissions.value
+  const tree = {}
+  
+  // 构建树形结构
+  permissions.forEach(permission => {
+    const parts = permission.code.split(/[-:]/)
+    let current = tree
+    
+    parts.forEach((part, index) => {
+      if (!current[part]) {
+        current[part] = {
+          code: parts.slice(0, index + 1).join(index === parts.length - 1 && permission.code.includes(':') ? ':' : '-'),
+          displayName: permission.displayName,
+          type: permission.type,
+          children: {}
+        }
+      }
+      current = current[part].children
+    })
+  })
+  
+  // 转换为数组格式
+  function convertToArray(obj) {
+    return Object.values(obj).map(item => ({
+      ...item,
+      children: Object.keys(item.children).length > 0 ? convertToArray(item.children) : undefined
+    }))
+  }
+  
+  return convertToArray(tree)
+})
+
+// 树形组件属性
+const treeProps = {
+  children: 'children',
+  label: 'displayName'
 }
 
-const extractSubmoduleCode = (permissionCode) => {
-  if (permissionCode && permissionCode.includes(':')) {
-    return permissionCode.split(':')[0]
+// 获取标签类型
+function getTagType(permissionType) {
+  switch (permissionType) {
+    case '系统模块':
+      return 'danger'
+    case '功能模块':
+      return 'warning'
+    case '操作权限':
+      return 'success'
+    default:
+      return 'info'
   }
-  return null
 }
 
-const extractModuleCode = (permissionCode) => {
-  if (!permissionCode) return null
-  let code = permissionCode
-  if (code.includes(':')) {
-    code = code.split(':')[0]
-  }
-  if (code.includes('-')) {
-    return code.split('-')[0]
-  }
-  return code
+// 处理标签关闭
+function handleClose(permissionCode) {
+  emit('close', permissionCode)
+}
+
+// 处理树形选择
+function handleTreeCheck(data, checkedInfo) {
+  emit('tree-check', data, checkedInfo)
 }
 </script>
 
 <style scoped>
 .permission-display {
-  padding: 8px 0;
+  width: 100%;
+}
+
+/* 标签模式样式 */
+.permission-tag {
+  margin: 2px 4px 2px 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.permission-tag .permission-icon {
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+/* 列表模式样式 */
+.permission-list {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .permission-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.permission-item:last-child {
+  border-bottom: none;
+}
+
+.permission-item .permission-icon {
+  margin-right: 8px;
+  color: #666;
+  font-size: 14px;
 }
 
 .permission-name {
-  font-weight: 500;
-  color: #303133;
-  min-width: 120px;
+  flex: 1;
+  font-size: 14px;
+  color: #333;
 }
 
 .permission-type-tag {
-  flex-shrink: 0;
+  margin: 0 8px;
 }
 
 .permission-code {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12px;
-  color: #909399;
-  background-color: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 3px;
-  flex-shrink: 0;
+  color: #999;
+  font-family: 'Courier New', monospace;
 }
 
-.permission-path {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 11px;
-  color: #b3b3b3;
-  margin-left: auto;
-  flex-shrink: 0;
+/* 树形模式样式 */
+.permission-tree {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.inherited-indicator {
-  color: #e6a23c;
-  font-size: 12px;
+.tree-node {
   display: flex;
   align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+  flex: 1;
+  padding-right: 8px;
 }
 
-.permission-description {
-  font-size: 12px;
+.tree-icon {
+  margin-right: 6px;
   color: #666;
+  font-size: 14px;
+}
+
+.tree-label {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.tree-type-tag {
   margin-left: 8px;
-  margin-top: 2px;
+}
+
+/* 文本模式样式 */
+.permission-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .permission-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .permission-item .permission-icon {
+    margin-bottom: 4px;
+  }
+  
+  .permission-type-tag {
+    margin: 4px 0;
+  }
 }
 </style> 

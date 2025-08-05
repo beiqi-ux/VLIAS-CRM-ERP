@@ -1,36 +1,39 @@
 <template>
-  <div class="menu-container">
-    <div class="action-bar">
-      <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.MENU.CREATE)"
-        type="primary" 
-        @click="handleAddTopLevel"
-      >
-        新增顶级菜单
-      </el-button>
-      <el-button
-        type="success"
-        @click="expandAll"
-      >
-        展开全部
-      </el-button>
-      <el-button
-        type="info"
-        @click="collapseAll"
-      >
-        折叠全部
-      </el-button>
-    </div>
+  <PageContainer>
+    <TableContainer>
+      <template #actions>
+        <div class="action-bar">
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.MENU.CREATE)"
+            type="primary" 
+            @click="handleAddTopLevel"
+          >
+            新增顶级菜单
+          </el-button>
+          <el-button
+            type="success"
+            @click="expandAll"
+          >
+            展开全部
+          </el-button>
+          <el-button
+            type="info"
+            @click="collapseAll"
+          >
+            折叠全部
+          </el-button>
+        </div>
+      </template>
 
-    <el-table
-      ref="menuTableRef"
-      v-loading="tableLoading"
-      :data="tableData"
-      row-key="id"
-      border
-      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      style="width: 100%; margin-top: 15px"
-    >
+      <el-table
+        ref="menuTableRef"
+        v-loading="tableLoading"
+        :data="tableData"
+        row-key="id"
+        border
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        height="100%"
+      >
       <el-table-column
         prop="id"
         label="ID"
@@ -40,7 +43,11 @@
           {{ $formatId(scope.row.id) }}
         </template>
       </el-table-column>
-      <el-table-column label="菜单名称">
+      <el-table-column 
+        label="菜单名称"
+        min-width="180"
+        show-overflow-tooltip
+      >
         <template #default="scope">
           <div class="menu-name">
             <el-icon
@@ -64,6 +71,8 @@
       <el-table-column
         prop="menuCode"
         label="菜单编码"
+        width="140"
+        show-overflow-tooltip
       />
       <el-table-column
         prop="menuType"
@@ -79,14 +88,20 @@
       <el-table-column
         prop="path"
         label="路由地址"
+        width="150"
+        show-overflow-tooltip
       />
       <el-table-column
         prop="component"
         label="组件路径"
+        width="180"
+        show-overflow-tooltip
       />
       <el-table-column
         prop="permissionCode"
         label="权限标识"
+        width="160"
+        show-overflow-tooltip
       />
       <el-table-column
         prop="sort"
@@ -308,7 +323,8 @@
         </el-button>
       </template>
     </el-dialog>
-  </div>
+    </TableContainer>
+  </PageContainer>
 </template>
 
 <script setup>
@@ -316,6 +332,8 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, toggleMenuStatus } from '@/api/menu'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
+import PageContainer from '@/components/PageContainer.vue'
+import TableContainer from '@/components/TableContainer.vue'
 
 // 表格数据和加载状态
 const tableData = ref([])
@@ -554,23 +572,31 @@ const handleDelete = (row) => {
 </script>
 
 <style scoped>
-.menu-container {
-  padding: 20px;
-}
 .action-bar {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
 }
+
 .menu-name {
   display: flex;
   align-items: center;
   gap: 5px;
+  overflow: hidden;
 }
+
+.menu-name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .menu-icon {
   margin-right: 5px;
+  flex-shrink: 0;
 }
+
 .core-menu-tag {
   margin-left: 8px;
+  flex-shrink: 0;
 }
 </style> 

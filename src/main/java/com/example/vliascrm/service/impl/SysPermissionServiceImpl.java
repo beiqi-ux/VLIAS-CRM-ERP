@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -130,6 +133,11 @@ public class SysPermissionServiceImpl implements SysPermissionService {
     public List<SysPermission> getAllPermissions() {
         // 按照3级权限结构排序：权限类型 → 排序字段 → ID
         return permissionRepository.findAllPermissionsOrderByTypeAndSort(false);
+    }
+
+    @Override
+    public Page<SysPermission> getPermissionPage(Specification<SysPermission> specification, Pageable pageable) {
+        return permissionRepository.findAll(specification, pageable);
     }
 
     @Override

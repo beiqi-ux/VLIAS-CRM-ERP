@@ -32,6 +32,7 @@
       :data="tableData"
       border
       style="width: 100%; margin-top: 15px"
+      height="600"
     >
       <el-table-column
         prop="id"
@@ -689,5 +690,29 @@ const getPermissionTypeLabel = (type) => {
   font-size: 11px;
   color: #b3b3b3;
   margin-left: auto;
+}
+
+/* 表格滚动条样式 */
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-corner {
+  background: #f1f1f1;
 }
 </style> 

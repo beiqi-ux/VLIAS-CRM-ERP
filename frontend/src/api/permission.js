@@ -84,6 +84,26 @@ export function getAllPermissions() {
   })
 }
 
+/**
+ * 分页查询权限列表
+ * @param {Object} params - 查询参数
+ * @param {Number} params.page - 页码，从0开始
+ * @param {Number} params.size - 每页大小
+ * @param {String} params.permissionName - 权限名称（模糊查询）
+ * @param {String} params.permissionCode - 权限编码（模糊查询）
+ * @param {Number} params.permissionType - 权限类型
+ * @param {Number} params.status - 状态
+ * @param {Number} params.parentId - 父权限ID
+ * @returns {Promise}
+ */
+export function getPermissionPage(params) {
+  return request({
+    url: '/api/sys/permissions/page',
+    method: 'get',
+    params
+  })
+}
+
 // ==================== 权限同步功能 ====================
 
 /**

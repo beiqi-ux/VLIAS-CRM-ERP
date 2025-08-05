@@ -1,107 +1,138 @@
 <template>
-  <el-container class="app-container">
+  <div class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside
-      :width="isCollapse ? '64px' : '200px'"
-      class="sidebar-container"
+    <div
+      :style="{ width: isCollapse ? '64px' : '200px' }"
+      class="layout-sidebar sidebar-container"
     >
-      <!-- 顶部logo -->
-      <div class="logo-container">
-        <div
-          class="vlias-logo"
-          :class="{ 'collapsed': isCollapse }"
-        >
-          {{ isCollapse ? 'V' : 'VLIAS' }}
-        </div>
-        <span v-if="!isCollapse">企业管理系统</span>
-      </div>
-      
-      <!-- 动态菜单 -->
-      <el-menu
-        :collapse="isCollapse"
-        :default-active="activeMenu"
-        :default-openeds="[]"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409eff"
-        :collapse-transition="false"
-        router
-      >
-        <!-- 首页菜单 -->
-        <el-menu-item index="/home">
-          <el-icon><House /></el-icon>
-          <template #title>
-            首页
-          </template>
-        </el-menu-item>
-        
-        <!-- 动态渲染菜单 -->
-        <template
-          v-for="menu in userMenus"
-          :key="menu.id"
-        >
-          <!-- 目录类型菜单 -->
-          <el-sub-menu
-            v-if="menu.menuType === 1"
-            :index="menu.menuCode"
+      <div class="sidebar-content">
+        <!-- 顶部logo -->
+        <div class="logo-container">
+          <div
+            class="vlias-logo"
+            :class="{ 'collapsed': isCollapse }"
           >
-            <template #title>
-              <el-icon v-if="menu.icon && iconMap[menu.icon]">
-                <component :is="iconMap[menu.icon]" />
-              </el-icon>
-              <el-icon v-else>
-                <Setting v-if="menu.menuCode === 'system'" />
-                <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
-                <Goods v-else-if="menu.menuCode === 'product'" />
-                <Document v-else-if="menu.menuCode === 'crm'" />
-                <Calendar v-else-if="menu.menuCode === 'order'" />
-                <Box v-else-if="menu.menuCode === 'inventory'" />
-                <Document v-else-if="menu.menuCode === 'purchase'" />
-                <Star v-else-if="menu.menuCode === 'promotion'" />
-                <Money v-else-if="menu.menuCode === 'finance'" />
-                <User v-else-if="menu.menuCode === 'member'" />
-                <Bell v-else-if="menu.menuCode === 'message'" />
-                <Menu v-else />
-              </el-icon>
-              <span>{{ menu.menuName }}</span>
-            </template>
-            <!-- 子菜单 -->
+            {{ isCollapse ? 'V' : 'VLIAS' }}
+          </div>
+          <span v-if="!isCollapse">企业管理系统</span>
+        </div>
+        
+        <!-- 主要菜单区域 -->
+        <div class="main-menu-area">
+          <el-menu
+            :collapse="isCollapse"
+            :default-active="activeMenu"
+            :default-openeds="[]"
+            background-color="#304156"
+            text-color="#bfcbd9"
+            active-text-color="#409eff"
+            :collapse-transition="false"
+            router
+          >
+            <!-- 首页菜单 -->
+            <el-menu-item index="/home">
+              <el-icon><House /></el-icon>
+              <template #title>
+                首页
+              </template>
+            </el-menu-item>
+            
+            <!-- 动态渲染菜单（排除个人中心） -->
             <template
-              v-for="child in menu.children"
-              :key="child.id"
+              v-for="menu in filteredUserMenus"
+              :key="menu.id"
             >
-              <el-menu-item :index="child.path">
+              <!-- 目录类型菜单 -->
+              <el-sub-menu
+                v-if="menu.menuType === 1"
+                :index="menu.menuCode"
+              >
                 <template #title>
-                  {{ child.menuName }}
+                  <el-icon v-if="menu.icon && iconMap[menu.icon]">
+                    <component :is="iconMap[menu.icon]" />
+                  </el-icon>
+                  <el-icon v-else>
+                    <Setting v-if="menu.menuCode === 'system'" />
+                    <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
+                    <Goods v-else-if="menu.menuCode === 'product'" />
+                    <Document v-else-if="menu.menuCode === 'crm'" />
+                    <Calendar v-else-if="menu.menuCode === 'order'" />
+                    <Box v-else-if="menu.menuCode === 'inventory'" />
+                    <Document v-else-if="menu.menuCode === 'purchase'" />
+                    <Star v-else-if="menu.menuCode === 'promotion'" />
+                    <Money v-else-if="menu.menuCode === 'finance'" />
+                    <User v-else-if="menu.menuCode === 'member'" />
+                    <Bell v-else-if="menu.menuCode === 'message'" />
+                    <Menu v-else />
+                  </el-icon>
+                  <span>{{ menu.menuName }}</span>
+                </template>
+                <!-- 子菜单 -->
+                <template
+                  v-for="child in menu.children"
+                  :key="child.id"
+                >
+                  <el-menu-item :index="child.path">
+                    <template #title>
+                      {{ child.menuName }}
+                    </template>
+                  </el-menu-item>
+                </template>
+              </el-sub-menu>
+              
+              <!-- 菜单类型 -->
+              <el-menu-item
+                v-else-if="menu.menuType === 2"
+                :index="menu.path"
+              >
+                <el-icon v-if="menu.icon && iconMap[menu.icon]">
+                  <component :is="iconMap[menu.icon]" />
+                </el-icon>
+                <el-icon v-else>
+                  <User v-if="menu.menuCode === 'profile'" />
+                  <View v-else />
+                </el-icon>
+                <template #title>
+                  {{ menu.menuName }}
                 </template>
               </el-menu-item>
             </template>
-          </el-sub-menu>
-          
-          <!-- 菜单类型 -->
-          <el-menu-item
-            v-else-if="menu.menuType === 2"
-            :index="menu.path"
+          </el-menu>
+        </div>
+        
+        <!-- 底部固定个人中心菜单 -->
+        <div class="bottom-menu-area">
+          <el-menu
+            :collapse="isCollapse"
+            :default-active="activeMenu"
+            background-color="#304156"
+            text-color="#bfcbd9"
+            active-text-color="#409eff"
+            :collapse-transition="false"
+            router
           >
-            <el-icon v-if="menu.icon && iconMap[menu.icon]">
-              <component :is="iconMap[menu.icon]" />
-            </el-icon>
-            <el-icon v-else>
-              <User v-if="menu.menuCode === 'profile'" />
-              <View v-else />
-            </el-icon>
-            <template #title>
-              {{ menu.menuName }}
+            <template v-if="profileMenu">
+              <el-menu-item :index="profileMenu.path">
+                <el-icon v-if="profileMenu.icon && iconMap[profileMenu.icon]">
+                  <component :is="iconMap[profileMenu.icon]" />
+                </el-icon>
+                <el-icon v-else>
+                  <User />
+                </el-icon>
+                <template #title>
+                  {{ profileMenu.menuName }}
+                </template>
+              </el-menu-item>
             </template>
-          </el-menu-item>
-        </template>
-      </el-menu>
-    </el-aside>
+          </el-menu>
+        </div>
+      </div>
+    </div>
     
     <!-- 主容器 -->
-    <el-container>
+    <div class="layout-main">
       <!-- 头部 -->
-      <el-header class="header">
+      <div class="layout-header header">
         <div class="header-left">
           <el-icon
             class="collapse-btn"
@@ -146,10 +177,10 @@
             </template>
           </el-dropdown>
         </div>
-      </el-header>
+      </div>
       
       <!-- 主内容区域 -->
-      <main class="main-content">
+      <main class="layout-content main-content">
         <!-- 权限数据加载中 -->
         <div
           v-if="!userStore.permissionsLoaded"
@@ -163,8 +194,8 @@
         <!-- 权限数据已加载，显示正常内容 -->
         <RouterView v-else />
       </main>
-    </el-container>
-  </el-container>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -211,6 +242,16 @@ const activeMenu = computed(() => route.path)
 
 // 用户菜单数据
 const userMenus = ref([])
+
+// 过滤掉个人中心的菜单（用于主要菜单区域）
+const filteredUserMenus = computed(() => {
+  return userMenus.value.filter(menu => menu.menuCode !== 'profile')
+})
+
+// 个人中心菜单（用于底部固定显示）
+const profileMenu = computed(() => {
+  return userMenus.value.find(menu => menu.menuCode === 'profile')
+})
 
 // 切换侧边栏
 function toggleSidebar() {
@@ -353,14 +394,53 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-.app-container {
-  height: 100%;
+.layout-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-sidebar {
+  flex-shrink: 0;
+}
+
+.layout-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-header {
+  flex-shrink: 0;
+  height: 60px;
+}
+
+.layout-content {
+  flex: 1;
+  overflow: hidden;
 }
 
 .sidebar-container {
   transition: width 0.3s;
   background-color: #304156;
   overflow-x: hidden;
+}
+
+.sidebar-content {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-menu-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.bottom-menu-area {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo-container {
@@ -421,9 +501,29 @@ async function handleLogout() {
 }
 
 .main-content {
-  padding: 20px;
+  padding: 0;
   background-color: #f5f5f5;
-  min-height: calc(100vh - 60px);
+  height: 100%;
+  overflow: auto;
+}
+
+/* 主内容区域滚动条样式 */
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .loading-container {

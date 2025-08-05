@@ -1,6 +1,9 @@
 <template>
   <div class="permission-container">
-    <div class="action-bar">
+    <!-- 固定顶部区域 -->
+    <div class="fixed-header">
+      <!-- 操作栏 -->
+      <div class="action-bar">
       <el-button 
         v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE)"
         type="primary" 
@@ -8,13 +11,22 @@
       >
         新增一级权限
       </el-button>
+      
+      <!-- 视图切换 -->
+      <el-radio-group v-model="viewMode" class="ml-4">
+        <el-radio-button label="tree">树形视图</el-radio-button>
+        <el-radio-button label="list">列表视图</el-radio-button>
+      </el-radio-group>
+      
       <el-button
+        v-if="viewMode === 'tree'"
         type="success"
         @click="expandAll"
       >
         展开全部
       </el-button>
       <el-button
+        v-if="viewMode === 'tree'"
         type="info"
         @click="collapseAll"
       >
@@ -32,202 +44,358 @@
         <el-icon><Refresh /></el-icon>
         同步权限
       </el-button>
-      <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.RESET)"
-        type="danger" 
-        :loading="resetLoading" 
-        @click="handleResetPermissions"
-      >
-        <el-icon><Delete /></el-icon>
-        重置权限
-      </el-button>
-      <el-button 
-        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.VALIDATE)"
-        type="info" 
-        @click="handleValidateConfig"
-      >
-        <el-icon><Tools /></el-icon>
-        验证配置
-      </el-button>
+
     </div>
 
-    <!-- 层级说明 -->
-    <div class="level-info-card">
-      <div class="level-info-item">
-        <el-tag size="small" type="primary" class="level-tag-1">1级</el-tag>
-        <span class="level-desc">一级权限(模块) - 系统主要功能模块</span>
-      </div>
-      <div class="level-info-item">
-        <el-tag size="small" type="success" class="level-tag-2">2级</el-tag>
-        <span class="level-desc">二级权限(子模块) - 模块下的功能分组</span>
-      </div>
-      <div class="level-info-item">
-        <el-tag size="small" type="warning" class="level-tag-3">3级</el-tag>
-        <span class="level-desc">三级权限(操作) - 具体的操作权限</span>
+    <!-- 搜索栏 - 仅在列表视图显示 -->
+    <div v-if="viewMode === 'list'" class="search-bar">
+      <el-form :model="searchForm" inline @submit.prevent="handleSearch">
+        <el-form-item label="权限名称">
+          <el-input
+            v-model="searchForm.permissionName"
+            placeholder="请输入权限名称"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="权限编码">
+          <el-input
+            v-model="searchForm.permissionCode"
+            placeholder="请输入权限编码"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="权限类型">
+          <el-select
+            v-model="searchForm.permissionType"
+            placeholder="请选择权限类型"
+            clearable
+            style="width: 150px"
+            @change="handleSearch"
+          >
+            <el-option label="一级权限" :value="1" />
+            <el-option label="二级权限" :value="2" />
+            <el-option label="三级权限" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+            @change="handleSearch"
+          >
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleResetSearch">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+      <!-- 权限类型说明 -->
+      <div class="permission-type-info">
+        <div class="info-item">
+          <el-tag type="primary" size="small">一级权限</el-tag>
+          <span class="info-text">模块级权限，如：系统管理、组织架构、商品管理等</span>
+        </div>
+        <div class="info-item">
+          <el-tag type="success" size="small">二级权限</el-tag>
+          <span class="info-text">功能级权限，如：用户管理、角色管理、权限管理等</span>
+        </div>
+        <div class="info-item">
+          <el-tag type="warning" size="small">三级权限</el-tag>
+          <span class="info-text">操作级权限，如：查看、新增、编辑、删除等</span>
+        </div>
       </div>
     </div>
 
-    <el-table
-      ref="permissionTableRef"
-      v-loading="tableLoading"
-      :data="tableData"
-      row-key="id"
-      border
-      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      :default-expand-all="false"
-      style="width: 100%; margin-top: 15px"
-      :row-style="{ height: '50px' }"
-      :cell-style="{ padding: '12px 8px' }"
-      :row-class-name="getRowClassName"
-    >
-      <el-table-column
-        prop="id"
-        label="ID"
-        width="90"
-        align="center"
+    <!-- 内容区域 -->
+    <div class="content-area">
+      <!-- 树形视图 -->
+    <div v-if="viewMode === 'tree'" class="tree-view">
+      <el-table
+        ref="permissionTableRef"
+        v-loading="tableLoading"
+        :data="tableData"
+        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        :default-expand-all="false"
+        border
+        stripe
+        class="permission-table"
+        height="600"
+        style="width: 100%"
       >
-        <template #default="scope">
-          {{ $formatId(scope.row.id) }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="permissionName"
-        label="权限名称"
-        width="200"
-        show-overflow-tooltip
+        <el-table-column
+          prop="permissionName"
+          label="权限名称"
+          min-width="200"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <div class="permission-name-cell">
+              <el-tag 
+                :type="getPermissionTypeTag(row.permissionType)" 
+                size="small" 
+                class="permission-type-tag"
+              >
+                {{ getPermissionTypeLabel(row.permissionType) }}
+              </el-tag>
+              <span class="permission-name">{{ row.permissionName }}</span>
+              <el-tooltip 
+                v-if="getPermissionDisplayName(row.permissionCode) !== row.permissionName"
+                :content="`友好名称: ${getPermissionDisplayName(row.permissionCode)}`"
+                placement="top"
+              >
+                <el-icon class="friendly-name-icon"><InfoFilled /></el-icon>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          label="权限编码"
+          min-width="250"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <div class="permission-code-cell">
+              <code class="permission-code">{{ row.permissionCode }}</code>
+              <el-tag 
+                size="small" 
+                type="info" 
+                class="friendly-display"
+              >
+                {{ getPermissionDisplayName(row.permissionCode) }}
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          prop="description"
+          label="描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="80"
+          align="center"
+        >
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          prop="sortOrder"
+          label="排序"
+          width="80"
+          align="center"
+        />
+        
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+          align="center"
+        >
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          label="操作"
+          width="200"
+          align="center"
+          fixed="right"
+        >
+          <template #default="{ row }">
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
+              type="primary"
+              size="small"
+              @click="handleAddChild(row)"
+            >
+              新增子权限
+            </el-button>
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
+              type="warning"
+              size="small"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 列表视图 -->
+    <div v-if="viewMode === 'list'" class="list-view">
+      <el-table
+        v-loading="listLoading"
+        :data="listData"
+        border
+        stripe
+        class="permission-list-table"
+        height="600"
+        style="width: 100%"
       >
-        <template #default="scope">
-          <div class="permission-name-wrapper" :class="`level-${scope.row.levelDepth}`">
-            <!-- 层级缩进 -->
-            <span 
-              v-for="i in (scope.row.levelDepth - 1)" 
-              :key="i" 
-              class="level-indent"
-            ></span>
-            
-            <!-- 层级图标 -->
-            <span class="level-icon" v-if="scope.row.levelDepth > 1">
-              <span v-if="scope.row.levelDepth === 2" class="level-2-icon">├─</span>
-              <span v-if="scope.row.levelDepth === 3" class="level-3-icon">└─</span>
-            </span>
-            
-            <!-- 权限名称 -->
-            <span class="permission-name-text">{{ scope.row.permissionName }}</span>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="permissionCode"
-        label="权限编码"
-        width="220"
-        show-overflow-tooltip
-      >
-        <template #default="scope">
-          <div class="permission-code-wrapper" :class="`level-${scope.row.levelDepth}`">
-            <code class="permission-code">{{ scope.row.permissionCode }}</code>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="permissionType"
-        label="权限类型"
-        width="110"
-        align="center"
-      >
-        <template #default="scope">
-          <el-tag :type="getPermissionTypeTag(scope.row.permissionType)" size="small">
-            {{ getPermissionTypeName(scope.row.permissionType) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="levelDepth"
-        label="层级"
-        width="80"
-        align="center"
-      >
-        <template #default="scope">
-          <el-tag 
-            size="small" 
-            :type="getLevelTagType(scope.row.levelDepth)"
-            :class="`level-tag-${scope.row.levelDepth}`"
-          >
-            {{ scope.row.levelDepth }}级
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="description"
-        label="描述"
-        min-width="150"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="status"
-        label="状态"
-        width="90"
-        align="center"
-      >
-        <template #default="scope">
-          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
-            {{ scope.row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="createTime"
-        label="创建时间"
-        width="160"
-        align="center"
-      >
-        <template #default="scope">
-          {{ formatDateTime(scope.row.createTime) }}
-        </template>
-      </el-table-column>
-      <el-table-column 
-        v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT) || hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) || hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE)"
-        label="操作" 
-        width="180" 
-        fixed="right"
-        align="center"
-      >
-        <template #default="scope">
-          <div class="action-buttons">
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
-            size="small" 
-            @click="handleEdit(scope.row)"
-          >
-            编辑
-          </el-button>
-          <el-button 
-            v-if="scope.row.permissionType === 1 && hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE)" 
-            size="small" 
-            type="success" 
-            @click="handleAddSubmodule(scope.row)"
-          >
-              +子模块
-          </el-button>
-          <el-button 
-            v-if="scope.row.permissionType === 2 && hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE)" 
-            size="small" 
-            type="warning" 
-            @click="handleAddAction(scope.row)"
-          >
-              +操作
-          </el-button>
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(scope.row)"
-            size="small" 
-            type="danger" 
-            @click="handleDelete(scope.row)"
-          >
-            删除
-          </el-button>
-          </div>
-        </template>
-      </el-table-column>
-    </el-table>
+        <el-table-column
+          prop="permissionName"
+          label="权限名称"
+          min-width="200"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <div class="permission-name-cell">
+              <el-tag 
+                :type="getPermissionTypeTag(row.permissionType)" 
+                size="small" 
+                class="permission-type-tag"
+              >
+                {{ getPermissionTypeLabel(row.permissionType) }}
+              </el-tag>
+              <span class="permission-name">{{ row.permissionName }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          prop="permissionCode"
+          label="权限编码"
+          min-width="250"
+          show-overflow-tooltip
+        />
+        
+        <el-table-column
+          prop="parentId"
+          label="父权限"
+          width="120"
+          align="center"
+        >
+          <template #default="{ row }">
+            <span v-if="row.parentId === 0">顶级权限</span>
+            <span v-else>{{ getParentPermissionName(row.parentId) }}</span>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          prop="description"
+          label="描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="80"
+          align="center"
+        >
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          prop="sortOrder"
+          label="排序"
+          width="80"
+          align="center"
+        />
+        
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+          align="center"
+        >
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
+        
+        <el-table-column
+          label="操作"
+          width="200"
+          align="center"
+          fixed="right"
+        >
+          <template #default="{ row }">
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
+              type="primary"
+              size="small"
+              @click="handleAddChild(row)"
+            >
+              新增子权限
+            </el-button>
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
+              type="warning"
+              size="small"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </div>
 
     <!-- 权限表单对话框 -->
     <el-dialog
@@ -376,22 +544,47 @@
         </el-button>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, validatePermissionConfig, resetAllPermissions } from '@/api/permission'
+import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, getPermissionPage } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
-import { Refresh, Tools, Delete } from '@element-plus/icons-vue'
+import { Refresh, Tools, Delete, Search, InfoFilled } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
+import { getPermissionDisplayName } from '@/utils/displayMapping'
 
 
 // 表格数据和加载状态
 const tableData = ref([])
 const tableLoading = ref(false)
 const permissionTableRef = ref(null)
+
+// 列表数据和加载状态
+const listData = ref([])
+const listLoading = ref(false)
+const permissionListRef = ref(null)
+
+// 搜索表单
+const searchForm = reactive({
+  permissionName: '',
+  permissionCode: '',
+  permissionType: null,
+  status: null
+})
+
+// 分页
+const pagination = reactive({
+  current: 1,
+  size: 10,
+  total: 0
+})
+
+// 视图模式
+const viewMode = ref('tree')
 
 // 权限表单相关
 const dialogVisible = ref(false)
@@ -415,13 +608,21 @@ const permissionRules = {
 
 // 权限选项和菜单选项
 const moduleOptions = ref([]) // 一级权限（模块）选项
-const submoduleOptions = ref([]) // 二级权限（子模块）选项  
+const submoduleOptions = ref([]) // 二级权限（子模块）选项
 const menuOptions = ref([])
 
 // 权限同步加载状态
 const syncLoading = ref(false)
-const resetLoading = ref(false)
 
+
+// 监听视图模式变化
+watch(viewMode, (newMode) => {
+  if (newMode === 'tree') {
+    fetchPermissionList()
+  } else {
+    fetchPermissionListData()
+  }
+})
 
 // 初始化
 onMounted(() => {
@@ -436,7 +637,7 @@ const formatDateTime = (dateTimeStr) => {
   return date.toLocaleString()
 }
 
-// 获取权限列表
+// 获取权限列表（树形视图）
 const fetchPermissionList = async () => {
   try {
     tableLoading.value = true
@@ -445,7 +646,7 @@ const fetchPermissionList = async () => {
     tableData.value = data || []
     
     // 获取不同级别的权限作为选项
-    updatePermissionOptions(data)
+    updatePermissionOptions(data || [])
     
     // 确保表格默认折叠状态
     nextTick(() => {
@@ -462,6 +663,33 @@ const fetchPermissionList = async () => {
     console.error(error)
   } finally {
     tableLoading.value = false
+  }
+}
+
+// 获取权限列表数据（列表视图）
+const fetchPermissionListData = async () => {
+  try {
+    listLoading.value = true
+    const params = {
+      page: pagination.current - 1, // 后端从0开始
+      size: pagination.size,
+      permissionName: searchForm.permissionName,
+      permissionCode: searchForm.permissionCode,
+      permissionType: searchForm.permissionType,
+      status: searchForm.status
+    }
+    const { data } = await getPermissionPage(params)
+    console.log('分页权限数据:', data)
+    listData.value = data.data || []
+    pagination.total = data.total || 0
+    
+    // 更新权限选项
+    updatePermissionOptions(data.data || [])
+  } catch (error) {
+    ElMessage.error('获取权限列表失败')
+    console.error(error)
+  } finally {
+    listLoading.value = false
   }
 }
 
@@ -491,8 +719,36 @@ const fetchMenuList = async () => {
     const { data } = await getMenuList()
     menuOptions.value = data || []
   } catch (error) {
-    console.error('获取菜单列表失败', error)
+    console.error('获取菜单列表失败:', error)
   }
+}
+
+// 获取权限类型标签样式
+const getPermissionTypeTag = (type) => {
+  switch (type) {
+    case 1: return 'primary'
+    case 2: return 'success'
+    case 3: return 'warning'
+    default: return 'info'
+  }
+}
+
+// 获取权限类型标签文本
+const getPermissionTypeLabel = (type) => {
+  switch (type) {
+    case 1: return '一级权限'
+    case 2: return '二级权限'
+    case 3: return '三级权限'
+    default: return '未知类型'
+  }
+}
+
+// 获取父权限名称
+const getParentPermissionName = (parentId) => {
+  if (parentId === 0) return '顶级权限'
+  const parent = moduleOptions.value.find(item => item.id === parentId) || 
+                submoduleOptions.value.find(item => item.id === parentId)
+  return parent ? parent.permissionName : '未知父权限'
 }
 
 // 展开全部
@@ -500,8 +756,23 @@ const expandAll = () => {
   if (permissionTableRef.value) {
     tableData.value.forEach(row => {
       permissionTableRef.value.toggleRowExpansion(row, true)
+      if (row.children) {
+        expandChildren(row.children)
+      }
     })
   }
+}
+
+// 递归展开子节点
+const expandChildren = (children) => {
+  children.forEach(child => {
+    if (permissionTableRef.value) {
+      permissionTableRef.value.toggleRowExpansion(child, true)
+      if (child.children) {
+        expandChildren(child.children)
+      }
+    }
+  })
 }
 
 // 折叠全部
@@ -513,62 +784,117 @@ const collapseAll = () => {
   }
 }
 
-// 新增顶级权限
+// 新增一级权限
 const handleAddTopLevel = () => {
+  resetForm()
+  permissionForm.permissionType = 1
+  permissionForm.parentId = 0
   formTitle.value = '新增一级权限'
-  Object.keys(permissionForm).forEach(key => {
-    permissionForm[key] = key === 'status' ? 1 : key === 'permissionType' ? 1 : key === 'parentId' ? 0 : null
-  })
   dialogVisible.value = true
 }
 
+// 新增子权限（用于树形视图）
+const handleAddChild = (row) => {
+  if (row.permissionType === 1) {
+    handleAddSubmodule(row)
+  } else if (row.permissionType === 2) {
+    handleAddAction(row)
+  }
+}
+
 // 新增子模块（二级权限）
-const handleAddSubmodule = (row) => {
-  formTitle.value = '新增子模块'
-  Object.keys(permissionForm).forEach(key => {
-    permissionForm[key] = key === 'status' ? 1 : key === 'permissionType' ? 2 : key === 'parentId' ? row.id : null
-  })
+const handleAddSubmodule = (parentRow) => {
+  resetForm()
+  permissionForm.permissionType = 2
+  permissionForm.parentId = parentRow.id
+  formTitle.value = `为"${parentRow.permissionName}"新增子模块`
   dialogVisible.value = true
 }
 
 // 新增操作（三级权限）
-const handleAddAction = (row) => {
-  formTitle.value = '新增操作权限'
-  Object.keys(permissionForm).forEach(key => {
-    permissionForm[key] = key === 'status' ? 1 : key === 'permissionType' ? 3 : key === 'parentId' ? row.id : null
-  })
+const handleAddAction = (parentRow) => {
+  resetForm()
+  permissionForm.permissionType = 3
+  permissionForm.parentId = parentRow.id
+  formTitle.value = `为"${parentRow.permissionName}"新增操作权限`
   dialogVisible.value = true
 }
 
 // 编辑权限
 const handleEdit = async (row) => {
-  formTitle.value = '编辑权限'
   try {
     const { data } = await getPermissionById(row.id)
-    Object.keys(permissionForm).forEach(key => {
-      permissionForm[key] = data[key]
-    })
+    Object.assign(permissionForm, data)
+    formTitle.value = '编辑权限'
     dialogVisible.value = true
   } catch (error) {
-    ElMessage.error('获取权限信息失败')
-    console.error(error)
+    ElMessage.error('获取权限详情失败')
   }
+}
+
+// 删除权限
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除权限"${row.permissionName}"吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await deletePermission(row.id)
+    ElMessage.success('删除成功')
+    
+    // 刷新列表
+    if (viewMode.value === 'tree') {
+      fetchPermissionList()
+    } else {
+      fetchPermissionListData()
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+// 搜索权限
+const handleSearch = () => {
+  pagination.current = 1
+  fetchPermissionListData()
+}
+
+// 重置搜索
+const handleResetSearch = () => {
+  Object.assign(searchForm, {
+    permissionName: '',
+    permissionCode: '',
+    permissionType: null,
+    status: null
+  })
+  pagination.current = 1
+  fetchPermissionListData()
+}
+
+// 分页大小变化
+const handleSizeChange = (val) => {
+  pagination.size = val
+  fetchPermissionListData()
+}
+
+// 当前页变化
+const handleCurrentChange = (val) => {
+  pagination.current = val
+  fetchPermissionListData()
 }
 
 // 提交表单
 const submitForm = async () => {
-  if (!permissionFormRef.value) return
-  
   try {
     await permissionFormRef.value.validate()
-    
-    // 根据权限类型设置parentId
-    if (permissionForm.permissionType === 1) {
-      permissionForm.parentId = 0
-      permissionForm.menuId = null
-    } else if (permissionForm.permissionType === 3) {
-      permissionForm.menuId = null
-    }
     
     if (permissionForm.id) {
       await updatePermission(permissionForm.id, permissionForm)
@@ -579,209 +905,59 @@ const submitForm = async () => {
     }
     
     dialogVisible.value = false
-    fetchPermissionList()
-  } catch (error) {
-    console.error(error)
-    ElMessage.error('提交失败')
-  }
-}
-
-// 删除权限
-const handleDelete = (row) => {
-  if (row.children && row.children.length > 0) {
-    ElMessage.warning('该权限下有子权限，请先删除子权限')
-    return
-  }
-  
-  ElMessageBox.confirm('确定要删除该权限吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      await deletePermission(row.id)
-      ElMessage.success('删除成功')
+    
+    // 刷新列表
+    if (viewMode.value === 'tree') {
       fetchPermissionList()
-    } catch (error) {
-      ElMessage.error('删除失败')
-      console.error(error)
+    } else {
+      fetchPermissionListData()
     }
-  }).catch(() => {})
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
 }
 
-// 权限同步功能
+// 重置表单
+const resetForm = () => {
+  Object.assign(permissionForm, {
+    id: null,
+    permissionName: '',
+    permissionCode: '',
+    permissionType: 1,
+    parentId: 0,
+    menuId: null,
+    description: '',
+    status: 1
+  })
+}
+
+// 判断是否为核心权限
+const isCorePermission = (permission) => {
+  const corePermissions = [
+    'system', 'profile', 'permission', 'menu', 'user', 'role'
+  ]
+  return corePermissions.includes(permission.permissionCode)
+}
+
+// 权限同步
 const handleSyncPermissions = async () => {
   try {
-    await ElMessageBox.confirm(
-      '确定要同步权限吗？此操作将根据配置文件自动创建或更新权限，请谨慎操作！',
-      '权限同步确认',
-      {
-        confirmButtonText: '确定同步',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
     syncLoading.value = true
-    const response = await syncAllPermissions()
-    
+    await syncAllPermissions()
     ElMessage.success('权限同步成功')
     
-    // 显示同步结果
-    ElMessageBox.alert(response.data, '同步结果', {
-      confirmButtonText: '确定',
-      type: 'success'
-    })
-    
-    // 刷新权限列表
-    await fetchPermissionList()
-    
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('权限同步失败:', error)
-      ElMessage.error('权限同步失败: ' + (error.response?.data?.message || error.message))
+    // 刷新列表
+    if (viewMode.value === 'tree') {
+      fetchPermissionList()
+    } else {
+      fetchPermissionListData()
     }
+  } catch (error) {
+    ElMessage.error('权限同步失败')
   } finally {
     syncLoading.value = false
   }
 }
-
-// 验证权限配置
-const handleValidateConfig = async () => {
-  try {
-    const response = await validatePermissionConfig()
-    
-    ElMessageBox.alert(response.data, '权限配置验证结果', {
-      confirmButtonText: '确定',
-      type: 'info'
-    })
-    
-  } catch (error) {
-    console.error('验证权限配置失败:', error)
-    ElMessage.error('验证权限配置失败: ' + (error.response?.data?.message || error.message))
-  }
-}
-
-// 重置所有权限
-const handleResetPermissions = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要重置所有权限吗？\n\n⚠️ 警告：此操作将逻辑删除所有现有权限并重新创建基础权限数据！\n\n' +
-      '💡 说明：已删除权限的编码会被修改以避免冲突，新权限将使用标准编码。\n\n请谨慎操作！',
-      '权限重置确认',
-      {
-        confirmButtonText: '确定重置',
-        cancelButtonText: '取消',
-        type: 'error',
-        dangerouslyUseHTMLString: true
-      }
-    )
-    
-    resetLoading.value = true
-    const response = await resetAllPermissions()
-    
-    ElMessage.success('权限重置成功！')
-    
-    // 显示重置结果详情
-    const resultMessage = `
-      <div style="text-align: left;">
-        <h4>权限重置完成！</h4>
-        <p>${response.data}</p>
-        <br/>
-        <p><strong>已重新创建的权限模块：</strong></p>
-        <ul>
-          <li>系统管理 - 系统基础功能管理</li>
-          <li>用户管理 - 用户账户管理</li>
-          <li>角色管理 - 角色权限管理</li>
-          <li>权限管理 - 权限配置管理</li>
-          <li>菜单管理 - 系统菜单管理</li>
-          <li>组织管理 - 组织架构管理</li>
-          <li>部门管理 - 部门信息管理</li>
-          <li>岗位管理 - 岗位信息管理</li>
-          <li>字典管理 - 系统字典管理</li>
-          <li>商品管理 - 商品信息管理</li>
-          <li>品牌管理 - 商品品牌管理</li>
-          <li>分类管理 - 商品分类管理</li>
-        </ul>
-        <p>每个模块都包含查看、新增、编辑、删除等基础操作权限。</p>
-      </div>
-    `
-    
-    ElMessageBox.alert(resultMessage, '重置结果', {
-      confirmButtonText: '确定',
-      type: 'success',
-      dangerouslyUseHTMLString: true
-    })
-    
-    // 刷新权限列表
-    await fetchPermissionList()
-    
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('权限重置失败:', error)
-      ElMessage.error('权限重置失败: ' + (error.response?.data?.message || error.message))
-    }
-  } finally {
-    resetLoading.value = false
-  }
-}
-
-// 判断是否为核心权限（不能被禁用或删除）
-const isCorePermission = (permission) => {
-  if (!permission || !permission.permissionCode) {
-    return false
-  }
-  
-  const corePermissions = ['system', 'profile']
-  return corePermissions.includes(permission.permissionCode)
-}
-
-// 获取权限类型名称
-const getPermissionTypeName = (type) => {
-  switch (type) {
-    case 1: return '一级权限(模块)'
-    case 2: return '二级权限(子模块)'
-    case 3: return '三级权限(操作)'
-    default: return '未知类型'
-  }
-}
-
-// 获取权限类型标签颜色
-const getPermissionTypeTag = (type) => {
-  switch (type) {
-    case 1: return 'primary'
-    case 2: return 'success'
-    case 3: return 'warning'
-    default: return 'info'
-  }
-}
-
-// 获取层级标签类型
-const getLevelTagType = (level) => {
-  switch (level) {
-    case 1: return 'primary'    // 一级权限 - 蓝色
-    case 2: return 'success'    // 二级权限 - 绿色
-    case 3: return 'warning'    // 三级权限 - 橙色
-    default: return 'info'
-  }
-}
-
-// 获取表格行的类名
-const getRowClassName = ({ row }) => {
-  let className = `level-${row.levelDepth}`
-  if (row.status === 0) {
-    className += ' disabled-row'
-  }
-  return className
-}
-
-// 权限类型变化处理
-const onPermissionTypeChange = (newType) => {
-  // 清空父级权限选择
-  permissionForm.parentId = newType === 1 ? 0 : null
-  permissionForm.menuId = null
-}
-
 
 
 
@@ -789,12 +965,33 @@ const onPermissionTypeChange = (newType) => {
 
 <style scoped>
 .permission-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+/* 固定头部区域 */
+.fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  padding: 20px 20px 0 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 内容区域 */
+.content-area {
+  flex: 1;
+  overflow: auto;
   padding: 20px;
 }
 .action-bar {
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -834,6 +1031,30 @@ const onPermissionTypeChange = (newType) => {
 
 :deep(.el-table .el-table__row:hover) {
   background-color: #f8f9fa;
+}
+
+/* 表格滚动条样式 */
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+:deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-corner {
+  background: #f1f1f1;
 }
 
 /* 禁用行样式 */
@@ -888,30 +1109,7 @@ const onPermissionTypeChange = (newType) => {
   font-weight: 400;
 }
 
-/* 层级说明卡片 */
-.level-info-card {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin: 15px 0;
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  flex-wrap: wrap;
-}
 
-.level-info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.level-desc {
-  font-size: 13px;
-  color: #666;
-  white-space: nowrap;
-}
 
 /* 按钮间距优化 */
 :deep(.el-button + .el-button) {
@@ -1046,5 +1244,138 @@ const onPermissionTypeChange = (newType) => {
 
 :deep(.el-table .el-table__row.level-3:hover) {
   background-color: #fdf6ec;
+}
+
+/* 搜索栏样式 */
+.search-bar {
+  margin-bottom: 10px;
+  padding: 10px 0;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 树形视图样式 */
+.tree-view {
+  margin-top: 10px;
+}
+
+/* 列表视图样式 */
+.list-view {
+  margin-top: 10px;
+}
+
+.permission-list-table {
+  font-size: 14px;
+}
+
+.permission-list-table :deep(.el-table__header-wrapper th) {
+  background-color: #fafafa;
+  color: #606266;
+  font-weight: 600;
+  border-bottom: 2px solid #e4e7ed;
+}
+
+.permission-list-table :deep(.el-table__row) {
+  transition: all 0.2s ease;
+}
+
+.permission-list-table :deep(.el-table__row:hover) {
+  background-color: #f8f9fa;
+}
+
+.permission-list-table :deep(.el-table__row.disabled-row) {
+  opacity: 0.6;
+  background-color: #fef0f0 !important;
+}
+
+.permission-list-table :deep(.el-table__row.disabled-row:hover) {
+  background-color: #fde2e2 !important;
+}
+
+.permission-list-table :deep(.el-table__row.disabled-row .permission-name-text) {
+  text-decoration: line-through;
+  color: #c0c4cc !important;
+}
+
+.permission-list-table .permission-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.permission-list-table .permission-type-tag {
+  flex-shrink: 0;
+}
+
+.permission-list-table .permission-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.permission-list-table .friendly-name-icon {
+  color: #409eff;
+  font-size: 14px;
+  margin-left: 4px;
+  cursor: help;
+}
+
+.permission-code-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.permission-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #666;
+  background-color: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #dcdfe6;
+}
+
+.friendly-display {
+  font-size: 11px;
+  background-color: #e1f3d8;
+  color: #67c23a;
+  border-color: #b3d8a4;
+}
+
+.pagination-container {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 权限类型说明样式 */
+.permission-type-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
 }
 </style> 
