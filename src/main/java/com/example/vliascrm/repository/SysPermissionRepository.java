@@ -77,6 +77,14 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
     List<SysPermission> findByParentIdAndStatusAndIsDeletedOrderBySortOrderAscIdAsc(Long parentId, Integer status, Boolean isDeleted);
 
     /**
+     * 根据父ID查询所有子权限（不限状态）
+     * @param parentId 父ID
+     * @param isDeleted 是否删除
+     * @return 权限列表
+     */
+    List<SysPermission> findByParentIdAndIsDeletedOrderBySortOrderAscIdAsc(Long parentId, Boolean isDeleted);
+
+    /**
      * 查询所有未删除的权限
      * @return 权限列表
      */
@@ -114,4 +122,12 @@ public interface SysPermissionRepository extends JpaRepository<SysPermission, Lo
      */
     @Query("SELECT p FROM SysPermission p WHERE p.isDeleted = ?1 ORDER BY p.permissionType ASC, p.sortOrder ASC, p.id ASC")
     List<SysPermission> findAllPermissionsOrderByTypeAndSort(Boolean isDeleted);
+
+    /**
+     * 根据资源ID查询权限列表（用于菜单权限关联）
+     * @param resourceId 资源ID
+     * @return 权限列表
+     */
+    @Query("SELECT p FROM SysPermission p WHERE p.resourceId = ?1 AND p.isDeleted = false")
+    List<SysPermission> findByResourceId(Long resourceId);
 } 

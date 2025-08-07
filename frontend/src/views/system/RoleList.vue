@@ -98,7 +98,7 @@
             分配权限
           </el-button>
           <el-button
-            v-if="hasPermission(PERMISSIONS.SYS.ROLE.DELETE)"
+            v-if="hasPermission(PERMISSIONS.SYS.ROLE.DELETE) && !isBuiltinRole(scope.row.roleCode)"
             size="small"
             type="danger"
             @click="handleDelete(scope.row)"
@@ -171,6 +171,7 @@
             :inactive-value="0"
             active-text="启用"
             inactive-text="禁用"
+            :disabled="isBuiltinRole(roleForm.roleCode)"
           />
         </el-form-item>
       </el-form>
@@ -299,7 +300,7 @@ const fetchRoleList = async () => {
     const params = {
       page: currentPage.value - 1, // 后端分页从0开始
       size: pageSize.value,
-      roleName: searchForm.roleName
+      keyword: searchForm.roleName || null
     }
     console.log('获取角色列表参数:', params)
     const response = await getRolePage(params)
@@ -650,6 +651,12 @@ const getPermissionTypeLabel = (type) => {
     case 3: return '操作'
     default: return '未知'
   }
+}
+
+// 检查是否为内置角色
+const isBuiltinRole = (roleCode) => {
+  const builtinRoles = ['admin', 'BRAND_ADMIN', 'MANAGER', 'EMPLOYEE', 'WAREHOUSE']
+  return builtinRoles.includes(roleCode)
 }
 
 </script>

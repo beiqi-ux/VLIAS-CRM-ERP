@@ -16,6 +16,10 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 权限管理控制器
@@ -25,6 +29,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SysPermissionController {
 
+    private static final Logger log = LoggerFactory.getLogger(SysPermissionController.class);
     private final SysPermissionService permissionService;
 
     /**
@@ -39,6 +44,7 @@ public class SysPermissionController {
      * @return 分页结果
      */
     @GetMapping("/page")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<Map<String, Object>> getPermissionPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -77,8 +83,11 @@ public class SysPermissionController {
                 predicates.add(criteriaBuilder.equal(root.get("parentId"), parentId));
             }
 
-            // 只查询未删除的权限
-            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
+            // 只查询未删除的权限 (包括NULL值，因为NULL在业务上等同于未删除)
+            predicates.add(criteriaBuilder.or(
+                criteriaBuilder.equal(root.get("isDeleted"), false),
+                criteriaBuilder.isNull(root.get("isDeleted"))
+            ));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -110,8 +119,10 @@ public class SysPermissionController {
      * @return 创建后的权限
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('permission-management:create')")
     public ApiResponse<SysPermission> createPermission(@RequestBody PermissionDTO permissionDTO) {
-        return ApiResponse.success(permissionService.createPermission(permissionDTO));
+        SysPermission result = permissionService.createPermission(permissionDTO);
+        return ApiResponse.success(result);
     }
 
     /**
@@ -121,6 +132,7 @@ public class SysPermissionController {
      * @return 更新后的权限
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('permission-management:edit')")
     public ApiResponse<SysPermission> updatePermission(@PathVariable Long id, @RequestBody PermissionDTO permissionDTO) {
         return ApiResponse.success(permissionService.updatePermission(id, permissionDTO));
     }
@@ -131,10 +143,26 @@ public class SysPermissionController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('permission-management:delete')")
     public ApiResponse<Void> deletePermission(@PathVariable Long id) {
         permissionService.deletePermission(id);
         return ApiResponse.success(null);
     }
+
+    /**
+     * 更新权限状态
+     * @param id 权限ID
+     * @param status 状态
+     * @return 更新后的权限
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('permission-management:edit')")
+    public ApiResponse<SysPermission> updatePermissionStatus(@PathVariable Long id, @RequestParam Integer status) {
+        SysPermission updatedPermission = permissionService.updatePermissionStatus(id, status);
+        return ApiResponse.success(updatedPermission);
+    }
+    
+
 
     /**
      * 根据ID获取权限
@@ -142,6 +170,7 @@ public class SysPermissionController {
      * @return 权限信息
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<SysPermission> getPermissionById(@PathVariable Long id) {
         return ApiResponse.success(permissionService.getPermissionById(id));
     }
@@ -151,6 +180,7 @@ public class SysPermissionController {
      * @return 权限树
      */
     @GetMapping("/tree")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<PermissionDTO>> getPermissionTree() {
         return ApiResponse.success(permissionService.getPermissionTree());
     }
@@ -160,6 +190,7 @@ public class SysPermissionController {
      * @return 权限树
      */
     @GetMapping("/tree/admin")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<PermissionDTO>> getPermissionTreeForAdmin() {
         if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
             return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getPermissionTreeForAdmin());
@@ -173,6 +204,7 @@ public class SysPermissionController {
      * @return 权限列表
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<SysPermission>> getAllPermissions() {
         return ApiResponse.success(permissionService.getAllPermissions());
     }
@@ -183,6 +215,7 @@ public class SysPermissionController {
      * @return 权限列表
      */
     @GetMapping("/roles/{roleId}")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<SysPermission>> getPermissionsByRoleId(@PathVariable Long roleId) {
         return ApiResponse.success(permissionService.getPermissionsByRoleId(roleId));
     }
@@ -193,6 +226,7 @@ public class SysPermissionController {
      * @return 权限列表
      */
     @GetMapping("/users/{userId}")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<SysPermission>> getPermissionsByUserId(@PathVariable Long userId) {
         return ApiResponse.success(permissionService.getPermissionsByUserId(userId));
     }
@@ -203,6 +237,7 @@ public class SysPermissionController {
      * @return 权限列表
      */
     @GetMapping("/type/{permissionType}")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<PermissionDTO>> getPermissionsByType(@PathVariable Integer permissionType) {
         if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
             return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getPermissionsByType(permissionType));
@@ -216,6 +251,7 @@ public class SysPermissionController {
      * @return 子孙权限列表
      */
     @GetMapping("/{permissionId}/descendants")
+    @PreAuthorize("hasAuthority('permission-management:view')")
     public ApiResponse<List<PermissionDTO>> getDescendantPermissions(@PathVariable Long permissionId) {
         if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
             return ApiResponse.success(((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService).getDescendantPermissions(permissionId));
@@ -230,6 +266,7 @@ public class SysPermissionController {
      * @return 是否有权限
      */
     @PostMapping("/check-inheritance")
+    @PreAuthorize("hasAuthority('permission-management:validate')")
     public ApiResponse<Boolean> checkPermissionWithInheritance(
             @RequestBody java.util.Map<String, Object> requestBody) {
         @SuppressWarnings("unchecked")
@@ -242,5 +279,16 @@ public class SysPermissionController {
             return ApiResponse.success(hasPermission);
         }
         return ApiResponse.success(false);
+    }
+
+    /**
+     * 同步菜单权限 - 根据现有菜单生成对应的权限记录
+     * @return 同步的权限数量
+     */
+    @PostMapping("/sync-menu-permissions")
+    @PreAuthorize("hasAuthority('permission-management:create')")
+    public ApiResponse<Integer> syncMenuPermissions() {
+        int syncCount = permissionService.syncMenuPermissions();
+        return ApiResponse.success(syncCount);
     }
 } 

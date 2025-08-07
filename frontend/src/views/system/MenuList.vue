@@ -2,38 +2,46 @@
   <PageContainer>
     <TableContainer>
       <template #actions>
-        <div class="action-bar">
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.MENU.CREATE)"
-            type="primary" 
-            @click="handleAddTopLevel"
-          >
-            新增顶级菜单
-          </el-button>
-          <el-button
-            type="success"
-            @click="expandAll"
-          >
-            展开全部
-          </el-button>
-          <el-button
-            type="info"
-            @click="collapseAll"
-          >
-            折叠全部
-          </el-button>
-        </div>
+    <div class="action-bar">
+      <el-button 
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.CREATE)"
+        type="primary" 
+        @click="handleAddTopLevel"
+      >
+        新增顶级菜单
+      </el-button>
+      <el-button
+        type="success"
+        @click="expandAll"
+      >
+        展开全部
+      </el-button>
+      <el-button
+        type="info"
+        @click="collapseAll"
+      >
+        折叠全部
+      </el-button>
+      <el-button
+        v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+        type="warning"
+        @click="handleBatchGeneratePermissions"
+        :loading="permissionGenerating"
+      >
+        批量生成权限
+      </el-button>
+    </div>
       </template>
 
-      <el-table
-        ref="menuTableRef"
-        v-loading="tableLoading"
-        :data="tableData"
-        row-key="id"
-        border
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+    <el-table
+      ref="menuTableRef"
+      v-loading="tableLoading"
+      :data="tableData"
+      row-key="id"
+      border
+      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         height="100%"
-      >
+    >
       <el-table-column
         prop="id"
         label="ID"
@@ -159,6 +167,16 @@
           >
             删除
           </el-button>
+          <el-button 
+            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+            size="small" 
+            type="primary"
+            plain
+            @click="handleRegeneratePermissions(scope.row)"
+            :loading="permissionGenerating"
+          >
+            生成权限
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -257,12 +275,12 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="menuForm.menuType === 3"
-          label="权限标识"
+          label="权限编码"
+          prop="permissionCode"
         >
           <el-input
             v-model="menuForm.permissionCode"
-            placeholder="请输入权限标识"
+            placeholder="请输入权限编码（如：product-management）"
           />
         </el-form-item>
         <el-form-item label="排序">
@@ -330,7 +348,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, toggleMenuStatus } from '@/api/menu'
+import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, toggleMenuStatus, batchGeneratePermissions, regeneratePermissions } from '@/api/menu'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import PageContainer from '@/components/PageContainer.vue'
 import TableContainer from '@/components/TableContainer.vue'
@@ -339,6 +357,7 @@ import TableContainer from '@/components/TableContainer.vue'
 const tableData = ref([])
 const tableLoading = ref(false)
 const menuTableRef = ref(null)
+const permissionGenerating = ref(false)
 
 // 菜单表单相关
 const dialogVisible = ref(false)
@@ -363,7 +382,8 @@ const menuRules = {
   menuName: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
   menuCode: [{ required: true, message: '请输入菜单编码', trigger: 'blur' }],
   menuType: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
-  path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }]
+  path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }],
+  permissionCode: [{ required: true, message: '请输入权限编码', trigger: 'blur' }]
 }
 
 // 菜单类型选项
@@ -566,6 +586,48 @@ const handleDelete = (row) => {
     } catch (error) {
       ElMessage.error('删除失败')
       console.error(error)
+    }
+  }).catch(() => {})
+}
+
+// 批量生成权限
+const handleBatchGeneratePermissions = async () => {
+  ElMessageBox.confirm('确定要为所有菜单批量生成权限吗？', '批量生成权限', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      permissionGenerating.value = true
+      const result = await batchGeneratePermissions()
+      ElMessage.success(result.message || '批量生成权限成功')
+      fetchMenuList()
+    } catch (error) {
+      ElMessage.error('批量生成权限失败')
+      console.error(error)
+    } finally {
+      permissionGenerating.value = false
+    }
+  }).catch(() => {})
+}
+
+// 为单个菜单重新生成权限
+const handleRegeneratePermissions = async (row) => {
+  ElMessageBox.confirm(`确定要为菜单"${row.menuName}"重新生成权限吗？`, '重新生成权限', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      permissionGenerating.value = true
+      const result = await regeneratePermissions(row.id)
+      ElMessage.success(result.message || '重新生成权限成功')
+      fetchMenuList()
+    } catch (error) {
+      ElMessage.error('重新生成权限失败')
+      console.error(error)
+    } finally {
+      permissionGenerating.value = false
     }
   }).catch(() => {})
 }

@@ -77,7 +77,7 @@
           <el-form-item label="状态">
             <DictSelect 
               v-model="searchForm.status" 
-              dict-code="USER_STATUS" 
+              dict-code="user_status" 
               placeholder="请选择状态" 
               clearable 
               value-type="number"
@@ -506,15 +506,16 @@
         <p class="mb-10">
           当前用户：{{ currentUser.username }} ({{ currentUser.realName || '未设置姓名' }})
         </p>
-        <el-checkbox-group v-model="selectedRoles">
-          <el-checkbox
+        <el-radio-group v-model="selectedRole" class="role-radio-group">
+          <el-radio
             v-for="role in roleList"
             :key="role.id"
             :label="role.id"
+            class="role-radio-item"
           >
-            {{ role.roleName }} ({{ role.roleCode }})
-          </el-checkbox>
-        </el-checkbox-group>
+            {{ role.roleName }}
+          </el-radio>
+        </el-radio-group>
       </div>
       <template #footer>
         <el-button @click="roleDialogVisible = false">
@@ -584,7 +585,7 @@ const {
 const searchForm = reactive({
   username: '',
   realName: '',
-  status: ''
+  status: null
 })
 
 // 同步搜索表单到新的loader
@@ -592,7 +593,7 @@ function syncSearchForm() {
   searchFormRef.value = {
     username: searchForm.username || null,
     realName: searchForm.realName || null,
-    status: searchForm.status || null
+    status: searchForm.status !== null && searchForm.status !== undefined && searchForm.status !== '' ? searchForm.status : null
   }
 }
 
@@ -878,7 +879,7 @@ const roleDialogVisible = ref(false)
 const roleLoading = ref(false)
 const roleSaving = ref(false)
 const roleList = ref([])
-const selectedRoles = ref([])
+const selectedRole = ref(null)
 const currentUser = ref({})
 
 // 获取所有角色
@@ -905,15 +906,17 @@ const fetchUserRoles = async (userId) => {
     roleLoading.value = true
     const response = await getUserRoleIds(userId)
     if (response.success) {
-      selectedRoles.value = response.data || []
+      // 单选模式，只取第一个角色
+      const roles = response.data || []
+      selectedRole.value = roles.length > 0 ? roles[0] : null
     } else {
       ElMessage.error(response.message || '获取用户角色失败')
-      selectedRoles.value = []
+      selectedRole.value = null
     }
   } catch (error) {
     ElMessage.error('获取用户角色失败')
     console.error(error)
-    selectedRoles.value = []
+    selectedRole.value = null
   } finally {
     roleLoading.value = false
   }
@@ -935,7 +938,9 @@ const handleAssignRole = async (row) => {
 const handleSaveUserRoles = async () => {
   try {
     roleSaving.value = true
-    const response = await assignUserRoles(currentUser.value.id, selectedRoles.value)
+    // 单选模式，将选中的角色ID包装成数组
+    const roleIds = selectedRole.value ? [selectedRole.value] : []
+    const response = await assignUserRoles(currentUser.value.id, roleIds)
     if (response.success) {
       ElMessage.success('角色分配成功')
       roleDialogVisible.value = false
@@ -1162,6 +1167,54 @@ const getStatusType = (status) => {
   background: #f1f1f1;
 }
 
+/* 角色选择框样式 */
+.role-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.role-radio-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
+  margin-right: 0 !important;
+  width: 100%;
+}
+
+.role-radio-item:hover {
+  background-color: #f0f9ff;
+  border-color: #409eff;
+}
+
+:deep(.role-radio-item.is-checked) {
+  background-color: #e8f4fd;
+  border-color: #409eff;
+  color: #409eff;
+}
+
+:deep(.role-radio-item .el-radio__label) {
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+  padding-left: 8px;
+}
+
+:deep(.role-radio-item.is-checked .el-radio__label) {
+  color: #409eff;
+}
+
+:deep(.role-radio-item .el-radio__input) {
+  margin-right: 8px;
+}
+
 /* 响应式布局 */
 @media (max-width: 768px) {
   .search-form {
@@ -1181,6 +1234,14 @@ const getStatusType = (status) => {
   
   .header-left {
     justify-content: center;
+  }
+  
+  .role-radio-group {
+    gap: 8px;
+  }
+  
+  .role-radio-item {
+    padding: 6px 10px;
   }
 }
 </style> 

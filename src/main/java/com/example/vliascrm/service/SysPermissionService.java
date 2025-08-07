@@ -74,4 +74,18 @@ public interface SysPermissionService {
      * @return 权限列表
      */
     List<SysPermission> getPermissionsByUserId(Long userId);
+
+    /**
+     * 更新权限状态
+     * @param id 权限ID
+     * @param status 状态 (0-禁用, 1-启用)
+     * @return 更新后的权限
+     */
+    SysPermission updatePermissionStatus(Long id, Integer status);
+
+    /**
+     * 同步菜单权限 - 根据现有菜单生成对应的权限记录
+     * @return 同步的权限数量
+     */
+    int syncMenuPermissions();
 } 

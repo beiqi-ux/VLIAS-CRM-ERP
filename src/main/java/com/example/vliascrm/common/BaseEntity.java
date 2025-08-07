@@ -1,6 +1,9 @@
 package com.example.vliascrm.common;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,6 +47,9 @@ public abstract class BaseEntity implements Serializable {
     @Column(name = "update_by")
     private String updateBy;
     
-    @Column(name = "is_deleted", columnDefinition = "tinyint default 0")
+    @Column(name = "is_deleted", columnDefinition = "tinyint(1) default 0")
+    @Convert(converter = BooleanToIntegerConverter.class)
+    @JsonSerialize(using = BooleanToIntSerializer.class)
+    @JsonDeserialize(using = BooleanToIntDeserializer.class)
     private Boolean isDeleted = false;
 } 

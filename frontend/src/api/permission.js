@@ -104,8 +104,8 @@ export function getPermissionPage(params) {
   })
 }
 
-// ==================== 权限同步功能 ====================
-
+  // ==================== 权限同步功能 ====================
+  
 /**
  * 同步所有权限
  * @returns {Promise}
@@ -162,7 +162,7 @@ export function getPermissionSyncStatus() {
   })
 }
 
-/**
+  /**
  * 根据用户ID获取权限列表
  * @param {Number} userId - 用户ID
  * @returns {Promise}
@@ -212,5 +212,19 @@ export function checkPermissionWithInheritance(userPermissions, requiredPermissi
       userPermissions,
       requiredPermission
     }
+  })
+}
+
+/**
+ * 更新权限状态
+ * @param {Number} id - 权限ID
+ * @param {Number} status - 状态 0-禁用 1-启用
+ * @returns {Promise}
+ */
+export function updatePermissionStatus(id, status) {
+  return request({
+    url: `/api/sys/permissions/${id}/status`,
+    method: 'patch',
+    params: { status }
   })
 } 

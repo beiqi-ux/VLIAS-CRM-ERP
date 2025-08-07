@@ -134,11 +134,13 @@
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="false"
+        :row-class-name="getRowClassName"
         border
         stripe
         class="permission-table"
         height="600"
         style="width: 100%"
+        @expand-change="handleExpandChange"
       >
         <el-table-column
           prop="permissionName"
@@ -147,7 +149,7 @@
           show-overflow-tooltip
         >
           <template #default="{ row }">
-            <div class="permission-name-cell">
+            <div class="permission-name-cell" :class="{ 'disabled-permission': row.status === 0 }">
               <el-tag 
                 :type="getPermissionTypeTag(row.permissionType)" 
                 size="small" 
@@ -162,6 +164,14 @@
                 placement="top"
               >
                 <el-icon class="friendly-name-icon"><InfoFilled /></el-icon>
+              </el-tooltip>
+              <!-- 禁用状态提示 -->
+              <el-tooltip 
+                v-if="row.status === 0"
+                content="权限已禁用，无法展开查看子权限"
+                placement="top"
+              >
+                <el-icon class="disabled-icon"><Lock /></el-icon>
               </el-tooltip>
             </div>
           </template>
@@ -226,35 +236,37 @@
         
         <el-table-column
           label="操作"
-          width="200"
+          width="240"
           align="center"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
-              type="primary"
-              size="small"
-              @click="handleAddChild(row)"
-            >
-              新增子权限
-            </el-button>
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
-              type="warning"
-              size="small"
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <div class="action-buttons-container">
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
+                type="primary"
+                size="small"
+                @click="handleAddChild(row)"
+              >
+                新增子权限
+              </el-button>
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
+                type="warning"
+                size="small"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -350,35 +362,45 @@
         
         <el-table-column
           label="操作"
-          width="200"
+          width="240"
           align="center"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
-              type="primary"
-              size="small"
-              @click="handleAddChild(row)"
-            >
-              新增子权限
-            </el-button>
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
-              type="warning"
-              size="small"
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <div class="action-buttons-container">
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.CREATE) && row.permissionType < 3"
+                type="primary"
+                size="small"
+                @click="handleAddChild(row)"
+              >
+                新增子权限
+              </el-button>
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT)"
+                type="warning"
+                size="small"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.EDIT) && !isCorePermission(row)"
+                :type="row.status === 1 ? 'info' : 'success'"
+                size="small"
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === 1 ? '禁用' : '启用' }}
+              </el-button>
+              <el-button
+                v-if="hasPermission(PERMISSIONS.SYS.PERMISSION.DELETE) && !isCorePermission(row)"
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -551,9 +573,9 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, syncAllPermissions, getPermissionPage } from '@/api/permission'
+import { getPermissionTree, getPermissionTreeForAdmin, getPermissionById, createPermission, updatePermission, deletePermission, getPermissionPage, updatePermissionStatus } from '@/api/permission'
 import { getMenuList } from '@/api/menu'
-import { Refresh, Tools, Delete, Search, InfoFilled } from '@element-plus/icons-vue'
+import { Refresh, Tools, Delete, Search, InfoFilled, Lock } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import { getPermissionDisplayName } from '@/utils/displayMapping'
 
@@ -613,6 +635,7 @@ const menuOptions = ref([])
 
 // 权限同步加载状态
 const syncLoading = ref(false)
+
 
 
 // 监听视图模式变化
@@ -784,6 +807,27 @@ const collapseAll = () => {
   }
 }
 
+// 获取行样式类名
+const getRowClassName = ({ row }) => {
+  if (row.status === 0) {
+    return 'disabled-permission-row'
+  }
+  return ''
+}
+
+// 处理展开变化事件
+const handleExpandChange = (row, expandedRows) => {
+  // 如果权限被禁用，阻止展开
+  if (row.status === 0) {
+    ElMessage.warning(`权限"${row.permissionName}"已禁用，无法展开查看子权限`)
+    // 强制折叠
+    if (permissionTableRef.value) {
+      permissionTableRef.value.toggleRowExpansion(row, false)
+    }
+    return false
+  }
+}
+
 // 新增一级权限
 const handleAddTopLevel = () => {
   resetForm()
@@ -913,7 +957,22 @@ const submitForm = async () => {
       fetchPermissionListData()
     }
   } catch (error) {
-    ElMessage.error('操作失败')
+    console.error('权限更新失败:', error)
+    console.error('错误详情:', {
+      message: error.message,
+      response: error.response,
+      status: error.response?.status,
+      data: error.response?.data
+    })
+    
+    let errorMessage = '操作失败'
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.response?.status) {
+      errorMessage = `操作失败 (状态码: ${error.response.status})`
+    }
+    
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -934,17 +993,77 @@ const resetForm = () => {
 // 判断是否为核心权限
 const isCorePermission = (permission) => {
   const corePermissions = [
-    'system', 'profile', 'permission', 'menu', 'user', 'role'
+    'system', 'profile', 'permission-management', 'menu-management', 'user-management', 'role-management'
   ]
-  return corePermissions.includes(permission.permissionCode)
+  
+  // 直接匹配权限编码
+  if (corePermissions.includes(permission.permissionCode)) {
+    return true
+  }
+  
+  // 对于三级权限，检查其父级权限编码（权限编码的前缀部分）
+  if (permission.permissionCode && permission.permissionCode.includes(':')) {
+    const parentCode = permission.permissionCode.split(':')[0]
+    return corePermissions.includes(parentCode)
+  }
+  
+  return false
 }
 
-// 权限同步
+// 权限同步（实际上是刷新权限列表）
 const handleSyncPermissions = async () => {
   try {
     syncLoading.value = true
-    await syncAllPermissions()
-    ElMessage.success('权限同步成功')
+    
+    // 直接刷新列表（从数据库获取最新权限数据）
+    if (viewMode.value === 'tree') {
+      await fetchPermissionList()
+    } else {
+      await fetchPermissionListData()
+    }
+    
+    ElMessage.success('权限列表已刷新')
+  } catch (error) {
+    ElMessage.error('刷新失败')
+  } finally {
+    syncLoading.value = false
+  }
+}
+
+// 切换权限状态
+const handleToggleStatus = async (row) => {
+  try {
+    const newStatus = row.status === 1 ? 0 : 1
+    const statusText = newStatus === 1 ? '启用' : '禁用'
+    
+    // 构建确认消息，提示级联影响
+    let confirmMessage = `确定要${statusText}权限"${row.permissionName}"吗？`
+    
+    if (newStatus === 0) {
+      // 禁用操作：提示会影响子权限
+      if (row.permissionType < 3) {
+        confirmMessage += '\n\n注意：禁用此权限将同时禁用其下所有子权限。'
+      }
+    } else {
+      // 启用操作：提示会影响父权限
+      if (row.parentId) {
+        confirmMessage += '\n\n注意：启用此权限将同时启用其父级权限。'
+      }
+    }
+    
+    await ElMessageBox.confirm(
+      confirmMessage,
+      '确认操作',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: false
+      }
+    )
+    
+    await updatePermissionStatus(row.id, newStatus)
+    ElMessage.success(`${statusText}成功`)
     
     // 刷新列表
     if (viewMode.value === 'tree') {
@@ -953,9 +1072,9 @@ const handleSyncPermissions = async () => {
       fetchPermissionListData()
     }
   } catch (error) {
-    ElMessage.error('权限同步失败')
-  } finally {
-    syncLoading.value = false
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
   }
 }
 
@@ -1116,6 +1235,32 @@ const handleSyncPermissions = async () => {
   margin-left: 8px;
 }
 
+/* 操作按钮容器样式 */
+.action-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 0;
+}
+
+.action-buttons-container .el-button {
+  margin: 0;
+  font-size: 12px;
+  padding: 5px 10px;
+  min-width: 60px;
+  height: 28px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.action-buttons-container .el-button + .el-button {
+  margin-left: 0;
+}
+
 /* 操作按钮样式优化 */
 .action-buttons {
   display: flex;
@@ -1264,6 +1409,53 @@ const handleSyncPermissions = async () => {
   margin-top: 10px;
 }
 
+/* 禁用权限行样式 */
+.permission-table :deep(.disabled-permission-row) {
+  background-color: #f5f7fa !important;
+  opacity: 0.7;
+  color: #c0c4cc;
+}
+
+.permission-table :deep(.disabled-permission-row:hover) {
+  background-color: #e9ecef !important;
+}
+
+.permission-table :deep(.disabled-permission-row .el-table__expand-icon) {
+  color: #c0c4cc;
+  cursor: not-allowed;
+}
+
+.permission-table :deep(.disabled-permission-row .permission-name) {
+  color: #c0c4cc;
+  text-decoration: line-through;
+}
+
+.permission-table :deep(.disabled-permission-row .permission-code) {
+  color: #c0c4cc;
+  background-color: #f0f0f0;
+  border-color: #d3d3d3;
+}
+
+.permission-table :deep(.disabled-permission-row .el-tag) {
+  opacity: 0.6;
+}
+
+/* 禁用权限名称单元格样式 */
+.disabled-permission {
+  opacity: 0.7;
+}
+
+.disabled-permission .permission-name {
+  color: #c0c4cc !important;
+  text-decoration: line-through;
+}
+
+.disabled-permission .disabled-icon {
+  color: #f56c6c;
+  margin-left: 8px;
+  font-size: 14px;
+}
+
 /* 列表视图样式 */
 .list-view {
   margin-top: 10px;
@@ -1377,5 +1569,28 @@ const handleSyncPermissions = async () => {
   font-size: 13px;
   color: #666;
   line-height: 1.4;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .action-buttons-container {
+    flex-direction: column;
+    gap: 4px;
+    min-height: auto;
+  }
+  
+  .action-buttons-container .el-button {
+    width: 100%;
+    min-width: 80px;
+    margin: 2px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-buttons-container .el-button {
+    font-size: 11px;
+    padding: 4px 8px;
+    height: 26px;
+  }
 }
 </style> 

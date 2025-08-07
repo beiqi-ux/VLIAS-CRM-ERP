@@ -58,6 +58,12 @@ public class SysPermission extends BaseEntity {
     private Long menuId;
 
     /**
+     * 关联资源ID（通用资源关联）
+     */
+    @Column(name = "resource_id")
+    private Long resourceId;
+
+    /**
      * 权限描述
      */
     @Column(length = 200)

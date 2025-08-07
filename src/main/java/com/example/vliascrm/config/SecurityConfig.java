@@ -47,11 +47,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/uploads/**")
                         ).permitAll()
-                        // 角色和权限控制
-                        .requestMatchers(new AntPathRequestMatcher("/api/sys/roles/**")).hasAnyRole("admin", "manager")
-                        .requestMatchers(new AntPathRequestMatcher("/api/sys/permissions/**")).hasRole("admin")
-                        .requestMatchers(new AntPathRequestMatcher("/api/sys/menus/**")).authenticated()
-                        // 其他请求需要认证
+                        // 所有API接口只需要登录认证，具体权限由@PreAuthorize控制
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())

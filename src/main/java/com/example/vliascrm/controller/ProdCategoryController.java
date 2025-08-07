@@ -5,6 +5,7 @@ import com.example.vliascrm.entity.ProdCategory;
 import com.example.vliascrm.service.ProdCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class ProdCategoryController {
      * @return 分类列表
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getCategoryList() {
         List<ProdCategory> categories = prodCategoryService.findAll();
         return ApiResponse.success(categories);
@@ -35,6 +37,7 @@ public class ProdCategoryController {
      * @return 分类详情
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<ProdCategory> getCategoryById(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (category.isPresent()) {
@@ -48,6 +51,7 @@ public class ProdCategoryController {
      * @return 根分类列表
      */
     @GetMapping("/root")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getRootCategories() {
         List<ProdCategory> categories = prodCategoryService.findRootCategories();
         return ApiResponse.success(categories);
@@ -59,6 +63,7 @@ public class ProdCategoryController {
      * @return 子分类列表
      */
     @GetMapping("/parent/{parentId}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getCategoriesByParent(@PathVariable Long parentId) {
         List<ProdCategory> categories = prodCategoryService.findByParentId(parentId);
         return ApiResponse.success(categories);
@@ -70,6 +75,7 @@ public class ProdCategoryController {
      * @return 分类列表
      */
     @GetMapping("/level/{level}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getCategoriesByLevel(@PathVariable Integer level) {
         List<ProdCategory> categories = prodCategoryService.findByLevel(level);
         return ApiResponse.success(categories);
@@ -80,6 +86,7 @@ public class ProdCategoryController {
      * @return 显示的分类列表
      */
     @GetMapping("/visible")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getVisibleCategories() {
         List<ProdCategory> categories = prodCategoryService.findVisibleCategories();
         return ApiResponse.success(categories);
@@ -91,6 +98,7 @@ public class ProdCategoryController {
      * @return 分类列表
      */
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> searchCategories(@RequestParam String categoryName) {
         List<ProdCategory> categories = prodCategoryService.findByCategoryNameContaining(categoryName);
         return ApiResponse.success(categories);
@@ -101,6 +109,7 @@ public class ProdCategoryController {
      * @return 分类树
      */
     @GetMapping("/tree")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getCategoryTree() {
         List<ProdCategory> categoryTree = prodCategoryService.buildCategoryTree();
         return ApiResponse.success(categoryTree);
@@ -112,6 +121,7 @@ public class ProdCategoryController {
      * @return 创建后的分类
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('product-category-management:create')")
     public ApiResponse<ProdCategory> createCategory(@RequestBody ProdCategory category) {
         // 检查分类名称是否存在（同级下）
         Long parentId = category.getParentId() != null ? category.getParentId() : 0L;
@@ -130,6 +140,7 @@ public class ProdCategoryController {
      * @return 更新后的分类
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-category-management:edit')")
     public ApiResponse<ProdCategory> updateCategory(@PathVariable Long id, @RequestBody ProdCategory category) {
         Optional<ProdCategory> existingCategory = prodCategoryService.findById(id);
         if (!existingCategory.isPresent()) {
@@ -147,6 +158,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-category-management:delete')")
     public ApiResponse<String> deleteCategory(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (!category.isPresent()) {
@@ -169,6 +181,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @DeleteMapping("/batch")
+    @PreAuthorize("hasAuthority('product-category-management:delete')")
     public ApiResponse<String> batchDeleteCategories(@RequestBody List<Long> ids) {
         prodCategoryService.deleteByIds(ids);
         return ApiResponse.success("批量删除成功");
@@ -180,6 +193,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @PutMapping("/{id}/enable")
+    @PreAuthorize("hasAuthority('product-category-management:edit')")
     public ApiResponse<String> enableCategory(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (!category.isPresent()) {
@@ -196,6 +210,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @PutMapping("/{id}/disable")
+    @PreAuthorize("hasAuthority('product-category-management:edit')")
     public ApiResponse<String> disableCategory(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (!category.isPresent()) {
@@ -212,6 +227,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @PutMapping("/{id}/show")
+    @PreAuthorize("hasAuthority('product-category-management:edit')")
     public ApiResponse<String> showCategory(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (!category.isPresent()) {
@@ -228,6 +244,7 @@ public class ProdCategoryController {
      * @return 操作结果
      */
     @PutMapping("/{id}/hide")
+    @PreAuthorize("hasAuthority('product-category-management:edit')")
     public ApiResponse<String> hideCategory(@PathVariable Long id) {
         Optional<ProdCategory> category = prodCategoryService.findById(id);
         if (!category.isPresent()) {
@@ -245,6 +262,7 @@ public class ProdCategoryController {
      * @return 检查结果
      */
     @GetMapping("/check-name")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<Boolean> checkCategoryName(@RequestParam String categoryName, 
                                                  @RequestParam(defaultValue = "0") Long parentId) {
         boolean exists = prodCategoryService.existsByCategoryNameAndParentId(categoryName, parentId);
@@ -257,6 +275,7 @@ public class ProdCategoryController {
      * @return 子分类数量
      */
     @GetMapping("/count/parent/{parentId}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<Long> countByParent(@PathVariable Long parentId) {
         long count = prodCategoryService.countByParentId(parentId);
         return ApiResponse.success(count);
@@ -268,6 +287,7 @@ public class ProdCategoryController {
      * @return 子级分类ID列表
      */
     @GetMapping("/child-ids/{parentId}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<Long>> getChildCategoryIds(@PathVariable Long parentId) {
         List<Long> childIds = prodCategoryService.findChildCategoryIds(parentId);
         return ApiResponse.success(childIds);
@@ -279,6 +299,7 @@ public class ProdCategoryController {
      * @return 所有下级分类ID列表
      */
     @GetMapping("/all-child-ids/{parentId}")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<Long>> getAllChildCategoryIds(@PathVariable Long parentId) {
         List<Long> allChildIds = prodCategoryService.findAllChildCategoryIds(parentId);
         return ApiResponse.success(allChildIds);

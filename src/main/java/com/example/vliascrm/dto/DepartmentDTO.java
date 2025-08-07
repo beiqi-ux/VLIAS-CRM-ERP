@@ -24,8 +24,13 @@ public class DepartmentDTO {
     private String remark;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-    private Long createBy;
-    private Long updateBy;
+    private String createBy;
+    private String updateBy;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Boolean isDeleted;
     
     // 扩展字段
     private String orgName;

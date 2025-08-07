@@ -1,5 +1,7 @@
 package com.example.vliascrm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -74,12 +76,32 @@ public class PermissionDTO {
     /**
      * 创建时间
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updateTime;
+
+    /**
+     * 创建人
+     */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String createBy;
+
+    /**
+     * 更新人
+     */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String updateBy;
+
+    /**
+     * 是否删除
+     */
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Boolean isDeleted;
 
     /**
      * 子权限列表

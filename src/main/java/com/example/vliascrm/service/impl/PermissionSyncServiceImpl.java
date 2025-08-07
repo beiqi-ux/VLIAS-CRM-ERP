@@ -30,7 +30,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
         log.info("开始同步所有权限...");
         
         if (!permissionSyncConfig.isEnabled()) {
-            return "权限同步功能未启用，请在配置文件中设置 vlias.permission-sync.enabled=true";
+            throw new RuntimeException("权限同步功能未启用");
         }
 
         if (permissionSyncConfig.getModules() == null || permissionSyncConfig.getModules().isEmpty()) {
@@ -108,7 +108,7 @@ public class PermissionSyncServiceImpl implements PermissionSyncService {
         log.info("开始同步模块权限: {}", moduleCode);
 
         if (!permissionSyncConfig.isEnabled()) {
-            return "权限同步功能未启用";
+            throw new RuntimeException("权限同步功能未启用");
         }
 
         Optional<PermissionSyncConfig.ModuleConfig> moduleOpt = permissionSyncConfig.getModules().stream()

@@ -52,6 +52,21 @@ public class RoleDTO {
     private LocalDateTime updateTime;
 
     /**
+     * 创建人
+     */
+    private String createBy;
+
+    /**
+     * 更新人
+     */
+    private String updateBy;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Boolean isDeleted;
+
+    /**
      * 菜单ID列表
      */
     private List<Long> menuIds;

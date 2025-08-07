@@ -119,4 +119,27 @@ export function toggleMenuStatus(id) {
     url: `/api/sys/menus/${id}/toggle-status`,
     method: 'put'
   })
+}
+
+/**
+ * 批量为所有菜单生成权限
+ * @returns {Promise}
+ */
+export function batchGeneratePermissions() {
+  return request({
+    url: '/api/sys/menus/batch-generate-permissions',
+    method: 'post'
+  })
+}
+
+/**
+ * 为指定菜单重新生成权限
+ * @param {number} id - 菜单ID
+ * @returns {Promise}
+ */
+export function regeneratePermissions(id) {
+  return request({
+    url: `/api/sys/menus/${id}/regenerate-permissions`,
+    method: 'post'
+  })
 } 

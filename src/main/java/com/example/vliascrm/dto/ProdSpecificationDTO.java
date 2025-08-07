@@ -46,10 +46,15 @@ public class ProdSpecificationDTO {
     /**
      * 创建人
      */
-    private Long createBy;
+    private String createBy;
 
     /**
      * 更新人
      */
-    private Long updateBy;
+    private String updateBy;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Boolean isDeleted;
 } 

@@ -6,98 +6,98 @@
       class="layout-sidebar sidebar-container"
     >
       <div class="sidebar-content">
-        <!-- 顶部logo -->
-        <div class="logo-container">
-          <div
-            class="vlias-logo"
-            :class="{ 'collapsed': isCollapse }"
-          >
-            {{ isCollapse ? 'V' : 'VLIAS' }}
-          </div>
-          <span v-if="!isCollapse">企业管理系统</span>
+      <!-- 顶部logo -->
+      <div class="logo-container">
+        <div
+          class="vlias-logo"
+          :class="{ 'collapsed': isCollapse }"
+        >
+          {{ isCollapse ? 'V' : 'VLIAS' }}
         </div>
-        
+        <span v-if="!isCollapse">企业管理系统</span>
+      </div>
+      
         <!-- 主要菜单区域 -->
         <div class="main-menu-area">
-          <el-menu
-            :collapse="isCollapse"
-            :default-active="activeMenu"
-            :default-openeds="[]"
-            background-color="#304156"
-            text-color="#bfcbd9"
-            active-text-color="#409eff"
-            :collapse-transition="false"
-            router
-          >
-            <!-- 首页菜单 -->
-            <el-menu-item index="/home">
-              <el-icon><House /></el-icon>
-              <template #title>
-                首页
-              </template>
-            </el-menu-item>
-            
+      <el-menu
+        :collapse="isCollapse"
+        :default-active="activeMenu"
+        :default-openeds="[]"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409eff"
+        :collapse-transition="false"
+        router
+      >
+        <!-- 首页菜单 -->
+        <el-menu-item index="/home">
+          <el-icon><House /></el-icon>
+          <template #title>
+            首页
+          </template>
+        </el-menu-item>
+        
             <!-- 动态渲染菜单（排除个人中心） -->
-            <template
+        <template
               v-for="menu in filteredUserMenus"
-              :key="menu.id"
+          :key="menu.id"
+        >
+          <!-- 目录类型菜单 -->
+          <el-sub-menu
+            v-if="menu.menuType === 1"
+            :index="menu.menuCode"
+          >
+            <template #title>
+              <el-icon v-if="menu.icon && iconMap[menu.icon]">
+                <component :is="iconMap[menu.icon]" />
+              </el-icon>
+              <el-icon v-else>
+                <Setting v-if="menu.menuCode === 'system'" />
+                <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
+                <Goods v-else-if="menu.menuCode === 'product'" />
+                <Document v-else-if="menu.menuCode === 'crm'" />
+                <Calendar v-else-if="menu.menuCode === 'order'" />
+                <Box v-else-if="menu.menuCode === 'inventory'" />
+                <Document v-else-if="menu.menuCode === 'purchase'" />
+                <Star v-else-if="menu.menuCode === 'promotion'" />
+                <Money v-else-if="menu.menuCode === 'finance'" />
+                <User v-else-if="menu.menuCode === 'member'" />
+                <Bell v-else-if="menu.menuCode === 'message'" />
+                <Menu v-else />
+              </el-icon>
+              <span>{{ menu.menuName }}</span>
+            </template>
+            <!-- 子菜单 -->
+            <template
+              v-for="child in menu.children"
+              :key="child.id"
             >
-              <!-- 目录类型菜单 -->
-              <el-sub-menu
-                v-if="menu.menuType === 1"
-                :index="menu.menuCode"
-              >
+              <el-menu-item :index="child.path">
                 <template #title>
-                  <el-icon v-if="menu.icon && iconMap[menu.icon]">
-                    <component :is="iconMap[menu.icon]" />
-                  </el-icon>
-                  <el-icon v-else>
-                    <Setting v-if="menu.menuCode === 'system'" />
-                    <OfficeBuilding v-else-if="menu.menuCode === 'org'" />
-                    <Goods v-else-if="menu.menuCode === 'product'" />
-                    <Document v-else-if="menu.menuCode === 'crm'" />
-                    <Calendar v-else-if="menu.menuCode === 'order'" />
-                    <Box v-else-if="menu.menuCode === 'inventory'" />
-                    <Document v-else-if="menu.menuCode === 'purchase'" />
-                    <Star v-else-if="menu.menuCode === 'promotion'" />
-                    <Money v-else-if="menu.menuCode === 'finance'" />
-                    <User v-else-if="menu.menuCode === 'member'" />
-                    <Bell v-else-if="menu.menuCode === 'message'" />
-                    <Menu v-else />
-                  </el-icon>
-                  <span>{{ menu.menuName }}</span>
-                </template>
-                <!-- 子菜单 -->
-                <template
-                  v-for="child in menu.children"
-                  :key="child.id"
-                >
-                  <el-menu-item :index="child.path">
-                    <template #title>
-                      {{ child.menuName }}
-                    </template>
-                  </el-menu-item>
-                </template>
-              </el-sub-menu>
-              
-              <!-- 菜单类型 -->
-              <el-menu-item
-                v-else-if="menu.menuType === 2"
-                :index="menu.path"
-              >
-                <el-icon v-if="menu.icon && iconMap[menu.icon]">
-                  <component :is="iconMap[menu.icon]" />
-                </el-icon>
-                <el-icon v-else>
-                  <User v-if="menu.menuCode === 'profile'" />
-                  <View v-else />
-                </el-icon>
-                <template #title>
-                  {{ menu.menuName }}
+                  {{ child.menuName }}
                 </template>
               </el-menu-item>
             </template>
-          </el-menu>
+          </el-sub-menu>
+          
+          <!-- 菜单类型 -->
+          <el-menu-item
+            v-else-if="menu.menuType === 2"
+            :index="menu.path"
+          >
+            <el-icon v-if="menu.icon && iconMap[menu.icon]">
+              <component :is="iconMap[menu.icon]" />
+            </el-icon>
+            <el-icon v-else>
+              <User v-if="menu.menuCode === 'profile'" />
+              <View v-else />
+            </el-icon>
+            <template #title>
+              {{ menu.menuName }}
+            </template>
+          </el-menu-item>
+        </template>
+      </el-menu>
         </div>
         
         <!-- 底部固定个人中心菜单 -->

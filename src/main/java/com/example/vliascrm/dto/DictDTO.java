@@ -47,6 +47,21 @@ public class DictDTO {
     private LocalDateTime updateTime;
 
     /**
+     * 创建人
+     */
+    private String createBy;
+
+    /**
+     * 更新人
+     */
+    private String updateBy;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Boolean isDeleted;
+
+    /**
      * 字典项列表
      */
     private List<DictItemDTO> items;

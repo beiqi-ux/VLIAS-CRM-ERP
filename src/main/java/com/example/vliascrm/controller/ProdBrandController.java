@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * 商品品牌管理控制器
@@ -31,6 +32,7 @@ public class ProdBrandController {
      * @return 品牌分页列表
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('product-brand-management:view')")
     public ApiResponse<Page<ProdBrand>> getBrandList(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
@@ -58,6 +60,7 @@ public class ProdBrandController {
      * @return 品牌详情
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-brand-management:view')")
     public ApiResponse<ProdBrand> getBrandById(@PathVariable Long id) {
         Optional<ProdBrand> brand = prodBrandService.findById(id);
         if (brand.isPresent()) {
@@ -107,6 +110,7 @@ public class ProdBrandController {
      * @return 创建后的品牌
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('product-brand-management:create')")
     public ApiResponse<ProdBrand> createBrand(@RequestBody ProdBrand brand) {
         // 检查品牌名称是否存在
         if (prodBrandService.existsByBrandName(brand.getBrandName())) {
@@ -124,6 +128,7 @@ public class ProdBrandController {
      * @return 更新后的品牌
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-brand-management:edit')")
     public ApiResponse<ProdBrand> updateBrand(@PathVariable Long id, @RequestBody ProdBrand brand) {
         Optional<ProdBrand> existingBrand = prodBrandService.findById(id);
         if (!existingBrand.isPresent()) {
@@ -141,6 +146,7 @@ public class ProdBrandController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-brand-management:delete')")
     public ApiResponse<String> deleteBrand(@PathVariable Long id) {
         Optional<ProdBrand> brand = prodBrandService.findById(id);
         if (!brand.isPresent()) {

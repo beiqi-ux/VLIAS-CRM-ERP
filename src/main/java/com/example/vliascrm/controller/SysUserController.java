@@ -31,6 +31,7 @@ import com.example.vliascrm.entity.OrgDepartment;
 import com.example.vliascrm.entity.OrgPosition;
 import com.example.vliascrm.entity.OrgPosition;
 import io.swagger.v3.oas.annotations.Operation;
+import com.example.vliascrm.entity.SysRole;
 
 /**
  * 系统用户管理控制器
@@ -51,6 +52,7 @@ public class SysUserController {
      * 获取用户列表（支持分页和条件查询）
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('user-management:view')")
     public ApiResponse<Map<String, Object>> getUserList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -108,6 +110,7 @@ public class SysUserController {
      * 获取单个用户
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('user-management:view')")
     public ApiResponse<SysUser> getUserById(@PathVariable Long id) {
         return sysUserRepository.findById(id)
                 .map(user -> {
@@ -122,6 +125,7 @@ public class SysUserController {
      * 创建用户
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('user-management:create')")
     public ApiResponse<SysUser> createUser(@RequestBody SysUser user) {
         // 检查用户名是否已存在
         if (sysUserRepository.existsByUsername(user.getUsername())) {
@@ -149,53 +153,54 @@ public class SysUserController {
      * 更新用户
      */
     @PutMapping("/{id}")
-    public ApiResponse<SysUser> updateUser(@PathVariable Long id, @RequestBody SysUser user) {
+    @PreAuthorize("hasAuthority('user-management:edit')")
+    public ApiResponse<SysUser> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         return sysUserRepository.findById(id)
                 .map(existingUser -> {
                     // 更新用户信息
-                    if (user.getUsername() != null) {
-                        existingUser.setUsername(user.getUsername());
+                    if (userDTO.getUsername() != null) {
+                        existingUser.setUsername(userDTO.getUsername());
                     }
                     
-                    if (user.getRealName() != null) {
-                        existingUser.setRealName(user.getRealName());
+                    if (userDTO.getRealName() != null) {
+                        existingUser.setRealName(userDTO.getRealName());
                     }
                     
-                    if (user.getEmail() != null) {
-                        existingUser.setEmail(user.getEmail());
+                    if (userDTO.getEmail() != null) {
+                        existingUser.setEmail(userDTO.getEmail());
                     }
                     
-                    if (user.getMobile() != null) {
-                        existingUser.setMobile(user.getMobile());
+                    if (userDTO.getMobile() != null) {
+                        existingUser.setMobile(userDTO.getMobile());
                     }
                     
-                    if (user.getAvatar() != null) {
-                        existingUser.setAvatar(user.getAvatar());
+                    if (userDTO.getAvatar() != null) {
+                        existingUser.setAvatar(userDTO.getAvatar());
                     }
                     
-                    if (user.getGender() != null) {
-                        existingUser.setGender(user.getGender());
+                    if (userDTO.getGender() != null) {
+                        existingUser.setGender(userDTO.getGender());
                     }
                     
-                    if (user.getOrgId() != null) {
-                        existingUser.setOrgId(user.getOrgId());
+                    if (userDTO.getOrgId() != null) {
+                        existingUser.setOrgId(userDTO.getOrgId());
                     }
                     
-                    if (user.getDeptId() != null) {
-                        existingUser.setDeptId(user.getDeptId());
+                    if (userDTO.getDeptId() != null) {
+                        existingUser.setDeptId(userDTO.getDeptId());
                     }
                     
-                    if (user.getPositionId() != null) {
-                        existingUser.setPositionId(user.getPositionId());
+                    if (userDTO.getPositionId() != null) {
+                        existingUser.setPositionId(userDTO.getPositionId());
                     }
                     
-                    if (user.getStatus() != null) {
-                        existingUser.setStatus(user.getStatus());
+                    if (userDTO.getStatus() != null) {
+                        existingUser.setStatus(userDTO.getStatus());
                     }
                     
                     // 如果提供了新密码则更新密码
-                    if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                        existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+                    if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+                        existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
                     }
                     
                     SysUser updatedUser = sysUserRepository.save(existingUser);
@@ -212,6 +217,7 @@ public class SysUserController {
      * 删除用户
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('user-management:delete')")
     public ApiResponse<Void> deleteUser(@PathVariable Long id) {
         if (!sysUserRepository.existsById(id)) {
             return ApiResponse.failure("用户不存在");
@@ -225,6 +231,7 @@ public class SysUserController {
      * 修改用户密码
      */
     @PostMapping("/{id}/change-password")
+    @PreAuthorize("hasAuthority('user-management:edit')")
     public ApiResponse<Void> changePassword(
             @PathVariable Long id,
             @RequestBody Map<String, String> passwordInfo) {
@@ -259,6 +266,7 @@ public class SysUserController {
      * 重置用户密码
      */
     @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('user-management:reset-password')")
     public ApiResponse<Map<String, String>> resetPassword(@PathVariable Long id) {
         Optional<SysUser> userOptional = sysUserRepository.findById(id);
         if (userOptional.isEmpty()) {
@@ -286,6 +294,7 @@ public class SysUserController {
      */
     @PatchMapping("/{id}/status")
     @Operation(summary = "更新用户状态", description = "更新用户的启用/禁用状态")
+    @PreAuthorize("hasAuthority('user-management:edit')")
     public ApiResponse<SysUser> updateUserStatus(@PathVariable Long id, @RequestParam Integer status) {
         try {
             Optional<SysUser> userOptional = sysUserRepository.findById(id);
@@ -318,6 +327,7 @@ public class SysUserController {
      * 获取用户详情列表（包含组织、部门和岗位名称）
      */
     @GetMapping("/detailed")
+    @PreAuthorize("hasAuthority('user-management:view')")
     public ApiResponse<Map<String, Object>> getDetailedUserList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -398,4 +408,6 @@ public class SysUserController {
         
         return ApiResponse.success(result);
     }
+
+
 } 

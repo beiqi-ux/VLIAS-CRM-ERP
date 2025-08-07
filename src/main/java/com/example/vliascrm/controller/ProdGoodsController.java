@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * 商品管理控制器
@@ -36,6 +37,7 @@ public class ProdGoodsController {
      * @return 商品分页列表
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('product-goods-management:view')")
     public ApiResponse<Page<ProdGoods>> getGoodsList(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
@@ -57,6 +59,7 @@ public class ProdGoodsController {
      * @return 商品详情
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-goods-management:view')")
     public ApiResponse<ProdGoods> getGoodsById(@PathVariable Long id) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         return goods.map(ApiResponse::success)
@@ -167,6 +170,7 @@ public class ProdGoodsController {
      * @return 创建后的商品
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('product-goods-management:create')")
     public ApiResponse<ProdGoods> createGoods(@RequestBody ProdGoods goods) {
         // 检查商品编码是否存在
         if (goods.getGoodsCode() != null && prodGoodsService.existsByGoodsCode(goods.getGoodsCode())) {
@@ -184,6 +188,7 @@ public class ProdGoodsController {
      * @return 更新后的商品
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-goods-management:edit')")
     public ApiResponse<ProdGoods> updateGoods(@PathVariable Long id, @RequestBody ProdGoods goods) {
         Optional<ProdGoods> existingGoods = prodGoodsService.findById(id);
         if (!existingGoods.isPresent()) {
@@ -201,6 +206,7 @@ public class ProdGoodsController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('product-goods-management:delete')")
     public ApiResponse<String> deleteGoods(@PathVariable Long id) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         if (!goods.isPresent()) {
@@ -261,6 +267,7 @@ public class ProdGoodsController {
      * @return 操作结果
      */
     @PutMapping("/{id}/audit")
+    @PreAuthorize("hasAuthority('product-goods-management:audit')")
     public ApiResponse<String> auditGoods(@PathVariable Long id, @RequestBody Map<String, Object> auditData) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         if (!goods.isPresent()) {

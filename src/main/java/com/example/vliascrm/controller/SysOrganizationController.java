@@ -6,6 +6,7 @@ import com.example.vliascrm.entity.SysOrganization;
 import com.example.vliascrm.service.SysOrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class SysOrganizationController {
      * @return 组织机构列表
      */
     @GetMapping("/list")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<List<SysOrganization>> list() {
         List<SysOrganization> list = organizationService.findAll();
         return Result.success(list);
@@ -34,6 +36,7 @@ public class SysOrganizationController {
      * @return 组织机构树
      */
     @GetMapping("/tree")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<List<OrganizationDTO>> tree() {
         List<OrganizationDTO> tree = organizationService.getOrganizationTree();
         return Result.success(tree);
@@ -45,6 +48,7 @@ public class SysOrganizationController {
      * @return 组织机构信息
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<SysOrganization> getById(@PathVariable Long id) {
         SysOrganization organization = organizationService.findById(id);
         return Result.success(organization);
@@ -56,6 +60,7 @@ public class SysOrganizationController {
      * @return 新增结果
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('org-management:create')")
     public Result<SysOrganization> add(@RequestBody SysOrganization organization) {
         SysOrganization savedOrganization = organizationService.save(organization);
         return Result.success(savedOrganization);
@@ -67,6 +72,7 @@ public class SysOrganizationController {
      * @return 更新结果
      */
     @PutMapping
+    @PreAuthorize("hasAuthority('org-management:edit')")
     public Result<SysOrganization> update(@RequestBody SysOrganization organization) {
         SysOrganization updatedOrganization = organizationService.update(organization);
         return Result.success(updatedOrganization);
@@ -78,6 +84,7 @@ public class SysOrganizationController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('org-management:delete')")
     public Result<Void> delete(@PathVariable Long id) {
         organizationService.delete(id);
         return Result.success();
@@ -89,6 +96,7 @@ public class SysOrganizationController {
      * @return 子组织机构列表
      */
     @GetMapping("/children/{parentId}")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<List<SysOrganization>> getChildren(@PathVariable Long parentId) {
         List<SysOrganization> children = organizationService.findByParentId(parentId);
         return Result.success(children);
@@ -101,6 +109,7 @@ public class SysOrganizationController {
      * @return 检查结果
      */
     @GetMapping("/check-code")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<Boolean> checkOrgCodeExists(@RequestParam String orgCode, @RequestParam(required = false) Long id) {
         boolean exists = organizationService.checkOrgCodeExists(orgCode, id);
         return Result.success(exists);
@@ -113,6 +122,7 @@ public class SysOrganizationController {
      * @return 检查结果
      */
     @GetMapping("/check-name")
+    @PreAuthorize("hasAuthority('org-management:view')")
     public Result<Boolean> checkOrgNameExists(@RequestParam String orgName, @RequestParam(required = false) Long id) {
         boolean exists = organizationService.checkOrgNameExists(orgName, id);
         return Result.success(exists);

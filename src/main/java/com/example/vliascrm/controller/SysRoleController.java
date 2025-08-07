@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 角色管理控制器
@@ -24,12 +25,19 @@ public class SysRoleController {
 
     private final SysRoleService roleService;
 
+    // 检查是否为内置角色
+    private boolean isBuiltinRole(String roleCode) {
+        Set<String> builtinRoles = Set.of("SUPER_ADMIN", "ADMIN", "MANAGER", "EMPLOYEE", "WAREHOUSE");
+        return builtinRoles.contains(roleCode);
+    }
+
     /**
      * 创建角色
      * @param roleDTO 角色信息
      * @return 创建后的角色
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('role-management:create')")
     public ApiResponse<SysRole> createRole(@RequestBody RoleDTO roleDTO) {
         return ApiResponse.success(roleService.createRole(roleDTO));
     }
@@ -41,7 +49,14 @@ public class SysRoleController {
      * @return 更新后的角色
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('role-management:edit')")
     public ApiResponse<SysRole> updateRole(@PathVariable Long id, @RequestBody RoleDTO roleDTO) {
+        // 检查是否为内置角色，如果是则不允许修改状态
+        SysRole existingRole = roleService.getRoleById(id);
+        if (isBuiltinRole(existingRole.getRoleCode())) {
+            // 保持原有状态，不允许修改
+            roleDTO.setStatus(existingRole.getStatus());
+        }
         return ApiResponse.success(roleService.updateRole(id, roleDTO));
     }
 
@@ -51,7 +66,13 @@ public class SysRoleController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('role-management:delete')")
     public ApiResponse<Void> deleteRole(@PathVariable Long id) {
+        // 检查是否为内置角色，如果是则不允许删除
+        SysRole existingRole = roleService.getRoleById(id);
+        if (isBuiltinRole(existingRole.getRoleCode())) {
+            return ApiResponse.failure("内置角色不允许删除");
+        }
         roleService.deleteRole(id);
         return ApiResponse.success(null);
     }
@@ -62,6 +83,7 @@ public class SysRoleController {
      * @return 角色信息
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('role-management:view')")
     public ApiResponse<SysRole> getRoleById(@PathVariable Long id) {
         return ApiResponse.success(roleService.getRoleById(id));
     }
@@ -71,6 +93,7 @@ public class SysRoleController {
      * @return 角色列表
      */
     @GetMapping("/list")
+    @PreAuthorize("hasAuthority('role-management:view')")
     public ApiResponse<List<SysRole>> getAllRolesList() {
         return ApiResponse.success(roleService.getAllRoles());
     }
@@ -80,6 +103,7 @@ public class SysRoleController {
      * @return 角色分页列表
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('role-management:view')")
     public ApiResponse<Page<SysRole>> getRoleList(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
@@ -110,6 +134,7 @@ public class SysRoleController {
      * @return 操作结果
      */
     @PostMapping("/{roleId}/permissions")
+    @PreAuthorize("hasAuthority('role-management:assign-permission')")
     public ApiResponse<Void> assignPermissions(
             @PathVariable Long roleId,
             @RequestBody List<Long> permissionIds) {
@@ -123,6 +148,7 @@ public class SysRoleController {
      * @return 权限ID列表
      */
     @GetMapping("/{roleId}/permissions")
+    @PreAuthorize("hasAuthority('role-management:view')")
     public ApiResponse<List<Long>> getRolePermissionIds(@PathVariable Long roleId) {
         return ApiResponse.success(roleService.getRolePermissionIds(roleId));
     }

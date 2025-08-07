@@ -27,6 +27,16 @@ public class UserDTO extends SysUser {
     private String positionName;
     
     /**
+     * 更新人
+     */
+    private String updateBy;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Boolean isDeleted;
+    
+    /**
      * 从SysUser创建UserDTO
      * @param user 用户实体
      * @return UserDTO

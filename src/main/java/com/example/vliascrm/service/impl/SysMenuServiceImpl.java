@@ -2,9 +2,11 @@ package com.example.vliascrm.service.impl;
 
 import com.example.vliascrm.dto.MenuDTO;
 import com.example.vliascrm.entity.SysMenu;
+import com.example.vliascrm.entity.SysPermission;
 import com.example.vliascrm.exception.BusinessException;
 import com.example.vliascrm.exception.ResourceNotFoundException;
 import com.example.vliascrm.repository.SysMenuRepository;
+import com.example.vliascrm.repository.SysPermissionRepository;
 import com.example.vliascrm.service.SysMenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.HashSet;
@@ -28,6 +31,7 @@ import java.util.Arrays;
 public class SysMenuServiceImpl implements SysMenuService {
 
     private final SysMenuRepository menuRepository;
+    private final SysPermissionRepository permissionRepository;
     
     // 核心菜单编码，不允许删除和禁用
     private static final Set<String> CORE_MENU_CODES = new HashSet<>(Arrays.asList(
@@ -45,6 +49,12 @@ public class SysMenuServiceImpl implements SysMenuService {
         // 检查菜单编码是否存在
         if (menuRepository.existsByMenuCode(menuDTO.getMenuCode())) {
             throw new BusinessException("菜单编码已存在");
+        }
+
+        // 检查权限编码是否存在（如果提供了权限编码）
+        if (menuDTO.getPermissionCode() != null && 
+            permissionRepository.existsByPermissionCodeAndIsDeleted(menuDTO.getPermissionCode(), false)) {
+            throw new BusinessException("权限编码已存在");
         }
 
         SysMenu menu = new SysMenu();
@@ -133,7 +143,7 @@ public class SysMenuServiceImpl implements SysMenuService {
     public List<MenuDTO> getMenuTree() {
         // 获取所有未删除的菜单
         List<SysMenu> allMenus = menuRepository.findAll().stream()
-                .filter(m -> !m.getIsDeleted() && m.getStatus() == 1)
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
                 .collect(Collectors.toList());
 
         // 转换为DTO
@@ -179,7 +189,7 @@ public class SysMenuServiceImpl implements SysMenuService {
         
         // 获取所有菜单，用于构建完整的树形结构
         List<SysMenu> allMenus = menuRepository.findAll().stream()
-                .filter(m -> !m.getIsDeleted() && m.getStatus() == 1)
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
                 .collect(Collectors.toList());
         
         // 获取用户有权限的菜单ID集合
@@ -249,4 +259,79 @@ public class SysMenuServiceImpl implements SysMenuService {
         menu.setUpdateTime(LocalDateTime.now());
         menuRepository.save(menu);
     }
+
+    @Override
+    @Transactional
+    public int batchGenerateMenuPermissions() {
+        // 获取所有启用的菜单
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
+                .collect(Collectors.toList());
+        
+        int totalGenerated = 0;
+        for (SysMenu menu : allMenus) {
+            totalGenerated += regenerateMenuPermissions(menu.getId());
+        }
+        return totalGenerated;
+    }
+
+    @Override
+    @Transactional
+    public int regenerateMenuPermissions(Long menuId) {
+        SysMenu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+        
+        // 使用菜单中填写的权限编码
+        String permissionCode = menu.getPermissionCode();
+        
+        // 如果菜单没有设置权限编码，则不生成权限
+        if (permissionCode == null || permissionCode.trim().isEmpty()) {
+            return 0;
+        }
+        
+        // 检查权限是否已存在
+        if (permissionRepository.existsByPermissionCodeAndIsDeleted(permissionCode, false)) {
+            return 0; // 权限已存在，不重复生成
+        }
+        
+        // 创建权限记录
+        SysPermission permission = new SysPermission();
+        permission.setPermissionName(menu.getMenuName() + "-权限");
+        permission.setPermissionCode(permissionCode);
+        
+        // 根据菜单类型设置对应的权限类型和层级
+        Integer permissionType = menu.getMenuType(); // 菜单类型直接对应权限类型
+        permission.setPermissionType(permissionType);
+        permission.setLevelDepth(permissionType);
+        
+        // 设置父权限ID
+        if (menu.getParentId() == 0) {
+            permission.setParentId(0L);
+        } else {
+            // 查找父菜单对应的权限作为父权限
+            SysMenu parentMenu = menuRepository.findById(menu.getParentId()).orElse(null);
+            if (parentMenu != null && parentMenu.getPermissionCode() != null) {
+                Optional<SysPermission> parentPermission = permissionRepository
+                    .findByPermissionCodeAndIsDeleted(parentMenu.getPermissionCode(), false);
+                if (parentPermission.isPresent()) {
+                    permission.setParentId(parentPermission.get().getId());
+                } else {
+                    permission.setParentId(0L);
+                }
+            } else {
+                permission.setParentId(0L);
+            }
+        }
+        
+        permission.setMenuId(menu.getId());
+        permission.setDescription("访问" + menu.getMenuName() + "菜单的权限");
+        permission.setStatus(1);
+        permission.setIsDeleted(false);
+        permission.setCreateTime(LocalDateTime.now());
+        permission.setUpdateTime(LocalDateTime.now());
+        
+        permissionRepository.save(permission);
+        return 1;
+    }
+
 } 

@@ -22,6 +22,8 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.Map;
 
 /**
  * 数据字典控制器
@@ -40,6 +42,7 @@ public class SysDictController {
      * @return 创建后的字典
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('dict-management:create')")
     @Operation(summary = "创建字典", description = "创建新的数据字典")
     public ApiResponse<SysDict> createDict(@RequestBody DictDTO dictDTO) {
         // 检查字典编码是否已存在
@@ -61,6 +64,7 @@ public class SysDictController {
      * @return 更新后的字典
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('dict-management:edit')")
     @Operation(summary = "更新字典", description = "根据ID更新字典信息")
     public ApiResponse<SysDict> updateDict(@PathVariable Long id, @RequestBody DictDTO dictDTO) {
         Optional<SysDict> dictOpt = dictService.findById(id);
@@ -86,6 +90,7 @@ public class SysDictController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('dict-management:delete')")
     @Operation(summary = "删除字典", description = "根据ID删除字典（同时删除字典项）")
     public ApiResponse<String> deleteDict(@PathVariable Long id) {
         if (!dictService.findById(id).isPresent()) {
@@ -102,6 +107,7 @@ public class SysDictController {
      * @return 字典信息
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('dict-management:view')")
     @Operation(summary = "获取字典详情", description = "根据ID获取字典详细信息")
     public ApiResponse<SysDict> getDict(@PathVariable Long id) {
         Optional<SysDict> dict = dictService.findById(id);
@@ -121,6 +127,7 @@ public class SysDictController {
      * @return 分页结果
      */
     @GetMapping
+    @PreAuthorize("hasAuthority('dict-management:view')")
     @Operation(summary = "分页查询字典", description = "分页查询数据字典列表")
     public ApiResponse<Page<SysDict>> getDictList(
             @Parameter(description = "页码，从0开始") @RequestParam(defaultValue = "0") int page,

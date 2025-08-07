@@ -32,6 +32,19 @@ public interface SysMenuService {
     void deleteMenu(Long id);
 
     /**
+     * 批量为所有菜单生成对应权限
+     * @return 生成的权限数量
+     */
+    int batchGenerateMenuPermissions();
+
+    /**
+     * 为指定菜单重新生成权限
+     * @param menuId 菜单ID
+     * @return 生成的权限数量
+     */
+    int regenerateMenuPermissions(Long menuId);
+
+    /**
      * 根据ID获取菜单
      * @param id 菜单ID
      * @return 菜单信息

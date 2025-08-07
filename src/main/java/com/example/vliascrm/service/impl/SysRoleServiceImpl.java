@@ -66,14 +66,28 @@ public class SysRoleServiceImpl implements SysRoleService {
         SysRole role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("角色不存在"));
 
+        // 检查是否为内置角色，如果是则不允许修改状态
+        boolean isBuiltin = isBuiltinRole(role.getRoleCode());
+        if (isBuiltin && roleDTO.getStatus() != null && !roleDTO.getStatus().equals(role.getStatus())) {
+            throw new BusinessException("内置角色状态不允许修改");
+        }
+
         // 如果修改了角色编码，需要检查是否存在
         if (!role.getRoleCode().equals(roleDTO.getRoleCode()) &&
                 roleRepository.existsByRoleCode(roleDTO.getRoleCode())) {
             throw new BusinessException("角色编码已存在");
         }
 
+        // 保存原始状态
+        Integer originalStatus = role.getStatus();
+        
         BeanUtils.copyProperties(roleDTO, role);
         role.setUpdateTime(LocalDateTime.now());
+
+        // 如果是内置角色，恢复原始状态
+        if (isBuiltin) {
+            role.setStatus(originalStatus);
+        }
 
         SysRole updatedRole = roleRepository.save(role);
 
@@ -90,6 +104,17 @@ public class SysRoleServiceImpl implements SysRoleService {
     public void deleteRole(Long id) {
         SysRole role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("角色不存在"));
+
+        // 检查是否为内置角色
+        if (isBuiltinRole(role.getRoleCode())) {
+            throw new BusinessException("内置角色不允许删除");
+        }
+
+        // 检查是否有用户正在使用该角色
+        List<SysUserRole> userRoles = userRoleRepository.findByRoleId(id);
+        if (!userRoles.isEmpty()) {
+            throw new BusinessException("该角色正在被用户使用，请先解除用户关联后再删除");
+        }
 
         // 删除角色权限关联
         rolePermissionRepository.deleteByRoleId(id);
@@ -111,7 +136,10 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     public List<SysRole> getAllRoles() {
-        return roleRepository.findAll();
+        Specification<SysRole> specification = (root, query, criteriaBuilder) -> {
+            return criteriaBuilder.equal(root.get("isDeleted"), false);
+        };
+        return roleRepository.findAll(specification);
     }
 
     @Override
@@ -204,5 +232,21 @@ public class SysRoleServiceImpl implements SysRoleService {
         return userRoles.stream()
                 .map(SysUserRole::getRoleId)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 检查是否为内置角色
+     * @param roleCode 角色编码
+     * @return 是否为内置角色
+     */
+    private boolean isBuiltinRole(String roleCode) {
+        // 内置角色编码列表
+        String[] builtinRoles = {"ADMIN", "MANAGER", "EMPLOYEE", "WAREHOUSE"};
+        for (String builtin : builtinRoles) {
+            if (builtin.equals(roleCode)) {
+                return true;
+            }
+        }
+        return false;
     }
 } 
