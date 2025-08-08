@@ -11,6 +11,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import com.example.vliascrm.entity.SysUser;
+import com.example.vliascrm.service.SysUserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 /**
  * 菜单管理控制器
@@ -21,6 +28,7 @@ import java.util.HashMap;
 public class SysMenuController {
 
     private final SysMenuService menuService;
+    private final SysUserService userService;
 
     /**
      * 创建菜单
@@ -137,7 +145,28 @@ public class SysMenuController {
     }
 
     /**
-     * 获取用户菜单树
+     * 获取当前用户的菜单树
+     * @return 当前用户菜单树
+     */
+    @GetMapping("/current-user/tree")
+    public ApiResponse<List<MenuDTO>> getCurrentUserMenuTree(HttpServletRequest request) {
+        // 获取当前用户信息
+        String currentUsername = request.getRemoteUser();
+        if (currentUsername == null) {
+            throw new IllegalStateException("用户未认证");
+        }
+        
+        // 获取当前用户ID
+        Optional<SysUser> currentUserOpt = userService.findByUsername(currentUsername);
+        if (currentUserOpt.isEmpty()) {
+            throw new IllegalStateException("当前用户不存在");
+        }
+        
+        return ApiResponse.success(menuService.getUserMenuTree(currentUserOpt.get().getId()));
+    }
+
+    /**
+     * 获取用户菜单树（管理员功能）
      * @param userId 用户ID
      * @return 用户菜单树
      */

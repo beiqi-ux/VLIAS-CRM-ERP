@@ -189,11 +189,11 @@ public class OrgDepartmentController {
         List<DepartmentDTO> deptDTOs = departments.stream()
             .filter(dept -> dept.getStatus() != null && dept.getStatus() == 1) // 只包含启用状态的部门
             .map(dept -> {
-                DepartmentDTO dto = new DepartmentDTO();
-                BeanUtils.copyProperties(dept, dto);
-                dto.setOrgName(orgName);
-                return dto;
-            }).collect(Collectors.toList());
+            DepartmentDTO dto = new DepartmentDTO();
+            BeanUtils.copyProperties(dept, dto);
+            dto.setOrgName(orgName);
+            return dto;
+        }).collect(Collectors.toList());
         
         return Result.success(deptDTOs);
     }

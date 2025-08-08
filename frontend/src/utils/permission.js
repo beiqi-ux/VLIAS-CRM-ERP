@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 
 /**
- * 检查用户是否具有指定权限（支持权限继承）
+ * 检查用户是否具有指定权限（用于UI显示，支持权限继承）
  * @param {string} permission - 权限编码
  * @returns {boolean} 是否具有权限
  */
@@ -27,12 +27,59 @@ export function hasPermission(permission) {
     return false
   }
   
-  // 使用权限继承检查
+  // 使用权限继承检查（用于UI显示）
   return hasPermissionWithInheritance(userPermissions, permission)
 }
 
 /**
- * 检查权限继承关系
+ * 检查用户是否具有指定操作权限（用于按钮功能控制，严格检查）
+ * @param {string} permission - 权限编码
+ * @returns {boolean} 是否具有权限
+ */
+export function hasActionPermission(permission) {
+  const userStore = useUserStore()
+  
+  // 如果用户未登录，返回false
+  if (!userStore.isLoggedIn) {
+    return false
+  }
+  
+  // 如果权限数据还未完全加载，返回false
+  if (!userStore.permissionsLoaded) {
+    return false
+  }
+  
+  const userPermissions = userStore.userInfo.permissions
+  
+  // 如果权限数据不是数组，返回false
+  if (!Array.isArray(userPermissions)) {
+    return false
+  }
+  
+  // 严格权限检查（用于操作控制）
+  return hasStrictPermission(userPermissions, permission)
+}
+
+/**
+ * 严格权限检查（不允许继承，用于操作权限控制）
+ * @param {string[]} userPermissions - 用户权限编码列表
+ * @param {string} requiredPermission - 需要检查的权限编码
+ * @returns {boolean} 是否有权限
+ */
+export function hasStrictPermission(userPermissions, requiredPermission) {
+  if (!userPermissions || userPermissions.length === 0 || 
+      !requiredPermission || requiredPermission.trim() === '') {
+    return false
+  }
+
+  const required = requiredPermission.trim()
+  
+  // 只进行直接权限检查，不允许继承
+  return userPermissions.includes(required)
+}
+
+/**
+ * 检查权限继承关系（用于UI显示权限检查）
  * @param {string[]} userPermissions - 用户权限编码列表
  * @param {string} requiredPermission - 需要检查的权限编码
  * @returns {boolean} 是否有权限
@@ -50,7 +97,7 @@ export function hasPermissionWithInheritance(userPermissions, requiredPermission
     return true
   }
   
-  // 2. 继承权限检查
+  // 2. 继承权限检查（仅用于UI显示）
   const permissionType = getPermissionType(required)
   
   if (!permissionType) {
@@ -58,8 +105,9 @@ export function hasPermissionWithInheritance(userPermissions, requiredPermission
   }
   
   switch (permissionType) {
-    case 3: // 三级权限，检查是否有二级或一级权限
+    case 3: // 三级权限（操作），检查是否有二级或一级权限
       const submoduleCode = extractSubmoduleCode(required)
+      // 检查是否有完整的二级权限
       if (submoduleCode && userPermissions.includes(submoduleCode)) {
         return true
       }
@@ -70,14 +118,14 @@ export function hasPermissionWithInheritance(userPermissions, requiredPermission
       }
       break
       
-    case 2: // 二级权限，检查是否有一级权限
+    case 2: // 二级权限（子模块），检查是否有一级权限
       const parentModuleCode = extractModuleCode(required)
       if (parentModuleCode && userPermissions.includes(parentModuleCode)) {
         return true
       }
       break
       
-    case 1: // 一级权限，无继承关系
+    case 1: // 一级权限（模块），无继承关系
     default:
       break
   }
@@ -97,17 +145,17 @@ export function getPermissionType(permissionCode) {
 
   const code = permissionCode.trim()
   
-  // 三级权限包含冒号
+  // 三级权限包含冒号（操作权限）
   if (code.includes(':')) {
     return 3 // 三级权限(操作)
   }
   
-  // 二级权限包含连字符但不包含冒号
+  // 二级权限包含连字符但不包含冒号（子模块权限）
   if (code.includes('-')) {
     return 2 // 二级权限(子模块)
   }
   
-  // 一级权限只包含字母
+  // 一级权限只包含字母（模块权限）
   if (/^[a-z]+$/.test(code)) {
     return 1 // 一级权限(模块)
   }
@@ -116,7 +164,7 @@ export function getPermissionType(permissionCode) {
 }
 
 /**
- * 解析权限编码，获取模块编码
+ * 解析权限编码，获取模块编码（一级权限）
  * @param {string} permissionCode - 权限编码
  * @returns {string|null} 模块编码
  */
@@ -143,7 +191,7 @@ export function extractModuleCode(permissionCode) {
 }
 
 /**
- * 解析权限编码，获取子模块编码
+ * 解析权限编码，获取子模块编码（二级权限）
  * @param {string} permissionCode - 权限编码
  * @returns {string|null} 子模块编码，如果不是三级权限则返回null
  */
@@ -163,7 +211,7 @@ export function extractSubmoduleCode(permissionCode) {
 }
 
 /**
- * 检查用户是否具有任一指定权限
+ * 检查用户是否具有任一指定权限（UI显示权限检查）
  * @param {string[]} permissions - 权限编码数组
  * @returns {boolean} 是否具有任一权限
  */
@@ -176,7 +224,7 @@ export function hasAnyPermission(permissions) {
 }
 
 /**
- * 检查用户是否具有所有指定权限
+ * 检查用户是否具有所有指定权限（UI显示权限检查）
  * @param {string[]} permissions - 权限编码数组
  * @returns {boolean} 是否具有所有权限
  */
@@ -189,7 +237,33 @@ export function hasAllPermissions(permissions) {
 }
 
 /**
- * Vue组合式API权限检查
+ * 检查用户是否具有任一指定操作权限（严格检查）
+ * @param {string[]} permissions - 权限编码数组
+ * @returns {boolean} 是否具有任一权限
+ */
+export function hasAnyActionPermission(permissions) {
+  if (!permissions || permissions.length === 0) {
+    return false
+  }
+  
+  return permissions.some(permission => hasActionPermission(permission))
+}
+
+/**
+ * 检查用户是否具有所有指定操作权限（严格检查）
+ * @param {string[]} permissions - 权限编码数组
+ * @returns {boolean} 是否具有所有权限
+ */
+export function hasAllActionPermissions(permissions) {
+  if (!permissions || permissions.length === 0) {
+    return true
+  }
+  
+  return permissions.every(permission => hasActionPermission(permission))
+}
+
+/**
+ * Vue组合式API权限检查（UI显示）
  * @param {string} permission - 权限编码
  * @returns {import('vue').ComputedRef<boolean>} 权限状态的响应式引用
  */
@@ -197,165 +271,197 @@ export function usePermission(permission) {
   const userStore = useUserStore()
   
   return computed(() => {
-    const userPermissions = userStore.userInfo.permissions || []
-    return userPermissions.includes(permission)
+    if (!userStore.isLoggedIn || !userStore.permissionsLoaded) {
+      return false
+    }
+    
+    const userPermissions = userStore.userInfo.permissions
+    if (!Array.isArray(userPermissions)) {
+      return false
+    }
+    
+    return hasPermissionWithInheritance(userPermissions, permission)
   })
 }
 
-// 权限编码常量 - 3级权限体系
-export const PERMISSIONS = {
-  // 一级权限：系统管理模块
-  SYSTEM: 'system',
+/**
+ * Vue组合式API操作权限检查（严格检查）
+ * @param {string} permission - 权限编码
+ * @returns {import('vue').ComputedRef<boolean>} 权限状态的响应式引用
+ */
+export function useActionPermission(permission) {
+  const userStore = useUserStore()
   
-  // 系统管理模块下的权限
+  return computed(() => {
+    if (!userStore.isLoggedIn || !userStore.permissionsLoaded) {
+      return false
+    }
+    
+    const userPermissions = userStore.userInfo.permissions
+    if (!Array.isArray(userPermissions)) {
+      return false
+    }
+    
+    return hasStrictPermission(userPermissions, permission)
+  })
+}
+
+/**
+ * 获取权限类型文本
+ * @param {number} permissionType - 权限类型
+ * @returns {string} 权限类型文本
+ */
+export function getPermissionTypeText(permissionType) {
+  const typeMap = {
+    1: '一级权限(模块)',
+    2: '二级权限(子模块)', 
+    3: '三级权限(操作)'
+  }
+  return typeMap[permissionType] || '未知类型'
+}
+
+/**
+ * 获取权限层级深度
+ * @param {string} permissionCode - 权限编码
+ * @returns {number} 层级深度
+ */
+export function getPermissionDepth(permissionCode) {
+  const type = getPermissionType(permissionCode)
+  return type || 0
+}
+
+/**
+ * 检查权限编码格式是否正确
+ * @param {string} permissionCode - 权限编码
+ * @param {number} expectedType - 期望的权限类型
+ * @returns {boolean} 格式是否正确
+ */
+export function validatePermissionCode(permissionCode, expectedType) {
+  const actualType = getPermissionType(permissionCode)
+  return actualType === expectedType
+}
+
+// 导出权限类型常量
+export const PERMISSION_TYPES = {
+  MODULE: 1,        // 一级权限(模块)
+  SUBMODULE: 2,     // 二级权限(子模块)
+  ACTION: 3         // 三级权限(操作)
+}
+
+// 导出常用操作权限后缀
+export const ACTION_TYPES = {
+  VIEW: 'view',
+  CREATE: 'create', 
+  EDIT: 'edit',
+  DELETE: 'delete',
+  EXPORT: 'export',
+  IMPORT: 'import'
+}
+
+// 导出权限常量对象（与后端权限编码保持一致）
+export const PERMISSIONS = {
+  // 系统管理模块
   SYS: {
-    // 二级权限：用户管理
-    USER_MANAGEMENT: 'user-management',
+    // 用户管理
     USER: {
       VIEW: 'user-management:view',
-      CREATE: 'user-management:create', 
+      CREATE: 'user-management:create',
       EDIT: 'user-management:edit',
       DELETE: 'user-management:delete',
-      RESET_PASSWORD: 'user-management:reset-password'
+      RESET_PASSWORD: 'user-management:reset-password',
+      EXPORT: 'user-management:export',
+      ASSIGN_ROLE: 'user-management:assign-role'
     },
-    
-    // 二级权限：角色管理
-    ROLE_MANAGEMENT: 'role-management',
+    // 角色管理
     ROLE: {
       VIEW: 'role-management:view',
       CREATE: 'role-management:create',
-      EDIT: 'role-management:edit', 
+      EDIT: 'role-management:edit',
       DELETE: 'role-management:delete',
-      ASSIGN_PERMISSION: 'role-management:assign-permission'
+      ASSIGN_PERMISSION: 'role-management:assign-permission',
+      EXPORT: 'role-management:export'
     },
-    
-    // 二级权限：权限管理
-    PERMISSION_MANAGEMENT: 'permission-management',
+    // 菜单管理
+    MENU: {
+      VIEW: 'menu-management:view',
+      CREATE: 'menu-management:create',
+      EDIT: 'menu-management:edit',
+      DELETE: 'menu-management:delete',
+      EXPORT: 'menu-management:export'
+    },
+    // 权限管理
     PERMISSION: {
       VIEW: 'permission-management:view',
       CREATE: 'permission-management:create',
       EDIT: 'permission-management:edit',
       DELETE: 'permission-management:delete',
-      SYNC: 'permission-management:sync',
-      RESET: 'permission-management:reset',
-      VALIDATE: 'permission-management:validate'
+      SYNC: 'permission-management:validate',
+      EXPORT: 'permission-management:export'
     },
-    
-    // 二级权限：菜单管理
-    MENU_MANAGEMENT: 'menu-management',
-    MENU: {
-      VIEW: 'menu-management:view',
-      CREATE: 'menu-management:create',
-      EDIT: 'menu-management:edit',
-      DELETE: 'menu-management:delete'
-    },
-    
-    // 二级权限：字典管理
-    DICT_MANAGEMENT: 'dict-management',
+    // 字典管理
     DICT: {
       VIEW: 'dict-management:view',
       CREATE: 'dict-management:create',
       EDIT: 'dict-management:edit',
-      DELETE: 'dict-management:delete'
+      DELETE: 'dict-management:delete',
+      EXPORT: 'dict-management:export'
     }
   },
-
-  // 一级权限：组织架构模块
-  ORG: 'org',
   
-  // 组织架构模块下的权限
+  // 组织架构模块
   ORGANIZATION: {
-    // 二级权限：组织机构管理
-    ORG_MANAGEMENT: 'org-management',
-    ORG: {
-      VIEW: 'org-management:view',
-      CREATE: 'org-management:create',
-      EDIT: 'org-management:edit',
-      DELETE: 'org-management:delete'
-    },
-    
-    // 二级权限：部门管理
-    DEPT_MANAGEMENT: 'dept-management',
+    // 部门管理
     DEPARTMENT: {
       VIEW: 'dept-management:view',
       CREATE: 'dept-management:create',
       EDIT: 'dept-management:edit',
-      DELETE: 'dept-management:delete'
+      DELETE: 'dept-management:delete',
+      EXPORT: 'dept-management:export'
     },
-    
-    // 二级权限：岗位管理
-    POSITION_MANAGEMENT: 'position-management',
+    // 职位管理
     POSITION: {
       VIEW: 'position-management:view',
       CREATE: 'position-management:create',
       EDIT: 'position-management:edit',
-      DELETE: 'position-management:delete'
+      DELETE: 'position-management:delete',
+      EXPORT: 'position-management:export'
     }
   },
-
-  // 一级权限：商品管理模块
-  PRODUCT: 'product',
   
-  // 商品管理模块下的权限
+  // 商品管理模块
   GOODS: {
-    // 二级权限：商品信息管理
-    PRODUCT_INFO_MANAGEMENT: 'product-info-management',
-    INFO: {
+    // 商品管理
+    GOODS: {
       VIEW: 'product-info-management:view',
       CREATE: 'product-info-management:create',
       EDIT: 'product-info-management:edit',
-      DELETE: 'product-info-management:delete'
+      DELETE: 'product-info-management:delete',
+      AUDIT: 'product-info-management:audit',
+      EXPORT: 'product-info-management:export'
     },
-    
-    // 二级权限：商品分类管理
-    PRODUCT_CATEGORY_MANAGEMENT: 'product-category-management',
-    CATEGORY: {
-      VIEW: 'product-category-management:view',
-      CREATE: 'product-category-management:create',
-      EDIT: 'product-category-management:edit',
-      DELETE: 'product-category-management:delete'
-    },
-    
-    // 二级权限：商品品牌管理
-    PRODUCT_BRAND_MANAGEMENT: 'product-brand-management',
-    BRAND: {
-      VIEW: 'product-brand-management:view',
-      CREATE: 'product-brand-management:create',
-      EDIT: 'product-brand-management:edit',
-      DELETE: 'product-brand-management:delete'
-    },
-    
-    // 二级权限：SKU管理
-    PRODUCT_SKU_MANAGEMENT: 'product-sku-management',
+    // SKU管理
     SKU: {
       VIEW: 'product-sku-management:view',
       CREATE: 'product-sku-management:create',
       EDIT: 'product-sku-management:edit',
-      DELETE: 'product-sku-management:delete'
+      DELETE: 'product-sku-management:delete',
+      EXPORT: 'product-sku-management:export'
     },
-    
-    // 二级权限：商品信息管理 (GoodsList使用)
-    PRODUCT_GOODS_MANAGEMENT: 'product-goods-management',
-    GOODS: {
-      VIEW: 'product-goods-management:view',
-      CREATE: 'product-goods-management:create',
-      EDIT: 'product-goods-management:edit',
-      DELETE: 'product-goods-management:delete',
-      AUDIT: 'product-goods-management:audit'
-    }
-  },
-
-  // 一级权限：个人中心模块
-  PROFILE: 'profile',
-  
-  // 个人中心模块下的权限
-  PERSONAL: {
-    // 二级权限：个人信息管理
-    PROFILE_INFO_MANAGEMENT: 'profile-info-management',
-    INFO: {
-      VIEW: 'profile-info-management:view',
-      EDIT: 'profile-info-management:edit',
-      CHANGE_PASSWORD: 'profile-info-management:change-password'
+    // 品牌管理
+    BRAND: {
+      VIEW: 'product-brand-management:view',
+      CREATE: 'product-brand-management:create',
+      EDIT: 'product-brand-management:edit',
+      DELETE: 'product-brand-management:delete',
+      EXPORT: 'product-brand-management:export'
+    },
+    // 分类管理
+    CATEGORY: {
+      VIEW: 'product-category-management:view',
+      CREATE: 'product-category-management:create',
+      EDIT: 'product-category-management:edit',
+      DELETE: 'product-category-management:delete',
+      EXPORT: 'product-category-management:export'
     }
   }
 } 

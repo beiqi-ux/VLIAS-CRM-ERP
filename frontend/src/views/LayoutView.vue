@@ -221,7 +221,7 @@ const iconMap = {
   CircleCheck, CircleClose, Warning, InfoFilled, SuccessFilled, WarningFilled, CircleCheckFilled,
   Money, ChatDotRound, Tools, SwitchButton, DataBoard
 }
-import { getUserMenuTree, getMenuTree } from '@/api/menu'
+import { getCurrentUserMenuTree, getUserMenuTree, getMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 // 路由
@@ -261,23 +261,17 @@ function toggleSidebar() {
 // 获取用户菜单
 async function fetchUserMenus() {
   try {
-    if (userInfo.value.userId || userInfo.value.id) {
-      const userId = userInfo.value.userId || userInfo.value.id
-      console.log('获取用户菜单，用户ID:', userId)
-      console.log('用户信息:', userInfo.value)
-      
-      const { data } = await getUserMenuTree(userId)
-      console.log('获取到的菜单数据:', data)
-      userMenus.value = data || []
-      console.log('设置后的菜单数据:', userMenus.value)
-      
-      // 如果没有菜单数据，显示提示
-      if (!data || data.length === 0) {
-        console.warn('用户没有菜单权限，可能需要分配角色权限')
-      }
-    } else {
-      console.log('用户信息不完整，无法获取菜单')
-      console.log('用户信息:', userInfo.value)
+    console.log('获取当前用户菜单')
+    console.log('用户信息:', userInfo.value)
+    
+    const { data } = await getCurrentUserMenuTree()
+    console.log('获取到的菜单数据:', data)
+    userMenus.value = data || []
+    console.log('设置后的菜单数据:', userMenus.value)
+    
+    // 如果没有菜单数据，显示提示
+    if (!data || data.length === 0) {
+      console.warn('用户没有菜单权限，可能需要分配角色权限')
     }
   } catch (error) {
     console.error('获取用户菜单失败:', error)

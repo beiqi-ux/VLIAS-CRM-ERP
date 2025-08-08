@@ -205,6 +205,80 @@ public class PermissionUtils {
     }
 
     /**
+     * 严格权限检查（不允许继承，用于操作权限控制）
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermission 需要检查的权限编码
+     * @return 是否有权限
+     */
+    public static boolean hasStrictPermission(List<String> userPermissions, String requiredPermission) {
+        if (userPermissions == null || userPermissions.isEmpty() || 
+            requiredPermission == null || requiredPermission.trim().isEmpty()) {
+            return false;
+        }
+
+        String required = requiredPermission.trim();
+        
+        // 只进行直接权限检查，不允许继承
+        return userPermissions.contains(required);
+    }
+
+    /**
+     * 检查用户是否具有任一指定权限（UI显示权限检查）
+     * @param userPermissions 用户权限编码列表
+     * @param permissions 权限编码数组
+     * @return 是否具有任一权限
+     */
+    public static boolean hasAnyPermission(List<String> userPermissions, List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return false;
+        }
+        
+        return permissions.stream().anyMatch(permission -> hasPermissionWithInheritance(userPermissions, permission));
+    }
+
+    /**
+     * 检查用户是否具有所有指定权限（UI显示权限检查）
+     * @param userPermissions 用户权限编码列表
+     * @param permissions 权限编码数组
+     * @return 是否具有所有权限
+     */
+    public static boolean hasAllPermissions(List<String> userPermissions, List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return true;
+        }
+        
+        return permissions.stream().allMatch(permission -> hasPermissionWithInheritance(userPermissions, permission));
+    }
+
+    /**
+     * 检查用户是否具有任一指定操作权限（严格检查）
+     * @param userPermissions 用户权限编码列表
+     * @param permissions 权限编码数组
+     * @return 是否具有任一权限
+     */
+    public static boolean hasAnyActionPermission(List<String> userPermissions, List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return false;
+        }
+        
+        return permissions.stream().anyMatch(permission -> hasStrictPermission(userPermissions, permission));
+    }
+
+    /**
+     * 检查用户是否具有所有指定操作权限（严格检查）
+     * @param userPermissions 用户权限编码列表
+     * @param permissions 权限编码数组
+     * @return 是否具有所有权限
+     */
+    public static boolean hasAllActionPermissions(List<String> userPermissions, List<String> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return true;
+        }
+        
+        return permissions.stream().allMatch(permission -> hasStrictPermission(userPermissions, permission));
+    }
+
+    /**
      * 生成子模块权限编码
      * @param moduleCode 模块编码
      * @param submoduleName 子模块名称

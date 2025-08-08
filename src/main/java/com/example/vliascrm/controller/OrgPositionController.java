@@ -5,6 +5,7 @@ import com.example.vliascrm.dto.PositionDTO;
 import com.example.vliascrm.entity.OrgPosition;
 import com.example.vliascrm.service.OrgPositionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class OrgPositionController {
      * @return 岗位列表
      */
     @GetMapping("/list")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<List<OrgPosition>> list() {
         List<OrgPosition> list = positionService.findAll();
         return Result.success(list);
@@ -36,6 +38,7 @@ public class OrgPositionController {
      * @return 岗位列表
      */
     @GetMapping("/list-with-info")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<List<PositionDTO>> listWithInfo(
             @RequestParam(required = false) Long orgId,
             @RequestParam(required = false) Long deptId) {
@@ -52,6 +55,7 @@ public class OrgPositionController {
      * @return 岗位列表
      */
     @GetMapping("/management-list")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<List<PositionDTO>> managementList(
             @RequestParam(required = false) Long orgId,
             @RequestParam(required = false) Long deptId,
@@ -67,6 +71,7 @@ public class OrgPositionController {
      * @return 岗位信息
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<OrgPosition> getById(@PathVariable Long id) {
         OrgPosition position = positionService.findById(id);
         return Result.success(position);
@@ -78,6 +83,7 @@ public class OrgPositionController {
      * @return 新增结果
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('position-management:create')")
     public Result<OrgPosition> add(@RequestBody OrgPosition position) {
         OrgPosition savedPosition = positionService.save(position);
         return Result.success(savedPosition);
@@ -89,6 +95,7 @@ public class OrgPositionController {
      * @return 更新结果
      */
     @PutMapping
+    @PreAuthorize("hasAuthority('position-management:edit')")
     public Result<OrgPosition> update(@RequestBody OrgPosition position) {
         OrgPosition updatedPosition = positionService.update(position);
         return Result.success(updatedPosition);
@@ -100,6 +107,7 @@ public class OrgPositionController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('position-management:delete')")
     public Result<Void> delete(@PathVariable Long id) {
         positionService.delete(id);
         return Result.success();
@@ -111,6 +119,7 @@ public class OrgPositionController {
      * @return 岗位列表
      */
     @GetMapping("/org/{orgId}")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<List<OrgPosition>> getByOrgId(@PathVariable Long orgId) {
         List<OrgPosition> positions = positionService.findByOrgId(orgId);
         return Result.success(positions);
@@ -122,6 +131,7 @@ public class OrgPositionController {
      * @return 岗位列表
      */
     @GetMapping("/dept/{deptId}")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<List<OrgPosition>> getByDeptId(@PathVariable Long deptId) {
         List<OrgPosition> positions = positionService.findByDeptId(deptId);
         return Result.success(positions);
@@ -135,6 +145,7 @@ public class OrgPositionController {
      * @return 检查结果
      */
     @GetMapping("/check-code")
+    @PreAuthorize("hasAuthority('position-management:view')")
     public Result<Boolean> checkPositionCodeExists(
             @RequestParam Long orgId, 
             @RequestParam String positionCode, 

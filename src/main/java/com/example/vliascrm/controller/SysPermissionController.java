@@ -282,6 +282,88 @@ public class SysPermissionController {
     }
 
     /**
+     * 严格权限检查（不允许继承，用于操作权限控制）
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermission 需要检查的权限编码
+     * @return 是否有权限
+     */
+    @PostMapping("/check-strict")
+    @PreAuthorize("hasAuthority('permission-management:validate')")
+    public ApiResponse<Boolean> checkStrictPermission(
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        @SuppressWarnings("unchecked")
+        java.util.List<String> userPermissions = (java.util.List<String>) requestBody.get("userPermissions");
+        String requiredPermission = (String) requestBody.get("requiredPermission");
+        
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            boolean hasPermission = ((com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService)
+                    .hasStrictPermission(userPermissions, requiredPermission);
+            return ApiResponse.success(hasPermission);
+        }
+        return ApiResponse.success(false);
+    }
+
+    /**
+     * 批量检查权限继承关系
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermissions 需要检查的权限编码列表
+     * @return 权限检查结果
+     */
+    @PostMapping("/check-batch-inheritance")
+    @PreAuthorize("hasAuthority('permission-management:validate')")
+    public ApiResponse<java.util.Map<String, Boolean>> checkBatchPermissionWithInheritance(
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        @SuppressWarnings("unchecked")
+        java.util.List<String> userPermissions = (java.util.List<String>) requestBody.get("userPermissions");
+        @SuppressWarnings("unchecked")
+        java.util.List<String> requiredPermissions = (java.util.List<String>) requestBody.get("requiredPermissions");
+        
+        java.util.Map<String, Boolean> results = new java.util.HashMap<>();
+        
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            com.example.vliascrm.service.impl.SysPermissionServiceImpl service = 
+                (com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService;
+            
+            for (String permission : requiredPermissions) {
+                boolean hasPermission = service.hasPermissionWithInheritance(userPermissions, permission);
+                results.put(permission, hasPermission);
+            }
+        }
+        
+        return ApiResponse.success(results);
+    }
+
+    /**
+     * 批量严格权限检查
+     * @param userPermissions 用户权限编码列表
+     * @param requiredPermissions 需要检查的权限编码列表
+     * @return 权限检查结果
+     */
+    @PostMapping("/check-batch-strict")
+    @PreAuthorize("hasAuthority('permission-management:validate')")
+    public ApiResponse<java.util.Map<String, Boolean>> checkBatchStrictPermission(
+            @RequestBody java.util.Map<String, Object> requestBody) {
+        @SuppressWarnings("unchecked")
+        java.util.List<String> userPermissions = (java.util.List<String>) requestBody.get("userPermissions");
+        @SuppressWarnings("unchecked")
+        java.util.List<String> requiredPermissions = (java.util.List<String>) requestBody.get("requiredPermissions");
+        
+        java.util.Map<String, Boolean> results = new java.util.HashMap<>();
+        
+        if (permissionService instanceof com.example.vliascrm.service.impl.SysPermissionServiceImpl) {
+            com.example.vliascrm.service.impl.SysPermissionServiceImpl service = 
+                (com.example.vliascrm.service.impl.SysPermissionServiceImpl) permissionService;
+            
+            for (String permission : requiredPermissions) {
+                boolean hasPermission = service.hasStrictPermission(userPermissions, permission);
+                results.put(permission, hasPermission);
+            }
+        }
+        
+        return ApiResponse.success(results);
+    }
+
+    /**
      * 同步菜单权限 - 根据现有菜单生成对应的权限记录
      * @return 同步的权限数量
      */

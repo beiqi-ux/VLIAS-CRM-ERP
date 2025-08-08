@@ -98,7 +98,18 @@ export function getMenusByUserId(userId) {
 }
 
 /**
- * 根据用户ID获取菜单树
+ * 获取当前用户的菜单树
+ * @returns {Promise}
+ */
+export function getCurrentUserMenuTree() {
+  return request({
+    url: '/api/sys/menus/current-user/tree',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取指定用户的菜单树（管理员功能）
  * @param {number} userId - 用户ID
  * @returns {Promise}
  */

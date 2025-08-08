@@ -184,9 +184,9 @@ public class SysUserController {
                     
                     // 对于组织/部门/岗位ID，直接使用DTO中的值（包括null值）
                     // 这样可以支持清空关联关系
-                    existingUser.setOrgId(userDTO.getOrgId());
-                    existingUser.setDeptId(userDTO.getDeptId());
-                    existingUser.setPositionId(userDTO.getPositionId());
+                        existingUser.setOrgId(userDTO.getOrgId());
+                        existingUser.setDeptId(userDTO.getDeptId());
+                        existingUser.setPositionId(userDTO.getPositionId());
                     
                     if (userDTO.getStatus() != null) {
                         existingUser.setStatus(userDTO.getStatus());

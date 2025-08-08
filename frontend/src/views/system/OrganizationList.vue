@@ -5,7 +5,7 @@
         <div class="card-header">
           <span>组织机构管理</span>
           <el-button 
-            v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.CREATE)"
+            v-action-permission="'org-management:create'"
             type="primary" 
             @click="handleAdd"
           >
@@ -131,14 +131,14 @@
           </template>
         </el-table-column>
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.VIEW) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT) || hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
+          v-permission="'org-management'"
           label="操作" 
           width="250" 
           fixed="right"
         >
           <template #default="{ row }">
             <el-button 
-              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.VIEW)"
+              v-action-permission="'org-management:view'"
               type="primary" 
               size="small" 
               @click="handleView(row)"
@@ -146,7 +146,7 @@
               查看
             </el-button>
             <el-button 
-              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.EDIT)"
+              v-action-permission="'org-management:edit'"
               type="primary" 
               size="small" 
               @click="handleEdit(row)"
@@ -154,7 +154,7 @@
               编辑
             </el-button>
             <el-button 
-              v-if="hasPermission(PERMISSIONS.ORGANIZATION.ORG.DELETE)"
+              v-action-permission="'org-management:delete'"
               type="danger" 
               size="small" 
               @click="handleDelete(row)"
@@ -335,7 +335,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
-import { hasPermission, PERMISSIONS } from '@/utils/permission'
+import { hasPermission } from '@/utils/permission'
 import { 
   getOrganizationList,
   getOrganizationTree,
