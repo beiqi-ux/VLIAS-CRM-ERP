@@ -182,17 +182,11 @@ public class SysUserController {
                         existingUser.setGender(userDTO.getGender());
                     }
                     
-                    if (userDTO.getOrgId() != null) {
-                        existingUser.setOrgId(userDTO.getOrgId());
-                    }
-                    
-                    if (userDTO.getDeptId() != null) {
-                        existingUser.setDeptId(userDTO.getDeptId());
-                    }
-                    
-                    if (userDTO.getPositionId() != null) {
-                        existingUser.setPositionId(userDTO.getPositionId());
-                    }
+                    // 对于组织/部门/岗位ID，直接使用DTO中的值（包括null值）
+                    // 这样可以支持清空关联关系
+                    existingUser.setOrgId(userDTO.getOrgId());
+                    existingUser.setDeptId(userDTO.getDeptId());
+                    existingUser.setPositionId(userDTO.getPositionId());
                     
                     if (userDTO.getStatus() != null) {
                         existingUser.setStatus(userDTO.getStatus());

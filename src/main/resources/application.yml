@@ -69,8 +69,6 @@ app:
     allowed-methods: "*"
     allowed-headers: "*"
   file:
-    upload-dir: uploads 
-
- 
+    upload-dir: uploads
 
  

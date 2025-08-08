@@ -288,13 +288,32 @@ public class PermissionResetServiceImpl {
             {"export", "导出", "导出数据权限"}
         };
         
+        // 定义特殊操作权限（针对特定模块）
+        Map<String, String[][]> specialOperations = new HashMap<>();
+        
+        // 用户管理特殊权限
+        specialOperations.put("user-management", new String[][]{
+            {"reset-password", "重置密码", "重置用户密码权限"},
+            {"assign-role", "分配角色", "为用户分配角色权限"}
+        });
+        
+        // 角色管理特殊权限
+        specialOperations.put("role-management", new String[][]{
+            {"assign-permission", "分配权限", "为角色分配权限"}
+        });
+        
+        // 权限管理特殊权限
+        specialOperations.put("permission-management", new String[][]{
+            {"validate", "权限验证", "权限验证操作"}
+        });
+        
         // 为每个二级权限创建对应的三级操作权限
         for (String subModuleCode : subModuleCodeToIdMap.keySet()) {
             Long parentId = subModuleCodeToIdMap.get(subModuleCode);
+            int sortIndex = 1;
             
-            for (int i = 0; i < baseOperations.length; i++) {
-                String[] operation = baseOperations[i];
-                
+            // 创建基础操作权限
+            for (String[] operation : baseOperations) {
                 SysPermission operationPermission = new SysPermission();
                 operationPermission.setPermissionName(operation[1]);
                 operationPermission.setPermissionCode(subModuleCode + ":" + operation[0]);
@@ -302,14 +321,38 @@ public class PermissionResetServiceImpl {
                 operationPermission.setLevelDepth(3);
                 operationPermission.setParentId(parentId);
                 operationPermission.setDescription(operation[2]);
-                operationPermission.setSortOrder((i + 1) * 10);
+                operationPermission.setSortOrder(sortIndex * 10);
                 operationPermission.setStatus(1);
-                                 operationPermission.setIsCore(1);
+                operationPermission.setIsCore(1);
                 operationPermission.setCreateTime(now);
                 operationPermission.setUpdateTime(now);
                 operationPermission.setIsDeleted(false);
                     
                 operations.add(operationPermission);
+                sortIndex++;
+            }
+            
+            // 创建特殊操作权限（如果存在）
+            if (specialOperations.containsKey(subModuleCode)) {
+                String[][] specialOps = specialOperations.get(subModuleCode);
+                for (String[] operation : specialOps) {
+                    SysPermission operationPermission = new SysPermission();
+                    operationPermission.setPermissionName(operation[1]);
+                    operationPermission.setPermissionCode(subModuleCode + ":" + operation[0]);
+                    operationPermission.setPermissionType(3); // 三级权限
+                    operationPermission.setLevelDepth(3);
+                    operationPermission.setParentId(parentId);
+                    operationPermission.setDescription(operation[2]);
+                    operationPermission.setSortOrder(sortIndex * 10);
+                    operationPermission.setStatus(1);
+                    operationPermission.setIsCore(1);
+                    operationPermission.setCreateTime(now);
+                    operationPermission.setUpdateTime(now);
+                    operationPermission.setIsDeleted(false);
+                        
+                    operations.add(operationPermission);
+                    sortIndex++;
+                }
             }
         }
         

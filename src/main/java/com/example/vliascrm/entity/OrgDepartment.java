@@ -1,6 +1,7 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,6 +14,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "org_department")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OrgDepartment extends BaseEntity {
 
     /**

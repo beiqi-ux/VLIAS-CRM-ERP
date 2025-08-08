@@ -130,53 +130,46 @@
       <el-table-column 
         v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT) || hasPermission(PERMISSIONS.SYS.MENU.CREATE) || hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
         label="操作" 
-        width="300" 
+        width="320" 
         fixed="right"
       >
         <template #default="scope">
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
-            size="small" 
-            @click="handleEdit(scope.row)"
-          >
-            编辑
-          </el-button>
-          <el-button 
-            v-if="scope.row.menuType !== 3 && hasPermission(PERMISSIONS.SYS.MENU.CREATE)" 
-            size="small" 
-            type="success" 
-            @click="handleAddChild(scope.row)"
-          >
-            添加子菜单
-          </el-button>
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
-            size="small" 
-            :type="scope.row.status === 1 ? 'warning' : 'success'"
-            @click="handleToggleStatus(scope.row)"
-            :disabled="isCoreMenu(scope.row.menuCode) && scope.row.status === 1"
-          >
-            {{ scope.row.status === 1 ? '禁用' : '启用' }}
-          </el-button>
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
-            size="small" 
-            type="danger" 
-            @click="handleDelete(scope.row)"
-            :disabled="isCoreMenu(scope.row.menuCode)"
-          >
-            删除
-          </el-button>
-          <el-button 
-            v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
-            size="small" 
-            type="primary"
-            plain
-            @click="handleRegeneratePermissions(scope.row)"
-            :loading="permissionGenerating"
-          >
-            生成权限
-          </el-button>
+          <div class="operation-buttons">
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+              size="small" 
+              @click="handleEdit(scope.row)"
+            >
+              编辑
+            </el-button>
+            <el-button 
+              v-if="scope.row.menuType !== 3 && hasPermission(PERMISSIONS.SYS.MENU.CREATE)" 
+              size="small" 
+              type="success" 
+              @click="handleAddChild(scope.row)"
+            >
+              添加子菜单
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.SYS.MENU.DELETE)"
+              size="small" 
+              type="danger" 
+              @click="handleDelete(scope.row)"
+              :disabled="isCoreMenu(scope.row.menuCode)"
+            >
+              删除
+            </el-button>
+            <el-button 
+              v-if="hasPermission(PERMISSIONS.SYS.MENU.EDIT)"
+              size="small" 
+              type="primary"
+              plain
+              @click="handleRegeneratePermissions(scope.row)"
+              :loading="permissionGenerating"
+            >
+              生成权限
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -348,7 +341,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, toggleMenuStatus, batchGeneratePermissions, regeneratePermissions } from '@/api/menu'
+import { getMenuTree, getMenuById, createMenu, updateMenu, deleteMenu, batchGeneratePermissions, regeneratePermissions } from '@/api/menu'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import PageContainer from '@/components/PageContainer.vue'
 import TableContainer from '@/components/TableContainer.vue'
@@ -376,7 +369,8 @@ const menuForm = reactive({
   visible: 1,
   status: 1,
   permissionCode: '',
-  isFrame: 0
+  isFrame: 0,
+  isDeleted: false
 })
 const menuRules = {
   menuName: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
@@ -452,7 +446,7 @@ const collapseAll = () => {
 const handleAddTopLevel = () => {
   formTitle.value = '新增顶级菜单'
   Object.keys(menuForm).forEach(key => {
-    menuForm[key] = ['status', 'visible', 'menuType'].includes(key) ? 1 : key === 'sort' ? 0 : key === 'isFrame' ? 0 : key === 'parentId' ? 0 : ''
+    menuForm[key] = ['status', 'visible', 'menuType'].includes(key) ? 1 : key === 'sort' ? 0 : key === 'isFrame' ? 0 : key === 'parentId' ? 0 : key === 'isDeleted' ? false : ''
   })
   dialogVisible.value = true
 }
@@ -461,7 +455,7 @@ const handleAddTopLevel = () => {
 const handleAddChild = (row) => {
   formTitle.value = '新增子菜单'
   Object.keys(menuForm).forEach(key => {
-    menuForm[key] = ['status', 'visible', 'menuType'].includes(key) ? 1 : key === 'sort' ? 0 : key === 'isFrame' ? 0 : key === 'parentId' ? row.id : ''
+    menuForm[key] = ['status', 'visible', 'menuType'].includes(key) ? 1 : key === 'sort' ? 0 : key === 'isFrame' ? 0 : key === 'parentId' ? row.id : key === 'isDeleted' ? false : ''
   })
   
   // 子菜单类型根据父菜单类型自动设置
@@ -538,29 +532,7 @@ const isCoreMenu = (menuCode) => {
   return CORE_MENU_CODES.includes(menuCode)
 }
 
-// 切换菜单状态
-const handleToggleStatus = (row) => {
-  if (isCoreMenu(row.menuCode) && row.status === 1) {
-    ElMessage.warning('系统核心菜单不允许禁用')
-    return
-  }
-  
-  const statusText = row.status === 1 ? '禁用' : '启用'
-  ElMessageBox.confirm(`确定要${statusText}该菜单吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      await toggleMenuStatus(row.id)
-      ElMessage.success(`${statusText}成功`)
-      fetchMenuList()
-    } catch (error) {
-      ElMessage.error(`${statusText}失败`)
-      console.error(error)
-    }
-  }).catch(() => {})
-}
+
 
 // 删除菜单
 const handleDelete = (row) => {
@@ -660,5 +632,23 @@ const handleRegeneratePermissions = async (row) => {
 .core-menu-tag {
   margin-left: 8px;
   flex-shrink: 0;
+}
+
+.operation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  margin: 0;
+  min-width: 60px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.operation-buttons .el-button--small {
+  padding: 5px 8px;
 }
 </style> 

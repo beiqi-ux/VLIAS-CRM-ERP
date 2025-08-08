@@ -64,4 +64,27 @@ public interface OrgDepartmentRepository extends JpaRepository<OrgDepartment, Lo
      */
     @Query("SELECT d FROM OrgDepartment d WHERE d.deptName LIKE %:deptName% ORDER BY d.sort ASC")
     List<OrgDepartment> findByDeptNameLike(@Param("deptName") String deptName);
+
+    /**
+     * 查询所有部门（只返回所属组织状态为启用的部门）
+     * @return 部门列表
+     */
+    @Query("SELECT d FROM OrgDepartment d JOIN SysOrganization o ON d.orgId = o.id WHERE o.status = 1 ORDER BY d.sort ASC")
+    List<OrgDepartment> findAllWithActiveOrganization();
+
+    /**
+     * 根据组织ID查询部门列表（只返回所属组织状态为启用的部门）
+     * @param orgId 组织ID
+     * @return 部门列表
+     */
+    @Query("SELECT d FROM OrgDepartment d JOIN SysOrganization o ON d.orgId = o.id WHERE d.orgId = :orgId AND o.status = 1 ORDER BY d.sort ASC")
+    List<OrgDepartment> findByOrgIdWithActiveOrganization(@Param("orgId") Long orgId);
+
+    /**
+     * 根据父ID查询子部门列表（只返回所属组织状态为启用的部门）
+     * @param parentId 父ID
+     * @return 子部门列表
+     */
+    @Query("SELECT d FROM OrgDepartment d JOIN SysOrganization o ON d.orgId = o.id WHERE d.parentId = :parentId AND o.status = 1 ORDER BY d.sort ASC")
+    List<OrgDepartment> findByParentIdWithActiveOrganization(@Param("parentId") Long parentId);
 } 

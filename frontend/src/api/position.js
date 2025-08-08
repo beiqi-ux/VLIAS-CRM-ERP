@@ -26,6 +26,22 @@ export function getPositionListWithInfo(orgId, deptId) {
 }
 
 /**
+ * 获取岗位管理列表（包含组织和部门信息，显示所有岗位包括禁用的）
+ * @param {number} orgId - 组织ID
+ * @param {number} deptId - 部门ID
+ * @param {number} status - 状态
+ * @param {string} positionName - 岗位名称
+ * @returns {Promise}
+ */
+export function getPositionManagementList(orgId, deptId, status, positionName) {
+  return request({
+    url: '/api/position/management-list',
+    method: 'get',
+    params: { orgId, deptId, status, positionName }
+  })
+}
+
+/**
  * 根据ID获取岗位
  * @param {number} id - 岗位ID
  * @returns {Promise}

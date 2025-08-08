@@ -23,6 +23,17 @@ export function getOrganizationTree() {
 }
 
 /**
+ * 获取组织机构选项列表（用于下拉框）
+ * @returns {Promise}
+ */
+export function getOrganizationOptions() {
+  return request({
+    url: '/api/organization/options',
+    method: 'get'
+  })
+}
+
+/**
  * 根据ID获取组织机构
  * @param {number} id - 组织机构ID
  * @returns {Promise}

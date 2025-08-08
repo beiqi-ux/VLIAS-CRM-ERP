@@ -127,31 +127,31 @@ public class OrgPositionServiceImpl implements OrgPositionService {
 
     @Override
     public List<OrgPosition> findAll() {
-        return positionRepository.findAll();
+        return positionRepository.findAllWithActiveOrganizationAndDepartment();
     }
 
     @Override
     public List<OrgPosition> findByOrgId(Long orgId) {
-        return positionRepository.findByOrgIdOrderBySortAsc(orgId);
+        return positionRepository.findByOrgIdWithActiveOrganizationAndDepartment(orgId);
     }
 
     @Override
     public List<OrgPosition> findByDeptId(Long deptId) {
-        return positionRepository.findByDeptIdOrderBySortAsc(deptId);
+        return positionRepository.findByDeptIdWithActiveOrganizationAndDepartment(deptId);
     }
 
     @Override
     public List<PositionDTO> getPositionList(Long orgId, Long deptId) {
-        // 获取岗位列表
+        // 获取岗位列表（只返回所属组织和部门状态都为启用的岗位）
         List<OrgPosition> positions;
         if (orgId != null && deptId != null) {
-            positions = positionRepository.findByDeptIdAndStatusOrderBySortAsc(deptId, 1);
+            positions = positionRepository.findByDeptIdWithActiveOrganizationAndDepartment(deptId);
         } else if (orgId != null) {
-            positions = positionRepository.findByOrgIdOrderBySortAsc(orgId);
+            positions = positionRepository.findByOrgIdWithActiveOrganizationAndDepartment(orgId);
         } else if (deptId != null) {
-            positions = positionRepository.findByDeptIdOrderBySortAsc(deptId);
+            positions = positionRepository.findByDeptIdWithActiveOrganizationAndDepartment(deptId);
         } else {
-            positions = positionRepository.findAll();
+            positions = positionRepository.findAllWithActiveOrganizationAndDepartment();
         }
         
         // 获取所有组织
@@ -187,5 +187,82 @@ public class OrgPositionServiceImpl implements OrgPositionService {
     public boolean checkPositionCodeExists(Long orgId, String positionCode, Long id) {
         Optional<OrgPosition> existingPos = positionRepository.findByOrgIdAndPositionCode(orgId, positionCode);
         return existingPos.isPresent() && !existingPos.get().getId().equals(id);
+    }
+
+    @Override
+    public List<PositionDTO> getPositionListForManagement(Long orgId, Long deptId) {
+        // 获取岗位列表（显示所有岗位包括禁用的，但只显示启用组织和部门下的岗位）
+        List<OrgPosition> positions;
+        if (orgId != null && deptId != null) {
+            positions = positionRepository.findByDeptIdForManagement(deptId);
+        } else if (orgId != null) {
+            positions = positionRepository.findByOrgIdForManagement(orgId);
+        } else if (deptId != null) {
+            positions = positionRepository.findByDeptIdForManagement(deptId);
+        } else {
+            positions = positionRepository.findAllForManagement();
+        }
+        
+        // 获取所有组织
+        List<SysOrganization> organizations = organizationRepository.findAll();
+        Map<Long, String> orgNameMap = organizations.stream()
+                .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
+        
+        // 获取所有部门
+        List<OrgDepartment> departments = departmentRepository.findAll();
+        Map<Long, String> deptNameMap = departments.stream()
+                .collect(Collectors.toMap(OrgDepartment::getId, OrgDepartment::getDeptName));
+        
+        // 转换为DTO
+        return positions.stream().map(pos -> {
+            PositionDTO dto = new PositionDTO();
+            BeanUtils.copyProperties(pos, dto);
+            
+            // 设置组织名称
+            if (pos.getOrgId() != null) {
+                dto.setOrgName(orgNameMap.getOrDefault(pos.getOrgId(), ""));
+            }
+            
+            // 设置部门名称
+            if (pos.getDeptId() != null) {
+                dto.setDeptName(deptNameMap.getOrDefault(pos.getDeptId(), ""));
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PositionDTO> getPositionListForManagement(Long orgId, Long deptId, Integer status, String positionName) {
+        // 使用统一的条件查询方法
+        List<OrgPosition> positions = positionRepository.findByConditionsForManagement(orgId, deptId, status, positionName);
+        
+        // 获取所有组织
+        List<SysOrganization> organizations = organizationRepository.findAll();
+        Map<Long, String> orgNameMap = organizations.stream()
+                .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
+        
+        // 获取所有部门
+        List<OrgDepartment> departments = departmentRepository.findAll();
+        Map<Long, String> deptNameMap = departments.stream()
+                .collect(Collectors.toMap(OrgDepartment::getId, OrgDepartment::getDeptName));
+        
+        // 转换为DTO
+        return positions.stream().map(pos -> {
+            PositionDTO dto = new PositionDTO();
+            BeanUtils.copyProperties(pos, dto);
+            
+            // 设置组织名称
+            if (pos.getOrgId() != null) {
+                dto.setOrgName(orgNameMap.getOrDefault(pos.getOrgId(), ""));
+            }
+            
+            // 设置部门名称
+            if (pos.getDeptId() != null) {
+                dto.setDeptName(deptNameMap.getOrDefault(pos.getDeptId(), ""));
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
     }
 } 

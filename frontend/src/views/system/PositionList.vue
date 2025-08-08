@@ -311,7 +311,8 @@ import {
   deletePosition,
   getPositionsByOrgId,
   checkPositionCodeExists,
-  getPositionListWithInfo
+  getPositionListWithInfo,
+  getPositionManagementList
 } from '@/api/position'
 import { getOrganizationList } from '@/api/organization'
 import { getDepartmentsByOrgId } from '@/api/department'
@@ -373,7 +374,12 @@ const positionRules = {
 const fetchPositionList = async () => {
   loading.value = true
   try {
-    const response = await getPositionListWithInfo(searchForm.orgId || null, searchForm.deptId || null)
+    const response = await getPositionManagementList(
+      searchForm.orgId || null, 
+      searchForm.deptId || null,
+      searchForm.status !== '' ? searchForm.status : null,
+      searchForm.positionName || null
+    )
     positionList.value = response.data || []
   } catch (error) {
     ElMessage.error('获取岗位列表失败')

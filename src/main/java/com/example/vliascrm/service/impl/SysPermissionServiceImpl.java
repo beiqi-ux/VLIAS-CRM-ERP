@@ -604,7 +604,7 @@ public class SysPermissionServiceImpl implements SysPermissionService {
             // 关联菜单ID和其他信息
             permission.setMenuId(menu.getId());
             permission.setSortOrder(menu.getSort() != null ? menu.getSort() : 0);
-            permission.setStatus(menu.getStatus() != null ? menu.getStatus() : 1);
+            permission.setStatus(1);
             permission.setIsCore(0);
             permission.setCreateTime(LocalDateTime.now());
             permission.setUpdateTime(LocalDateTime.now());

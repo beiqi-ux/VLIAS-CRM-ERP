@@ -396,8 +396,11 @@ const fetchDeptList = async () => {
 const fetchOrgOptions = async () => {
   try {
     const response = await getOrganizationList()
+    console.log('组织机构API响应:', response)
     orgOptions.value = response.data || []
+    console.log('设置的orgOptions:', orgOptions.value)
   } catch (error) {
+    console.error('获取组织机构列表失败:', error)
     ElMessage.error('获取组织机构列表失败')
   }
 }

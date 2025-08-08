@@ -90,7 +90,7 @@ public class SysMenuServiceImpl implements SysMenuService {
             throw new BusinessException("菜单编码已存在");
         }
 
-        BeanUtils.copyProperties(menuDTO, menu);
+        BeanUtils.copyProperties(menuDTO, menu, "id", "createTime", "createBy", "isDeleted");
         menu.setUpdateTime(LocalDateTime.now());
 
         return menuRepository.save(menu);
@@ -141,9 +141,36 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Override
     public List<MenuDTO> getMenuTree() {
-        // 获取所有未删除的菜单
+        // 获取所有未删除且启用的菜单（用于用户侧显示）
         List<SysMenu> allMenus = menuRepository.findAll().stream()
                 .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
+                .collect(Collectors.toList());
+
+        // 转换为DTO
+        List<MenuDTO> dtoList = allMenus.stream().map(m -> {
+            MenuDTO dto = new MenuDTO();
+            BeanUtils.copyProperties(m, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 构建树形结构
+        Map<Long, List<MenuDTO>> parentMap = dtoList.stream()
+                .collect(Collectors.groupingBy(MenuDTO::getParentId));
+
+        // 获取顶级菜单
+        List<MenuDTO> rootMenus = parentMap.getOrDefault(0L, new ArrayList<>());
+
+        // 递归设置子菜单
+        rootMenus.forEach(root -> setChildren(root, parentMap));
+
+        return rootMenus;
+    }
+
+    @Override
+    public List<MenuDTO> getAdminMenuTree() {
+        // 获取所有未删除的菜单（用于管理员菜单管理，包括禁用的菜单）
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()))
                 .collect(Collectors.toList());
 
         // 转换为DTO

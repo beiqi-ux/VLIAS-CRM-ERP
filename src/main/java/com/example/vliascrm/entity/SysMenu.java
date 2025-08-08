@@ -1,6 +1,7 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "sys_menu")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SysMenu extends BaseEntity {
 
     /**

@@ -549,8 +549,8 @@ import {
   updateUserStatus
 } from '@/api/user'
 import { getRoleList, getUserRoleIds, assignUserRoles } from '@/api/role'
-import { getOrganizationList } from '@/api/organization'
-import { getDepartmentsByOrgId } from '@/api/department'
+import { getOrganizationOptions } from '@/api/organization'
+import { getDepartmentOptions } from '@/api/department'
 import { getPositionsByDeptId } from '@/api/position'
 import { Edit, UserFilled, ArrowDown, Key, Refresh, Delete, User, Search, Plus } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
@@ -725,6 +725,26 @@ const handleRefresh = () => {
 // 编辑用户
 const handleEdit = async (row) => {
   dialogTitle.value = '编辑用户'
+  
+  // 检查用户的组织是否还在可选列表中（即是否已被禁用）
+  const isOrgActive = row.orgId && orgOptions.value.some(org => org.id === row.orgId)
+  
+  // 先加载组织相关的部门和岗位数据，用于后续验证
+  let isDeptActive = false
+  let isPositionActive = false
+  
+  if (isOrgActive && row.orgId) {
+    await fetchDepartments(row.orgId)
+    // 检查用户的部门是否还在可选列表中（即是否已被禁用）
+    isDeptActive = row.deptId && deptOptions.value.some(dept => dept.id === row.deptId)
+    
+    if (isDeptActive && row.deptId) {
+      await fetchPositions(row.deptId)
+      // 检查用户的岗位是否还在可选列表中（即是否已被禁用）
+      isPositionActive = row.positionId && positionOptions.value.some(pos => pos.id === row.positionId)
+    }
+  }
+  
   Object.assign(userForm, {
     id: row.id,
     username: row.username,
@@ -733,18 +753,10 @@ const handleEdit = async (row) => {
     email: row.email,
     gender: row.gender,
     status: row.status,
-    orgId: row.orgId,
-    deptId: row.deptId,
-    positionId: row.positionId
+    orgId: isOrgActive ? row.orgId : null, // 如果组织已禁用，设置为null
+    deptId: isDeptActive ? row.deptId : null, // 如果部门已禁用，设置为null
+    positionId: isPositionActive ? row.positionId : null // 如果岗位已禁用，设置为null
   })
-  
-  // 加载关联数据
-  if (row.orgId) {
-    await fetchDepartments(row.orgId)
-    if (row.deptId) {
-      await fetchPositions(row.deptId)
-    }
-  }
   
   dialogVisible.value = true
 }
@@ -830,11 +842,29 @@ const handleSubmit = async () => {
     await userFormRef.value.validate()
     submitting.value = true
     
+    // 在提交前验证关联关系是否仍然有效
+    const submitData = { ...userForm }
+    
+    // 检查组织是否在可选列表中，如果不在则清空
+    if (submitData.orgId && !orgOptions.value.some(org => org.id === submitData.orgId)) {
+      submitData.orgId = null
+    }
+    
+    // 检查部门是否在可选列表中，如果不在则清空
+    if (submitData.deptId && !deptOptions.value.some(dept => dept.id === submitData.deptId)) {
+      submitData.deptId = null
+    }
+    
+    // 检查岗位是否在可选列表中，如果不在则清空
+    if (submitData.positionId && !positionOptions.value.some(pos => pos.id === submitData.positionId)) {
+      submitData.positionId = null
+    }
+    
     if (userForm.id) {
-      await updateUser(userForm.id, userForm)
+      await updateUser(userForm.id, submitData)
       ElMessage.success('更新成功')
     } else {
-      await createUser(userForm)
+      await createUser(submitData)
       ElMessage.success('创建成功')
     }
     
@@ -986,8 +1016,8 @@ onMounted(async () => {
 const fetchOrganizations = async () => {
   try {
     loadingOrg.value = true
-    const response = await getOrganizationList({})
-    if (response.success) {
+    const response = await getOrganizationOptions()
+    if (response.code === 200) {
       orgOptions.value = response.data || []
     }
   } catch (error) {
@@ -1006,8 +1036,10 @@ const fetchDepartments = async (orgId) => {
   
   loadingDept.value = true
   try {
-    const res = await getDepartmentsByOrgId(orgId)
-    deptOptions.value = res.data || []
+    const res = await getDepartmentOptions(orgId)
+    if (res.code === 200) {
+      deptOptions.value = res.data || []
+    }
   } catch (error) {
     console.error('Failed to fetch departments:', error)
     ElMessage.error('获取部门列表失败')
@@ -1026,7 +1058,9 @@ const fetchPositions = async (deptId) => {
   loadingPosition.value = true
   try {
     const res = await getPositionsByDeptId(deptId)
-    positionOptions.value = res.data || []
+    if (res.code === 200) {
+      positionOptions.value = res.data || []
+    }
   } catch (error) {
     console.error('Failed to fetch positions:', error)
     ElMessage.error('获取岗位列表失败')

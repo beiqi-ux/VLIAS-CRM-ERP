@@ -34,6 +34,19 @@ public interface ProdGoodsService {
     Page<ProdGoods> findAll(Pageable pageable);
 
     /**
+     * 根据条件查询商品（分页）
+     * @param pageable 分页参数
+     * @param goodsName 商品名称（可选）
+     * @param categoryId 分类ID（可选）
+     * @param brandId 品牌ID（可选）
+     * @param status 状态（可选）
+     * @param auditStatus 审核状态（可选）
+     * @return 商品分页列表
+     */
+    Page<ProdGoods> findByConditions(Pageable pageable, String goodsName, Long categoryId, 
+                                    Long brandId, Integer status, Integer auditStatus);
+
+    /**
      * 根据分类ID查询商品
      * @param categoryId 分类ID
      * @return 商品列表

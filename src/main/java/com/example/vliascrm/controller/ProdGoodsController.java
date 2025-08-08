@@ -37,7 +37,7 @@ public class ProdGoodsController {
      * @return 商品分页列表
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('product-goods-management:view')")
+    @PreAuthorize("hasAuthority('product-info-management:view')")
     public ApiResponse<Page<ProdGoods>> getGoodsList(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
@@ -45,10 +45,15 @@ public class ProdGoodsController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Integer saleStatus, // 支持前端的saleStatus参数
             @RequestParam(required = false) Integer auditStatus) {
         
+        // saleStatus和status是同一个字段，优先使用saleStatus
+        Integer finalStatus = saleStatus != null ? saleStatus : status;
+        
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by("createTime").descending());
-        Page<ProdGoods> page = prodGoodsService.findAll(pageable);
+        Page<ProdGoods> page = prodGoodsService.findByConditions(
+            pageable, goodsName, categoryId, brandId, finalStatus, auditStatus);
         
         return ApiResponse.success(page);
     }
@@ -59,7 +64,7 @@ public class ProdGoodsController {
      * @return 商品详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('product-goods-management:view')")
+    @PreAuthorize("hasAuthority('product-info-management:view')")
     public ApiResponse<ProdGoods> getGoodsById(@PathVariable Long id) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         return goods.map(ApiResponse::success)
@@ -170,7 +175,7 @@ public class ProdGoodsController {
      * @return 创建后的商品
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('product-goods-management:create')")
+    @PreAuthorize("hasAuthority('product-info-management:create')")
     public ApiResponse<ProdGoods> createGoods(@RequestBody ProdGoods goods) {
         // 检查商品编码是否存在
         if (goods.getGoodsCode() != null && prodGoodsService.existsByGoodsCode(goods.getGoodsCode())) {
@@ -188,7 +193,7 @@ public class ProdGoodsController {
      * @return 更新后的商品
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('product-goods-management:edit')")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
     public ApiResponse<ProdGoods> updateGoods(@PathVariable Long id, @RequestBody ProdGoods goods) {
         Optional<ProdGoods> existingGoods = prodGoodsService.findById(id);
         if (!existingGoods.isPresent()) {
@@ -206,7 +211,7 @@ public class ProdGoodsController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('product-goods-management:delete')")
+    @PreAuthorize("hasAuthority('product-info-management:delete')")
     public ApiResponse<String> deleteGoods(@PathVariable Long id) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         if (!goods.isPresent()) {
@@ -267,7 +272,7 @@ public class ProdGoodsController {
      * @return 操作结果
      */
     @PutMapping("/{id}/audit")
-    @PreAuthorize("hasAuthority('product-goods-management:audit')")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
     public ApiResponse<String> auditGoods(@PathVariable Long id, @RequestBody Map<String, Object> auditData) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         if (!goods.isPresent()) {

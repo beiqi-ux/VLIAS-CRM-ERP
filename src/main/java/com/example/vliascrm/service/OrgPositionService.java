@@ -73,4 +73,22 @@ public interface OrgPositionService {
      * @return 存在返回true，否则返回false
      */
     boolean checkPositionCodeExists(Long orgId, String positionCode, Long id);
+
+    /**
+     * 获取岗位列表（管理列表用，包含组织和部门信息，显示所有岗位包括禁用的）
+     * @param orgId 组织ID
+     * @param deptId 部门ID
+     * @return 岗位DTO列表
+     */
+    List<PositionDTO> getPositionListForManagement(Long orgId, Long deptId);
+
+    /**
+     * 获取岗位列表（管理列表用，包含组织和部门信息，支持状态筛选）
+     * @param orgId 组织ID
+     * @param deptId 部门ID
+     * @param status 状态（可选）
+     * @param positionName 岗位名称（可选）
+     * @return 岗位DTO列表
+     */
+    List<PositionDTO> getPositionListForManagement(Long orgId, Long deptId, Integer status, String positionName);
 } 

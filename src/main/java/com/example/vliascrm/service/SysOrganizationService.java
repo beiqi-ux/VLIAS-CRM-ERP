@@ -51,6 +51,19 @@ public interface SysOrganizationService {
     List<SysOrganization> findByParentId(Long parentId);
 
     /**
+     * 根据状态查询组织机构
+     * @param status 状态 0-禁用 1-正常
+     * @return 组织机构列表
+     */
+    List<SysOrganization> findByStatus(Integer status);
+
+    /**
+     * 获取启用状态的组织机构列表（用于下拉选择）
+     * @return 启用状态的组织机构列表
+     */
+    List<SysOrganization> findActiveOrganizations();
+
+    /**
      * 获取组织机构树形结构
      * @return 组织机构树
      */

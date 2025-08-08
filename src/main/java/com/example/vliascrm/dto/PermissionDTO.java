@@ -54,6 +54,11 @@ public class PermissionDTO {
     private Long menuId;
 
     /**
+     * 关联资源ID（通用资源关联）
+     */
+    private Long resourceId;
+
+    /**
      * 权限描述
      */
     private String description;

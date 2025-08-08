@@ -58,10 +58,16 @@ public interface SysMenuService {
     List<SysMenu> getAllMenus();
 
     /**
-     * 获取菜单树
+     * 获取菜单树（用户侧，只显示启用且未删除的菜单）
      * @return 菜单树
      */
     List<MenuDTO> getMenuTree();
+
+    /**
+     * 获取管理员菜单树（管理侧，显示所有未删除的菜单，包括禁用的）
+     * @return 菜单树
+     */
+    List<MenuDTO> getAdminMenuTree();
 
     /**
      * 根据角色ID获取菜单列表
@@ -85,8 +91,9 @@ public interface SysMenuService {
     List<MenuDTO> getUserMenuTree(Long userId);
 
     /**
-     * 切换菜单状态
+     * 切换菜单状态（启用/禁用）
      * @param id 菜单ID
      */
     void toggleMenuStatus(Long id);
+
 } 

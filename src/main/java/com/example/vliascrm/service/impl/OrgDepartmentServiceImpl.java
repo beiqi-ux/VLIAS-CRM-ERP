@@ -110,27 +110,27 @@ public class OrgDepartmentServiceImpl implements OrgDepartmentService {
 
     @Override
     public List<OrgDepartment> findAll() {
-        return departmentRepository.findAll();
+        return departmentRepository.findAllWithActiveOrganization();
     }
 
     @Override
     public List<OrgDepartment> findByOrgId(Long orgId) {
-        return departmentRepository.findByOrgIdOrderBySortAsc(orgId);
+        return departmentRepository.findByOrgIdWithActiveOrganization(orgId);
     }
 
     @Override
     public List<OrgDepartment> findByParentId(Long parentId) {
-        return departmentRepository.findByParentIdOrderBySortAsc(parentId);
+        return departmentRepository.findByParentIdWithActiveOrganization(parentId);
     }
 
     @Override
     public List<DepartmentDTO> getDepartmentTree(Long orgId) {
-        // 获取部门列表
+        // 获取部门列表（只返回所属组织状态为启用的部门）
         List<OrgDepartment> departments;
         if (orgId != null) {
-            departments = departmentRepository.findByOrgIdOrderBySortAsc(orgId);
+            departments = departmentRepository.findByOrgIdWithActiveOrganization(orgId);
         } else {
-            departments = departmentRepository.findAll();
+            departments = departmentRepository.findAllWithActiveOrganization();
         }
         
         // 获取所有组织

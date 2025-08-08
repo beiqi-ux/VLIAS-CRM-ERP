@@ -215,4 +215,22 @@ public class ProdGoods extends BaseEntity {
      */
     @Transient
     private String brandName;
+
+    // 为了兼容前端使用saleStatus字段，添加别名方法
+    public Integer getSaleStatus() {
+        return this.status;
+    }
+
+    public void setSaleStatus(Integer saleStatus) {
+        this.status = saleStatus;
+    }
+
+    // 为了兼容前端使用content字段，添加别名方法
+    public String getContent() {
+        return this.description;
+    }
+
+    public void setContent(String content) {
+        this.description = content;
+    }
 } 

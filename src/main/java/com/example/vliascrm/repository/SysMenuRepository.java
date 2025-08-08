@@ -31,6 +31,14 @@ public interface SysMenuRepository extends JpaRepository<SysMenu, Long> {
     /**
      * 根据父ID查询菜单列表
      * @param parentId 父ID
+     * @param isDeleted 是否删除
+     * @return 菜单列表
+     */
+    List<SysMenu> findByParentIdAndIsDeletedOrderBySortAsc(Long parentId, Boolean isDeleted);
+
+    /**
+     * 根据父ID、状态和是否删除查询菜单列表
+     * @param parentId 父ID
      * @param status 状态
      * @param isDeleted 是否删除
      * @return 菜单列表

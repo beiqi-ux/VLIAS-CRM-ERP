@@ -109,17 +109,7 @@ export function getUserMenuTree(userId) {
   })
 }
 
-/**
- * 切换菜单状态
- * @param {number} id - 菜单ID
- * @returns {Promise}
- */
-export function toggleMenuStatus(id) {
-  return request({
-    url: `/api/sys/menus/${id}/toggle-status`,
-    method: 'put'
-  })
-}
+ 
 
 /**
  * 批量为所有菜单生成权限

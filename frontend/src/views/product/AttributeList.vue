@@ -254,6 +254,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { 
+  getAttributeList, 
+  createAttribute, 
+  updateAttribute, 
+  deleteAttribute, 
+  batchDeleteAttributes 
+} from '@/api/attribute'
 
 // 响应式数据
 const loading = ref(false)
@@ -300,38 +307,14 @@ const formRules = {
 async function fetchAttributeList() {
   try {
     loading.value = true
-    // TODO: 调用API获取属性列表
-    // const { data } = await getAttributeList({
-    //   ...searchForm,
-    //   page: pagination.currentPage,
-    //   size: pagination.pageSize
-    // })
+    const { data } = await getAttributeList({
+      ...searchForm,
+      page: pagination.currentPage - 1, // 后端分页从0开始
+      size: pagination.pageSize
+    })
     
-    // 模拟数据
-    const mockData = {
-      content: [
-        {
-          id: 1,
-          attributeName: '颜色',
-          attributeCode: 'color',
-          description: '商品颜色属性',
-          status: 1,
-          createTime: '2024-01-01 10:00:00'
-        },
-        {
-          id: 2,
-          attributeName: '尺寸',
-          attributeCode: 'size',
-          description: '商品尺寸属性',
-          status: 1,
-          createTime: '2024-01-01 11:00:00'
-        }
-      ],
-      totalElements: 2
-    }
-    
-    attributeList.value = mockData.content
-    pagination.total = mockData.totalElements
+    attributeList.value = data.content
+    pagination.total = data.totalElements
   } catch (error) {
     console.error('获取属性列表失败:', error)
     ElMessage.error('获取属性列表失败')
@@ -387,8 +370,7 @@ function handleDelete(row) {
     }
   ).then(async () => {
     try {
-      // TODO: 调用删除API
-      // await deleteAttribute(row.id)
+      await deleteAttribute(row.id)
       ElMessage.success('删除成功')
       fetchAttributeList()
     } catch (error) {
@@ -415,9 +397,8 @@ function handleBatchDelete() {
     }
   ).then(async () => {
     try {
-      // TODO: 调用批量删除API
-      // const ids = selectedRows.value.map(row => row.id)
-      // await batchDeleteAttributes(ids)
+      const ids = selectedRows.value.map(row => row.id)
+      await batchDeleteAttributes(ids)
       ElMessage.success('批量删除成功')
       fetchAttributeList()
     } catch (error) {
@@ -451,12 +432,11 @@ async function handleSubmit() {
     await formRef.value.validate()
     submitLoading.value = true
     
-    // TODO: 调用保存API
     if (isEdit.value) {
-      // await updateAttribute(form.id, form)
+      await updateAttribute(form.id, form)
       ElMessage.success('更新成功')
     } else {
-      // await createAttribute(form)
+      await createAttribute(form)
       ElMessage.success('创建成功')
     }
     

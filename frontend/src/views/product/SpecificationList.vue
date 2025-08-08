@@ -254,6 +254,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { 
+  getSpecificationList, 
+  createSpecification, 
+  updateSpecification, 
+  deleteSpecification, 
+  batchDeleteSpecifications 
+} from '@/api/specification'
 
 // 响应式数据
 const loading = ref(false)
@@ -300,38 +307,14 @@ const formRules = {
 async function fetchSpecificationList() {
   try {
     loading.value = true
-    // TODO: 调用API获取规格列表
-    // const { data } = await getSpecificationList({
-    //   ...searchForm,
-    //   page: pagination.currentPage,
-    //   size: pagination.pageSize
-    // })
+    const { data } = await getSpecificationList({
+      ...searchForm,
+      page: pagination.currentPage - 1, // 后端分页从0开始
+      size: pagination.pageSize
+    })
     
-    // 模拟数据
-    const mockData = {
-      content: [
-        {
-          id: 1,
-          specificationName: '内存',
-          specificationCode: 'memory',
-          description: '设备内存规格',
-          status: 1,
-          createTime: '2024-01-01 10:00:00'
-        },
-        {
-          id: 2,
-          specificationName: '存储',
-          specificationCode: 'storage',
-          description: '设备存储规格',
-          status: 1,
-          createTime: '2024-01-01 11:00:00'
-        }
-      ],
-      totalElements: 2
-    }
-    
-    specificationList.value = mockData.content
-    pagination.total = mockData.totalElements
+    specificationList.value = data.content
+    pagination.total = data.totalElements
   } catch (error) {
     console.error('获取规格列表失败:', error)
     ElMessage.error('获取规格列表失败')
@@ -387,8 +370,7 @@ function handleDelete(row) {
     }
   ).then(async () => {
     try {
-      // TODO: 调用删除API
-      // await deleteSpecification(row.id)
+      await deleteSpecification(row.id)
       ElMessage.success('删除成功')
       fetchSpecificationList()
     } catch (error) {
@@ -415,9 +397,8 @@ function handleBatchDelete() {
     }
   ).then(async () => {
     try {
-      // TODO: 调用批量删除API
-      // const ids = selectedRows.value.map(row => row.id)
-      // await batchDeleteSpecifications(ids)
+      const ids = selectedRows.value.map(row => row.id)
+      await batchDeleteSpecifications(ids)
       ElMessage.success('批量删除成功')
       fetchSpecificationList()
     } catch (error) {
@@ -451,12 +432,11 @@ async function handleSubmit() {
     await formRef.value.validate()
     submitLoading.value = true
     
-    // TODO: 调用保存API
     if (isEdit.value) {
-      // await updateSpecification(form.id, form)
+      await updateSpecification(form.id, form)
       ElMessage.success('更新成功')
     } else {
-      // await createSpecification(form)
+      await createSpecification(form)
       ElMessage.success('创建成功')
     }
     

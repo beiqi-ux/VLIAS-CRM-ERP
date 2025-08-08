@@ -43,6 +43,16 @@ public class SysOrganizationController {
     }
 
     /**
+     * 获取组织机构选项列表（用于下拉框，不需要权限）
+     * @return 组织机构列表
+     */
+    @GetMapping("/options")
+    public Result<List<SysOrganization>> getOrganizationOptions() {
+        List<SysOrganization> list = organizationService.findActiveOrganizations();
+        return Result.success(list);
+    }
+
+    /**
      * 根据ID获取组织机构
      * @param id 组织机构ID
      * @return 组织机构信息

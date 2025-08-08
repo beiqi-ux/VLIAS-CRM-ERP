@@ -22,6 +22,7 @@ public class OrganizationDTO {
     private String address;
     private Integer sort;
     private Integer status;
+    private String remark;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private String createBy;

@@ -87,6 +87,18 @@ export function getDepartmentsByOrgId(orgId) {
 }
 
 /**
+ * 根据组织ID获取部门选项列表（用于下拉框）
+ * @param {number} orgId - 组织ID
+ * @returns {Promise}
+ */
+export function getDepartmentOptions(orgId) {
+  return request({
+    url: `/api/department/org/${orgId}/options`,
+    method: 'get'
+  })
+}
+
+/**
  * 根据父ID获取子部门
  * @param {number} parentId - 父ID
  * @returns {Promise}
@@ -110,5 +122,16 @@ export function checkDeptCodeExists(orgId, deptCode, id) {
     url: '/api/department/check-code',
     method: 'get',
     params: { orgId, deptCode, id }
+  })
+}
+
+/**
+ * 获取组织列表（用于下拉框）
+ * @returns {Promise}
+ */
+export function getOrganizations() {
+  return request({
+    url: '/api/department/organizations',
+    method: 'get'
   })
 } 

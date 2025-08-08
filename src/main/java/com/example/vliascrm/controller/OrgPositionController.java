@@ -44,6 +44,24 @@ public class OrgPositionController {
     }
 
     /**
+     * 获取岗位管理列表（包含组织和部门信息，显示所有岗位包括禁用的）
+     * @param orgId 组织ID
+     * @param deptId 部门ID
+     * @param status 状态
+     * @param positionName 岗位名称
+     * @return 岗位列表
+     */
+    @GetMapping("/management-list")
+    public Result<List<PositionDTO>> managementList(
+            @RequestParam(required = false) Long orgId,
+            @RequestParam(required = false) Long deptId,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String positionName) {
+        List<PositionDTO> list = positionService.getPositionListForManagement(orgId, deptId, status, positionName);
+        return Result.success(list);
+    }
+
+    /**
      * 根据ID获取岗位
      * @param id 岗位ID
      * @return 岗位信息
@@ -88,7 +106,7 @@ public class OrgPositionController {
     }
 
     /**
-     * 根据组织ID获取岗位列表
+     * 根据组织ID获取岗位列表（只返回启用状态组织和部门下的岗位）
      * @param orgId 组织ID
      * @return 岗位列表
      */
@@ -99,7 +117,7 @@ public class OrgPositionController {
     }
 
     /**
-     * 根据部门ID获取岗位列表
+     * 根据部门ID获取岗位列表（只返回启用状态组织和部门下的岗位）
      * @param deptId 部门ID
      * @return 岗位列表
      */

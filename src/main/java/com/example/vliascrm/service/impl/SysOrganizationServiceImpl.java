@@ -108,6 +108,16 @@ public class SysOrganizationServiceImpl implements SysOrganizationService {
     }
 
     @Override
+    public List<SysOrganization> findByStatus(Integer status) {
+        return organizationRepository.findByStatusOrderBySortAsc(status);
+    }
+
+    @Override
+    public List<SysOrganization> findActiveOrganizations() {
+        return organizationRepository.findByStatusOrderBySortAsc(1); // 1表示正常状态
+    }
+
+    @Override
     public List<OrganizationDTO> getOrganizationTree() {
         // 获取所有组织
         List<SysOrganization> allOrgs = organizationRepository.findAll();

@@ -1,6 +1,7 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,6 +14,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "sys_organization")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SysOrganization extends BaseEntity {
 
     /**
@@ -74,4 +76,10 @@ public class SysOrganization extends BaseEntity {
      */
     @Column
     private Integer status;
+
+    /**
+     * 备注
+     */
+    @Column(columnDefinition = "TEXT")
+    private String remark;
 } 

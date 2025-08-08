@@ -139,17 +139,22 @@ public class OrgDepartmentController {
 
     /**
      * 根据组织ID获取部门列表
+     * 只返回启用状态组织下的部门
      * @param orgId 组织ID
      * @return 部门列表
      */
     @GetMapping("/org/{orgId}")
     @PreAuthorize("hasAuthority('dept-management:view')")
     public Result<List<DepartmentDTO>> getByOrgId(@PathVariable Long orgId) {
-        List<OrgDepartment> departments = departmentService.findByOrgId(orgId);
-        
-        // 获取组织机构
+        // 首先检查组织是否启用
         Optional<SysOrganization> organization = organizationRepository.findById(orgId);
-        String orgName = organization.isPresent() ? organization.get().getOrgName() : "";
+        if (!organization.isPresent() || organization.get().getStatus() != 1) {
+            // 如果组织不存在或未启用，返回空列表
+            return Result.success(List.of());
+        }
+        
+        List<OrgDepartment> departments = departmentService.findByOrgId(orgId);
+        String orgName = organization.get().getOrgName();
         
         // 转换为DTO并设置组织名称
         List<DepartmentDTO> deptDTOs = departments.stream().map(dept -> {
@@ -158,6 +163,37 @@ public class OrgDepartmentController {
             dto.setOrgName(orgName);
             return dto;
         }).collect(Collectors.toList());
+        
+        return Result.success(deptDTOs);
+    }
+
+    /**
+     * 根据组织ID获取部门选项列表（用于下拉框，不需要权限）
+     * 只返回启用状态组织下的启用状态部门
+     * @param orgId 组织ID
+     * @return 部门列表
+     */
+    @GetMapping("/org/{orgId}/options")
+    public Result<List<DepartmentDTO>> getDepartmentOptions(@PathVariable Long orgId) {
+        // 首先检查组织是否启用
+        Optional<SysOrganization> organization = organizationRepository.findById(orgId);
+        if (!organization.isPresent() || organization.get().getStatus() != 1) {
+            // 如果组织不存在或未启用，返回空列表
+            return Result.success(List.of());
+        }
+        
+        List<OrgDepartment> departments = departmentService.findByOrgId(orgId);
+        String orgName = organization.get().getOrgName();
+        
+        // 转换为DTO并设置组织名称，同时过滤掉禁用状态的部门
+        List<DepartmentDTO> deptDTOs = departments.stream()
+            .filter(dept -> dept.getStatus() != null && dept.getStatus() == 1) // 只包含启用状态的部门
+            .map(dept -> {
+                DepartmentDTO dto = new DepartmentDTO();
+                BeanUtils.copyProperties(dept, dto);
+                dto.setOrgName(orgName);
+                return dto;
+            }).collect(Collectors.toList());
         
         return Result.success(deptDTOs);
     }
@@ -208,5 +244,25 @@ public class OrgDepartmentController {
             @RequestParam(required = false) Long id) {
         boolean exists = departmentService.checkDeptCodeExists(orgId, deptCode, id);
         return Result.success(exists);
+    }
+
+    /**
+     * 获取组织列表（用于下拉框）
+     * @return 组织列表
+     */
+    @GetMapping("/organizations")
+    @PreAuthorize("hasAuthority('dept-management:view')")
+    public Result<List<Map<String, Object>>> getOrganizations() {
+        List<SysOrganization> organizations = organizationRepository.findByStatusOrderBySortAsc(1); // 只获取启用状态的组织
+        List<Map<String, Object>> orgList = organizations.stream().map(org -> {
+            Map<String, Object> orgMap = Map.of(
+                "id", org.getId(),
+                "orgName", org.getOrgName(),
+                "orgCode", org.getOrgCode()
+            );
+            return orgMap;
+        }).collect(Collectors.toList());
+        
+        return Result.success(orgList);
     }
 } 

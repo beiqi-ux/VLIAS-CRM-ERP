@@ -105,13 +105,13 @@ public class SysMenuController {
     }
 
     /**
-     * 获取菜单树
+     * 获取菜单树（管理员视图，包含禁用的菜单）
      * @return 菜单树
      */
     @GetMapping("/tree")
     @PreAuthorize("hasAuthority('menu-management:view')")
     public ApiResponse<List<MenuDTO>> getMenuTree() {
-        return ApiResponse.success(menuService.getMenuTree());
+        return ApiResponse.success(menuService.getAdminMenuTree());
     }
 
     /**
@@ -147,15 +147,5 @@ public class SysMenuController {
         return ApiResponse.success(menuService.getUserMenuTree(userId));
     }
 
-    /**
-     * 切换菜单状态
-     * @param id 菜单ID
-     * @return 操作结果
-     */
-    @PutMapping("/{id}/toggle-status")
-    @PreAuthorize("hasAuthority('menu-management:edit')")
-    public ApiResponse<Void> toggleMenuStatus(@PathVariable Long id) {
-        menuService.toggleMenuStatus(id);
-        return ApiResponse.success(null);
-    }
+
 } 

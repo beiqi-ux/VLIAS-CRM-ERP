@@ -1,4 +1,4 @@
-# VLIASCRM系统数据库表设计（完整版）
+    # VLIASCRM系统数据库表设计（完整版）
 
 ## 目录与功能模块说明
 
@@ -187,7 +187,8 @@ CREATE TABLE sys_organization (
     email VARCHAR(100) COMMENT '邮箱',
     address VARCHAR(200) COMMENT '地址',
     sort INT DEFAULT 0 COMMENT '排序',
-    status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1-正常',
+    status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1image.png-正常',
+    remark TEXT COMMENT '备注',
     create_time DATETIME NOT NULL COMMENT '创建时间',
     update_time DATETIME COMMENT '更新时间',
     create_by BIGINT COMMENT '创建人',

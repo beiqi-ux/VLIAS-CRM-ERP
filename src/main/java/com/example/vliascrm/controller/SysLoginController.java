@@ -5,9 +5,15 @@ import com.example.vliascrm.dto.LoginDTO;
 import com.example.vliascrm.dto.LoginResponseDTO;
 import com.example.vliascrm.service.SysLoginService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 系统登录控制器
@@ -63,5 +69,30 @@ public class SysLoginController {
     public ApiResponse<LoginResponseDTO> getUserInfo() {
         LoginResponseDTO loginResponseDTO = sysLoginService.getCurrentUserInfo();
         return ApiResponse.success(loginResponseDTO);
+    }
+    
+    /**
+     * 获取当前用户权限调试信息
+     *
+     * @return 调试信息
+     */
+    @GetMapping("/debug/permissions")
+    public ApiResponse<Map<String, Object>> getDebugPermissions() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> debugInfo = new HashMap<>();
+        
+        if (authentication != null && authentication.isAuthenticated()) {
+            debugInfo.put("username", authentication.getName());
+            debugInfo.put("authorities", authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList()));
+            debugInfo.put("principal", authentication.getPrincipal().toString());
+            debugInfo.put("isAuthenticated", authentication.isAuthenticated());
+            debugInfo.put("authType", authentication.getClass().getSimpleName());
+        } else {
+            debugInfo.put("message", "No authentication found");
+        }
+        
+        return ApiResponse.success(debugInfo);
     }
 } 

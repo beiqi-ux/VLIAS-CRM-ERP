@@ -6,10 +6,14 @@ import com.example.vliascrm.service.ProdGoodsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +39,46 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
     @Override
     public Page<ProdGoods> findAll(Pageable pageable) {
         return prodGoodsRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<ProdGoods> findByConditions(Pageable pageable, String goodsName, Long categoryId, 
+                                          Long brandId, Integer status, Integer auditStatus) {
+        Specification<ProdGoods> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 默认查询未删除的记录
+            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), false));
+            
+            // 商品名称模糊查询
+            if (StringUtils.hasText(goodsName)) {
+                predicates.add(criteriaBuilder.like(root.get("goodsName"), "%" + goodsName + "%"));
+            }
+            
+            // 分类ID
+            if (categoryId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("categoryId"), categoryId));
+            }
+            
+            // 品牌ID
+            if (brandId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("brandId"), brandId));
+            }
+            
+            // 状态
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            
+            // 审核状态
+            if (auditStatus != null) {
+                predicates.add(criteriaBuilder.equal(root.get("auditStatus"), auditStatus));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        return prodGoodsRepository.findAll(spec, pageable);
     }
 
     @Override

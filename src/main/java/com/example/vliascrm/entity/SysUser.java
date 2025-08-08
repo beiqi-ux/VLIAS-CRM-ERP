@@ -1,6 +1,7 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +22,7 @@ import java.util.List;
 @Entity
 @Table(name = "sys_user")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SysUser extends BaseEntity implements UserDetails {
 
     /**
