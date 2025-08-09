@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * 岗位Service实现类
  */
 @Service
-public class OrgPositionServiceImpl implements OrgPositionService {
+public  class OrgPositionServiceImpl implements OrgPositionService {
 
     @Autowired
     private OrgPositionRepository positionRepository;
