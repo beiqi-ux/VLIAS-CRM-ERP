@@ -116,6 +116,17 @@ public class ProdCategoryController {
     }
 
     /**
+     * 构建管理后台分类树（包括禁用状态）
+     * @return 分类树
+     */
+    @GetMapping("/admin-tree")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
+    public ApiResponse<List<ProdCategory>> getAdminCategoryTree() {
+        List<ProdCategory> categoryTree = prodCategoryService.buildAdminCategoryTree();
+        return ApiResponse.success(categoryTree);
+    }
+
+    /**
      * 创建分类
      * @param category 分类信息
      * @return 创建后的分类
@@ -124,7 +135,7 @@ public class ProdCategoryController {
     @PreAuthorize("hasAuthority('product-category-management:create')")
     public ApiResponse<ProdCategory> createCategory(@RequestBody ProdCategory category) {
         // 检查分类名称是否存在（同级下）
-        Long parentId = category.getParentId() != null ? category.getParentId() : 0L;
+        Long parentId = category.getParentId();
         if (prodCategoryService.existsByCategoryNameAndParentId(category.getCategoryName(), parentId)) {
             return ApiResponse.failure("同级下分类名称已存在");
         }
@@ -264,7 +275,7 @@ public class ProdCategoryController {
     @GetMapping("/check-name")
     @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<Boolean> checkCategoryName(@RequestParam String categoryName, 
-                                                 @RequestParam(defaultValue = "0") Long parentId) {
+                                                 @RequestParam(required = false) Long parentId) {
         boolean exists = prodCategoryService.existsByCategoryNameAndParentId(categoryName, parentId);
         return ApiResponse.success(exists);
     }

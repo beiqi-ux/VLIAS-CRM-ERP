@@ -136,6 +136,7 @@ public class OrgDepartmentServiceImpl implements OrgDepartmentService {
         // 获取所有组织
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 转换为DTO

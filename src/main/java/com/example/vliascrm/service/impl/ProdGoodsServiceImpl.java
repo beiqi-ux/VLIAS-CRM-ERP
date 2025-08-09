@@ -1,10 +1,15 @@
 package com.example.vliascrm.service.impl;
 
 import com.example.vliascrm.entity.ProdGoods;
+import com.example.vliascrm.entity.ProdCategory;
+import com.example.vliascrm.entity.ProdBrand;
 import com.example.vliascrm.repository.ProdGoodsRepository;
 import com.example.vliascrm.service.ProdGoodsService;
+import com.example.vliascrm.service.ProdCategoryService;
+import com.example.vliascrm.service.ProdBrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -25,10 +30,22 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
 
     @Autowired
     private ProdGoodsRepository prodGoodsRepository;
+    
+    @Autowired
+    private ProdCategoryService prodCategoryService;
+    
+    @Autowired
+    private ProdBrandService prodBrandService;
 
     @Override
     public Optional<ProdGoods> findById(Long id) {
-        return prodGoodsRepository.findById(id);
+        Optional<ProdGoods> goodsOpt = prodGoodsRepository.findById(id);
+        if (goodsOpt.isPresent()) {
+            ProdGoods goods = goodsOpt.get();
+            fillCategoryAndBrandNames(goods);
+            return Optional.of(goods);
+        }
+        return goodsOpt;
     }
 
     @Override
@@ -78,7 +95,38 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
         
-        return prodGoodsRepository.findAll(spec, pageable);
+        Page<ProdGoods> page = prodGoodsRepository.findAll(spec, pageable);
+        
+        // 填充分类名和品牌名
+        List<ProdGoods> goodsWithNames = new ArrayList<>();
+        for (ProdGoods goods : page.getContent()) {
+            fillCategoryAndBrandNames(goods);
+            goodsWithNames.add(goods);
+        }
+        
+        return new PageImpl<>(goodsWithNames, pageable, page.getTotalElements());
+    }
+    
+    /**
+     * 填充商品的分类名和品牌名
+     * @param goods 商品对象
+     */
+    private void fillCategoryAndBrandNames(ProdGoods goods) {
+        // 设置分类名称
+        if (goods.getCategoryId() != null) {
+            Optional<ProdCategory> category = prodCategoryService.findById(goods.getCategoryId());
+            if (category.isPresent()) {
+                goods.setCategoryName(category.get().getCategoryName());
+            }
+        }
+        
+        // 设置品牌名称
+        if (goods.getBrandId() != null) {
+            Optional<ProdBrand> brand = prodBrandService.findById(goods.getBrandId());
+            if (brand.isPresent()) {
+                goods.setBrandName(brand.get().getBrandName());
+            }
+        }
     }
 
     @Override
@@ -226,5 +274,17 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
     @Override
     public long countByBrandId(Long brandId) {
         return prodGoodsRepository.countByBrandIdAndIsDeleted(brandId, false);
+    }
+
+    @Override
+    @Transactional
+    public void updateMainImage(Long goodsId, String mainImageUrl) {
+        Optional<ProdGoods> goodsOpt = prodGoodsRepository.findById(goodsId);
+        if (goodsOpt.isPresent()) {
+            ProdGoods goods = goodsOpt.get();
+            goods.setMainImage(mainImageUrl);
+            goods.setUpdateTime(LocalDateTime.now());
+            prodGoodsRepository.save(goods);
+        }
     }
 } 

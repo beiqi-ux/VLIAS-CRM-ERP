@@ -41,6 +41,7 @@ public class OrgDepartmentController {
         // 获取所有组织机构
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 转换为DTO并设置组织名称
@@ -211,6 +212,7 @@ public class OrgDepartmentController {
         // 获取所有组织机构
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 转换为DTO并设置组织名称

@@ -26,19 +26,15 @@
           />
         </el-form-item>
         <el-form-item label="商品分类">
-          <el-select
+          <el-tree-select
             v-model="searchForm.categoryId"
+            :data="categoryList"
+            :props="{ value: 'id', label: 'categoryName', children: 'children' }"
             placeholder="请选择分类"
             clearable
+            check-strictly
             style="width: 200px"
-          >
-            <el-option
-              v-for="category in categoryList"
-              :key="category.id"
-              :label="category.categoryName"
-              :value="category.id"
             />
-          </el-select>
         </el-form-item>
         <el-form-item label="商品品牌">
           <el-select
@@ -174,19 +170,18 @@
         >
           <template #default="{ row }">
             <el-image
-              v-if="row.mainImage"
-              :src="row.mainImage"
+              :src="getMainImageUrl(row.mainImage)"
               fit="cover"
               style="width: 50px; height: 50px; border-radius: 4px;"
-              :preview-src-list="[row.mainImage]"
+              :preview-src-list="row.mainImage ? [getMainImageUrl(row.mainImage)] : []"
               preview-teleported
-            />
-            <div
-              v-else
-              class="no-image"
             >
-              暂无图片
-            </div>
+              <template #error>
+                <div class="image-slot">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
           </template>
         </el-table-column>
         <el-table-column
@@ -364,18 +359,15 @@
               label="商品分类"
               prop="categoryId"
             >
-              <el-select
+              <el-tree-select
                 v-model="formData.categoryId"
+                :data="categoryList"
+                :props="{ value: 'id', label: 'categoryName', children: 'children' }"
                 placeholder="请选择分类"
+                clearable
+                check-strictly
                 style="width: 100%"
-              >
-                <el-option
-                  v-for="category in categoryList"
-                  :key="category.id"
-                  :label="category.categoryName"
-                  :value="category.id"
                 />
-              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -522,6 +514,74 @@
           />
         </el-form-item>
         <el-form-item
+          label="商品图片"
+        >
+          <div class="upload-container">
+            <el-upload
+              ref="uploadRef"
+              v-model:file-list="imageFileList"
+              :action="uploadAction"
+              :headers="uploadHeaders"
+              :data="{ goodsId: formData.id || 0, isMain: imageList.length === 0 ? 1 : 0 }"
+              :on-success="handleImageUploadSuccess"
+              :on-error="handleImageUploadError"
+              :on-remove="handleImageRemove"
+              :before-upload="beforeImageUpload"
+              list-type="picture-card"
+              :limit="5"
+              multiple
+              accept="image/*"
+            >
+              <el-icon><Plus /></el-icon>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持jpg/png/gif格式，单张图片不超过2MB，最多上传5张
+                </div>
+              </template>
+            </el-upload>
+            <div v-if="imageList.length > 0" class="image-list">
+              <div
+                v-for="(image, index) in imageList"
+                :key="image.id"
+                class="image-item"
+                :class="{ 'is-main': image.isMain === 1 }"
+              >
+                <el-image
+                  :src="getImageUrl(image.imageUrl)"
+                  :preview-src-list="[getImageUrl(image.imageUrl)]"
+                  fit="cover"
+                  style="width: 100px; height: 100px"
+                />
+                <div class="image-actions">
+                  <el-button
+                    v-if="image.isMain !== 1"
+                    size="small"
+                    type="primary"
+                    @click="setMainImage(image)"
+                  >
+                    设为主图
+                  </el-button>
+                  <el-button
+                    v-else
+                    size="small"
+                    type="success"
+                    disabled
+                  >
+                    主图
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    @click="removeImage(image, index)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item
           label="商品详情"
           prop="content"
         >
@@ -608,7 +668,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Delete, Picture } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/format'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import {
@@ -623,6 +683,8 @@ import {
 } from '@/api/goods'
 import { getCategoryTree } from '@/api/category'
 import { getAllBrands } from '@/api/brand'
+  import { getImagesByGoodsId, deleteImage, updateImage, setAsMainImage } from '@/api/image'
+  import { uploadProductImage } from '@/api/file'
 
 // 响应式数据
 const loading = ref(false)
@@ -632,6 +694,15 @@ const goodsList = ref([])
 const categoryList = ref([])
 const brandList = ref([])
 const selectedRows = ref([])
+
+// 图片相关
+const imageList = ref([])
+const imageFileList = ref([])
+const uploadRef = ref()
+const uploadAction = ref('/api/files/product-image')
+  const uploadHeaders = ref({
+    'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
+  })
 
 // 搜索表单
 const searchForm = reactive({
@@ -735,7 +806,7 @@ const loadCategoryList = async () => {
   try {
     const response = await getCategoryTree()
     if (response.success) {
-      categoryList.value = flattenTree(response.data)
+      categoryList.value = response.data
     }
   } catch (error) {
     console.error('获取分类列表失败:', error)
@@ -751,24 +822,6 @@ const loadBrandList = async () => {
   } catch (error) {
     console.error('获取品牌列表失败:', error)
   }
-}
-
-// 扁平化树结构
-const flattenTree = (tree) => {
-  const result = []
-  const traverse = (nodes, level = 0) => {
-    nodes.forEach(node => {
-      result.push({
-        ...node,
-        categoryName: '　'.repeat(level) + node.categoryName
-      })
-      if (node.children && node.children.length > 0) {
-        traverse(node.children, level + 1)
-      }
-    })
-  }
-  traverse(tree)
-  return result
 }
 
 const handleSearch = () => {
@@ -814,6 +867,10 @@ const handleEdit = (row) => {
       key === 'saleStatus' || key === 'isRecommended' ? (row[key] ?? 1) : '')
   })
   dialogVisible.value = true
+  // 加载商品图片
+  if (row.id) {
+    loadProductImages(row.id)
+  }
 }
 
 const handleView = (row) => {
@@ -928,6 +985,17 @@ const handleSubmit = async () => {
       : await createGoods(formData)
       
     if (response.success) {
+      // 如果是新创建的商品且有待关联的图片，需要更新图片的商品ID
+      if (!formData.id && imageList.value.length > 0) {
+        const newGoodsId = response.data.id
+        // 更新临时上传的图片，设置正确的商品ID
+        for (const image of imageList.value) {
+          if (image.goodsId === 0) {
+            await updateImage(image.id, { ...image, goodsId: newGoodsId })
+          }
+        }
+      }
+      
       ElMessage.success(formData.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
       loadGoodsList()
@@ -947,6 +1015,115 @@ const resetFormData = () => {
       key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 :
         key === 'id' ? null : ''
   })
+  // 重置图片相关数据
+  imageList.value = []
+  imageFileList.value = []
+}
+
+// 图片处理方法
+const loadProductImages = async (goodsId) => {
+  if (!goodsId) {
+    imageList.value = []
+    return
+  }
+  try {
+    const response = await getImagesByGoodsId(goodsId)
+    if (response.success) {
+      imageList.value = response.data || []
+    }
+  } catch (error) {
+    console.error('加载商品图片失败:', error)
+  }
+}
+
+const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) {
+    return url
+  }
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`
+}
+
+const getMainImageUrl = (url) => {
+  if (!url) return '/no-image.png'
+  if (url.startsWith('http')) {
+    return url
+  }
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`
+}
+
+const beforeImageUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+const handleImageUploadSuccess = (response, file, fileList) => {
+  if (response.success) {
+    ElMessage.success('图片上传成功')
+    // 重新加载商品图片
+    if (formData.id) {
+      loadProductImages(formData.id)
+    } else {
+      // 新商品时，将上传结果添加到图片列表
+      imageList.value.push(response.data)
+    }
+  } else {
+    ElMessage.error(response.message || '图片上传失败')
+  }
+}
+
+const handleImageUploadError = (error, file, fileList) => {
+  ElMessage.error('图片上传失败')
+}
+
+const handleImageRemove = (file, fileList) => {
+  // 如果是从服务器删除，需要调用删除接口
+  // 这里暂时不实现，因为el-upload的remove主要用于删除未上传的文件
+}
+
+const setMainImage = async (image) => {
+  try {
+    const response = await setAsMainImage(image.id)
+    if (response.success) {
+      ElMessage.success('设置主图成功')
+      // 重新加载商品图片列表
+      loadProductImages(formData.id)
+      // 重新加载商品列表以更新主图显示
+      loadGoodsList()
+    }
+  } catch (error) {
+    ElMessage.error('设置主图失败')
+  }
+}
+
+const removeImage = async (image, index) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这张图片吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const response = await deleteImage(image.id)
+    if (response.success) {
+      ElMessage.success('删除成功')
+      loadProductImages(formData.id)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
 }
 
 const getAuditStatusText = (status) => {
@@ -971,49 +1148,96 @@ onMounted(() => {
   padding: 20px;
 }
 
-.search-card, .operation-card, .table-card {
-  margin-bottom: 16px;
+.search-card {
+  margin-bottom: 20px;
+}
+
+.operation-card {
+  margin-bottom: 20px;
 }
 
 .operation-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
 
-.no-image {
-  width: 50px;
-  height: 50px;
+.upload-container {
+  width: 100%;
+}
+
+.image-list {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-item {
+  position: relative;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 5px;
+  background: #fff;
+}
+
+.image-item.is-main {
+  border-color: #67c23a;
+  background: #f0f9ff;
+}
+
+.image-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
   justify-content: center;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #999;
 }
 
-.price-info {
-  font-size: 12px;
-}
-
-.cost-price {
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
   color: #909399;
-  margin-bottom: 2px;
+  font-size: 14px;
 }
 
-.selling-price {
-  color: #e6a23c;
-  font-weight: bold;
+.image-actions .el-button {
+  padding: 2px 6px;
+  font-size: 12px;
+  min-height: auto;
+  align-items: center;
 }
 
-.pagination-wrapper {
+.pagination-container {
   display: flex;
   justify-content: center;
   margin-top: 20px;
 }
 
-.dialog-footer {
-  text-align: right;
+/* TreeSelect层级样式优化 */
+:deep(.el-tree-select .el-tree-node__content) {
+  padding-left: calc(20px * var(--level, 0)) !important;
+}
+
+:deep(.el-tree-select .el-tree-node[data-level="1"] .el-tree-node__content) {
+  font-weight: 600;
+  color: #409EFF;
+}
+
+:deep(.el-tree-select .el-tree-node[data-level="2"] .el-tree-node__content) {
+  font-weight: 500;
+  color: #606266;
+  padding-left: 20px !important;
+}
+
+:deep(.el-tree-select .el-tree-node[data-level="3"] .el-tree-node__content) {
+  color: #909399;
+  padding-left: 40px !important;
+}
+
+:deep(.el-tree-select .el-tree-node .el-tree-node__expand-icon) {
+  color: #409EFF;
 }
 </style> 

@@ -3,6 +3,7 @@ package com.example.vliascrm.service.impl;
 import com.example.vliascrm.entity.ProdImage;
 import com.example.vliascrm.repository.ProdImageRepository;
 import com.example.vliascrm.service.ProdImageService;
+import com.example.vliascrm.service.ProdGoodsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,9 @@ public class ProdImageServiceImpl implements ProdImageService {
 
     @Autowired
     private ProdImageRepository prodImageRepository;
+
+    @Autowired
+    private ProdGoodsService prodGoodsService;
 
     @Override
     public Optional<ProdImage> findById(Long id) {
@@ -84,11 +88,14 @@ public class ProdImageServiceImpl implements ProdImageService {
         if (imageOpt.isPresent()) {
             ProdImage image = imageOpt.get();
             
-            // 先取消该商品的所有主图状态
-            clearMainImageByGoodsId(image.getGoodsId());
+            // 先取消该商品的所有主图状态（但不清除商品表的main_image字段）
+            prodImageRepository.clearMainImageByGoodsId(image.getGoodsId());
             
             // 设置当前图片为主图
             prodImageRepository.setAsMainImage(id);
+            
+            // 同时更新商品表的main_image字段
+            prodGoodsService.updateMainImage(image.getGoodsId(), image.getImageUrl());
         }
     }
 
@@ -96,6 +103,9 @@ public class ProdImageServiceImpl implements ProdImageService {
     @Transactional
     public void clearMainImageByGoodsId(Long goodsId) {
         prodImageRepository.clearMainImageByGoodsId(goodsId);
+        
+        // 同时清除商品表的main_image字段
+        prodGoodsService.updateMainImage(goodsId, null);
     }
 
     @Override

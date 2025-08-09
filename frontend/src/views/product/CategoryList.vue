@@ -121,19 +121,7 @@
           prop="categoryName"
           label="分类名称"
           min-width="200"
-        >
-          <template #default="{ row }">
-            <div class="category-name">
-              <el-image
-                v-if="row.image"
-                :src="row.image"
-                fit="cover"
-                style="width: 24px; height: 24px; border-radius: 4px; margin-right: 8px;"
-              />
-              <span>{{ row.categoryName }}</span>
-            </div>
-          </template>
-        </el-table-column>
+        />
         <el-table-column
           prop="level"
           label="层级"
@@ -176,52 +164,43 @@
           width="180"
         />
         <el-table-column 
-          v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.CREATE) || hasPermission(PERMISSIONS.GOODS.CATEGORY.EDIT) || hasPermission(PERMISSIONS.GOODS.CATEGORY.DELETE)"
           label="操作" 
-          width="320" 
+          width="280" 
           fixed="right"
         >
           <template #default="{ row }">
+            <div class="action-buttons">
             <el-button 
               v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.CREATE)"
               type="primary" 
-              text 
+                size="small"
+                class="action-btn add-btn"
               @click="handleAddChild(row)"
             >
+                <el-icon><Plus /></el-icon>
               添加子级
             </el-button>
             <el-button 
               v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.EDIT)"
               type="primary" 
-              text 
+                size="small"
+                class="action-btn edit-btn"
               @click="handleEdit(row)"
             >
+                <el-icon><Edit /></el-icon>
               编辑
-            </el-button>
-            <el-button 
-              v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.EDIT)"
-              :type="row.status === 1 ? 'warning' : 'success'" 
-              text 
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === 1 ? '禁用' : '启用' }}
-            </el-button>
-            <el-button 
-              v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.EDIT)"
-              :type="row.isShow === 1 ? 'info' : 'success'" 
-              text 
-              @click="handleToggleShow(row)"
-            >
-              {{ row.isShow === 1 ? '隐藏' : '显示' }}
             </el-button>
             <el-button 
               v-if="hasPermission(PERMISSIONS.GOODS.CATEGORY.DELETE)"
               type="danger" 
-              text 
+                size="small"
+                class="action-btn delete-btn"
               @click="handleDelete(row)"
             >
+                <el-icon><Delete /></el-icon>
               删除
             </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -263,15 +242,7 @@
             placeholder="请输入分类名称"
           />
         </el-form-item>
-        <el-form-item
-          label="分类图片"
-          prop="image"
-        >
-          <el-input
-            v-model="formData.image"
-            placeholder="请输入图片URL"
-          />
-        </el-form-item>
+
         <el-form-item
           label="排序"
           prop="sort"
@@ -341,16 +312,13 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Sort } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Sort, Edit, Delete } from '@element-plus/icons-vue'
 import {
   getCategoryTree,
+  getAdminCategoryTree,
   createCategory,
   updateCategory,
-  deleteCategory,
-  enableCategory,
-  disableCategory,
-  showCategory,
-  hideCategory
+  deleteCategory
 } from '@/api/category'
 import { formatDateTime } from '@/utils/format'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
@@ -379,7 +347,6 @@ const formData = reactive({
   id: null,
   parentId: null,
   categoryName: '',
-  image: '',
   sort: 0,
   status: 1,
   isShow: 1,
@@ -400,7 +367,7 @@ const formRules = {
 const loadCategoryList = async () => {
   loading.value = true
   try {
-    const response = await getCategoryTree()
+    const response = await getAdminCategoryTree()
     if (response.success) {
       categoryList.value = response.data
       // 构建树选择器数据（去除当前编辑项及其子项）
@@ -471,12 +438,16 @@ const handleExpandAll = () => {
 
 const handleAdd = () => {
   resetFormData()
+  // 更新树选择器数据，确保显示正确的分类名称
+  categoryTreeData.value = buildTreeSelectData(categoryList.value)
   dialogVisible.value = true
 }
 
 const handleAddChild = (row) => {
   resetFormData()
   formData.parentId = row.id
+  // 更新树选择器数据，确保显示正确的分类名称
+  categoryTreeData.value = buildTreeSelectData(categoryList.value)
   dialogVisible.value = true
 }
 
@@ -513,45 +484,7 @@ const handleDelete = (row) => {
   })
 }
 
-const handleToggleStatus = async (row) => {
-  try {
-    const action = row.status === 1 ? '禁用' : '启用'
-    await ElMessageBox.confirm(`确定要${action}分类"${row.categoryName}"吗？`, `确认${action}`)
-    
-    const response = row.status === 1 
-      ? await disableCategory(row.id)
-      : await enableCategory(row.id)
-      
-    if (response.success) {
-      ElMessage.success(`${action}成功`)
-      loadCategoryList()
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('操作失败')
-    }
-  }
-}
 
-const handleToggleShow = async (row) => {
-  try {
-    const action = row.isShow === 1 ? '隐藏' : '显示'
-    await ElMessageBox.confirm(`确定要${action}分类"${row.categoryName}"吗？`, `确认${action}`)
-    
-    const response = row.isShow === 1 
-      ? await hideCategory(row.id)
-      : await showCategory(row.id)
-      
-    if (response.success) {
-      ElMessage.success(`${action}成功`)
-      loadCategoryList()
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('操作失败')
-    }
-  }
-}
 
 const handleSubmit = async () => {
   try {
@@ -612,5 +545,64 @@ onMounted(() => {
 
 .dialog-footer {
   text-align: right;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn .el-icon {
+  margin-right: 4px;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+  border-color: #67c23a;
+  color: white;
+}
+
+.add-btn:hover {
+  background: linear-gradient(135deg, #529b2e 0%, #67c23a 100%);
+  border-color: #529b2e;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  border-color: #409eff;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #337ecc 0%, #409eff 100%);
+  border-color: #337ecc;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%);
+  border-color: #f56c6c;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #dd6161 0%, #f56c6c 100%);
+  border-color: #dd6161;
 }
 </style> 

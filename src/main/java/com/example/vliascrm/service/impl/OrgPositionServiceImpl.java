@@ -157,11 +157,13 @@ public  class OrgPositionServiceImpl implements OrgPositionService {
         // 获取所有组织
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 获取所有部门
         List<OrgDepartment> departments = departmentRepository.findAll();
         Map<Long, String> deptNameMap = departments.stream()
+                .filter(dept -> dept.getDeptName() != null) // 过滤null值
                 .collect(Collectors.toMap(OrgDepartment::getId, OrgDepartment::getDeptName));
         
         // 转换为DTO
@@ -206,11 +208,13 @@ public  class OrgPositionServiceImpl implements OrgPositionService {
         // 获取所有组织
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 获取所有部门
         List<OrgDepartment> departments = departmentRepository.findAll();
         Map<Long, String> deptNameMap = departments.stream()
+                .filter(dept -> dept.getDeptName() != null) // 过滤null值
                 .collect(Collectors.toMap(OrgDepartment::getId, OrgDepartment::getDeptName));
         
         // 转换为DTO
@@ -240,11 +244,13 @@ public  class OrgPositionServiceImpl implements OrgPositionService {
         // 获取所有组织
         List<SysOrganization> organizations = organizationRepository.findAll();
         Map<Long, String> orgNameMap = organizations.stream()
+                .filter(org -> org.getOrgName() != null) // 过滤null值
                 .collect(Collectors.toMap(SysOrganization::getId, SysOrganization::getOrgName));
         
         // 获取所有部门
         List<OrgDepartment> departments = departmentRepository.findAll();
         Map<Long, String> deptNameMap = departments.stream()
+                .filter(dept -> dept.getDeptName() != null) // 过滤null值
                 .collect(Collectors.toMap(OrgDepartment::getId, OrgDepartment::getDeptName));
         
         // 转换为DTO

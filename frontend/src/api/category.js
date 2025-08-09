@@ -94,6 +94,17 @@ export function getCategoryTree() {
 }
 
 /**
+ * 构建管理后台分类树（包括禁用状态）
+ * @returns {Promise}
+ */
+export function getAdminCategoryTree() {
+  return request({
+    url: '/api/prod/categories/admin-tree',
+    method: 'get'
+  })
+}
+
+/**
  * 创建分类
  * @param {Object} data - 分类数据
  * @returns {Promise}

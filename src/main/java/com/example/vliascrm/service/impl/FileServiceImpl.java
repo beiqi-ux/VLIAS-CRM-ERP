@@ -31,6 +31,9 @@ public class FileServiceImpl implements FileService {
 
     @Value("${server.port}")
     private String serverPort;
+    
+    @Value("${app.file.base-url:}")
+    private String baseUrl;
 
     /**
      * 上传文件
@@ -73,8 +76,11 @@ public class FileServiceImpl implements FileService {
             
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             
-            // 返回文件的访问URL（相对路径）
-            String fileUrl = "/uploads/" + subDir + "/" + datePath + "/" + newFilename;
+            // 返回文件的访问URL
+            String relativePath = "/uploads/" + subDir + "/" + datePath + "/" + newFilename;
+            String fileUrl = (baseUrl != null && !baseUrl.isEmpty()) 
+                ? baseUrl + relativePath 
+                : relativePath;
             logger.info("文件上传成功, URL: {}", fileUrl);
             
             return fileUrl;

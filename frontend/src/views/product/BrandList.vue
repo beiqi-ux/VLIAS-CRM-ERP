@@ -183,34 +183,32 @@
         <el-table-column 
           v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT) || hasPermission(PERMISSIONS.GOODS.BRAND.DELETE)"
           label="操作" 
-          width="220" 
+          width="180" 
           fixed="right"
         >
           <template #default="{ row }">
+            <div class="action-buttons">
             <el-button 
               v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT)"
               type="primary" 
-              text 
+                size="small"
+                class="action-btn edit-btn"
               @click="handleEdit(row)"
             >
+                <el-icon><Edit /></el-icon>
               编辑
-            </el-button>
-            <el-button 
-              v-if="hasPermission(PERMISSIONS.GOODS.BRAND.EDIT)"
-              :type="row.status === 1 ? 'warning' : 'success'" 
-              text 
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
             <el-button 
               v-if="hasPermission(PERMISSIONS.GOODS.BRAND.DELETE)"
               type="danger" 
-              text 
+                size="small"
+                class="action-btn delete-btn"
               @click="handleDelete(row)"
             >
+                <el-icon><Delete /></el-icon>
               删除
             </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -255,20 +253,33 @@
           label="品牌Logo"
           prop="brandLogo"
         >
-          <el-input
-            v-model="formData.brandLogo"
-            placeholder="请输入Logo图片URL"
-          />
-          <div
-            v-if="formData.brandLogo"
-            class="logo-preview"
+          <el-upload
+            class="logo-uploader"
+            :action="uploadAction"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleLogoSuccess"
+            :on-error="handleLogoError"
+            :before-upload="beforeLogoUpload"
+            accept="image/jpeg,image/jpg,image/png,image/gif"
           >
+            <div v-if="formData.brandLogo" class="logo-preview">
             <el-image 
               :src="formData.brandLogo" 
-              style="width: 100px; height: 60px; border-radius: 4px; margin-top: 8px;"
+                style="width: 120px; height: 80px; border-radius: 8px;"
               fit="cover"
             />
+              <div class="logo-overlay">
+                <el-icon><Picture /></el-icon>
+                <span>更换图片</span>
+              </div>
+            </div>
+            <div v-else class="logo-upload-placeholder">
+              <el-icon class="upload-icon"><Upload /></el-icon>
+              <div class="upload-text">点击上传Logo</div>
+              <div class="upload-hint">支持 JPG、PNG、GIF 格式，大小不超过2MB</div>
           </div>
+          </el-upload>
         </el-form-item>
         <el-form-item
           label="官网地址"
@@ -335,15 +346,13 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Delete, Edit, Upload, Picture } from '@element-plus/icons-vue'
 import {
   getBrandList,
   createBrand,
   updateBrand,
   deleteBrand,
-  batchDeleteBrands,
-  enableBrand,
-  disableBrand
+  batchDeleteBrands
 } from '@/api/brand'
 import { formatDateTime } from '@/utils/format'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
@@ -381,6 +390,12 @@ const formData = reactive({
   sort: 0,
   status: 1,
   description: ''
+})
+
+// 上传配置
+const uploadAction = ref('/api/files/upload') // 后端文件上传接口
+const uploadHeaders = ref({
+  'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : ''
 })
 
 // 表单验证规则
@@ -511,25 +526,7 @@ const handleBatchDelete = () => {
   })
 }
 
-const handleToggleStatus = async (row) => {
-  try {
-    const action = row.status === 1 ? '禁用' : '启用'
-    await ElMessageBox.confirm(`确定要${action}品牌"${row.brandName}"吗？`, `确认${action}`)
-    
-    const response = row.status === 1 
-      ? await disableBrand(row.id)
-      : await enableBrand(row.id)
-      
-    if (response.success) {
-      ElMessage.success(`${action}成功`)
-      loadBrandList()
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('操作失败')
-    }
-  }
-}
+
 
 const handleSubmit = async () => {
   try {
@@ -552,6 +549,35 @@ const handleSubmit = async () => {
   } finally {
     submitLoading.value = false
   }
+}
+
+// 图片上传相关方法
+const beforeLogoUpload = (file) => {
+  const isJPGorPNG = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(file.type)
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isJPGorPNG) {
+    ElMessage.error('Logo图片只能是 JPG、PNG、GIF 格式!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('Logo图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+const handleLogoSuccess = (response) => {
+  if (response.success) {
+    formData.brandLogo = response.data.url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error(response.message || '图片上传失败')
+  }
+}
+
+const handleLogoError = () => {
+  ElMessage.error('图片上传失败，请稍后重试')
 }
 
 const resetFormData = () => {
@@ -589,10 +615,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #999;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #909399;
+  border: 1px solid #e4e7ed;
+  font-weight: 500;
 }
 
 .text-gray {
@@ -611,5 +639,160 @@ onMounted(() => {
 
 .dialog-footer {
   text-align: right;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn .el-icon {
+  margin-right: 4px;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  border-color: #409eff;
+  color: white;
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #337ecc 0%, #409eff 100%);
+  border-color: #337ecc;
+}
+
+.status-btn.el-button--success {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+  border-color: #67c23a;
+  color: white;
+}
+
+.status-btn.el-button--success:hover {
+  background: linear-gradient(135deg, #529b2e 0%, #67c23a 100%);
+  border-color: #529b2e;
+}
+
+.status-btn.el-button--warning {
+  background: linear-gradient(135deg, #e6a23c 0%, #ebb563 100%);
+  border-color: #e6a23c;
+  color: white;
+}
+
+.status-btn.el-button--warning:hover {
+  background: linear-gradient(135deg, #b88230 0%, #e6a23c 100%);
+  border-color: #b88230;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%);
+  border-color: #f56c6c;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #dd6161 0%, #f56c6c 100%);
+  border-color: #dd6161;
+}
+
+/* Logo上传组件样式 */
+.logo-uploader {
+  width: 100%;
+}
+
+.logo-uploader .el-upload {
+  position: relative;
+  cursor: pointer;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.logo-uploader .el-upload:hover {
+  border-color: #409eff;
+}
+
+.logo-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  min-height: 120px;
+  background-color: #fafafa;
+  transition: background-color 0.3s ease;
+}
+
+.logo-upload-placeholder:hover {
+  background-color: #f0f9ff;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #8c939d;
+  margin-bottom: 8px;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #909399;
+}
+
+.logo-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.logo-preview:hover .logo-overlay {
+  opacity: 1;
+}
+
+.logo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+  font-size: 12px;
+}
+
+.logo-overlay .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
 }
 </style> 

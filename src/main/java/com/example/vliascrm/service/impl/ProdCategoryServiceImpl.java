@@ -68,7 +68,7 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
             
             // 设置层级
             if (category.getParentId() == null || category.getParentId() == 0) {
-                category.setParentId(0L);
+                category.setParentId(null); // 保持为null，表示根分类
                 category.setLevel(1);
             } else {
                 // 根据父分类设置层级
@@ -88,6 +88,21 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
     public ProdCategory update(ProdCategory category) {
         // 设置更新时间
         category.setUpdateTime(LocalDateTime.now());
+        
+        // 重新计算层级（当父分类发生变化时）
+        if (category.getParentId() == null || category.getParentId() == 0) {
+            category.setParentId(null); // 保持为null，表示根分类
+            category.setLevel(1);
+        } else {
+            // 根据父分类设置层级
+            Optional<ProdCategory> parentOpt = findById(category.getParentId());
+            if (parentOpt.isPresent()) {
+                category.setLevel(parentOpt.get().getLevel() + 1);
+            } else {
+                category.setLevel(1);
+            }
+        }
+        
         return prodCategoryRepository.save(category);
     }
 
@@ -186,6 +201,11 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
     }
 
     @Override
+    public List<ProdCategory> findAllByParentId(Long parentId) {
+        return prodCategoryRepository.findByParentIdAndIsDeletedOrderBySortAsc(parentId, false);
+    }
+
+    @Override
     public List<ProdCategory> buildCategoryTree() {
         // 获取所有根分类
         List<ProdCategory> rootCategories = findRootCategories();
@@ -193,6 +213,19 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
         // 为每个根分类构建子树
         for (ProdCategory root : rootCategories) {
             buildCategoryChildren(root);
+        }
+        
+        return rootCategories;
+    }
+
+    @Override
+    public List<ProdCategory> buildAdminCategoryTree() {
+        // 获取所有根分类（包括禁用状态）
+        List<ProdCategory> rootCategories = prodCategoryRepository.findAllRootCategories();
+        
+        // 为每个根分类构建子树
+        for (ProdCategory root : rootCategories) {
+            buildAdminCategoryChildren(root);
         }
         
         return rootCategories;
@@ -208,6 +241,19 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
         
         for (ProdCategory child : children) {
             buildCategoryChildren(child);
+        }
+    }
+
+    /**
+     * 递归构建管理后台分类子树（包括禁用状态）
+     * @param category 分类节点
+     */
+    private void buildAdminCategoryChildren(ProdCategory category) {
+        List<ProdCategory> children = findAllByParentId(category.getId());
+        category.setChildren(children);
+        
+        for (ProdCategory child : children) {
+            buildAdminCategoryChildren(child);
         }
     }
 } 

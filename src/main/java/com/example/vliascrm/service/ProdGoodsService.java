@@ -172,4 +172,11 @@ public interface ProdGoodsService {
      * @return 商品数量
      */
     long countByBrandId(Long brandId);
+
+    /**
+     * 更新商品主图
+     * @param goodsId 商品ID
+     * @param mainImageUrl 主图URL
+     */
+    void updateMainImage(Long goodsId, String mainImageUrl);
 } 

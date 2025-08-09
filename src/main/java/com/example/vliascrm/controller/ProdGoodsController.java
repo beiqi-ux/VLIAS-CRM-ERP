@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import com.example.vliascrm.entity.SysUser;
 
 /**
  * 商品管理控制器
@@ -273,7 +275,7 @@ public class ProdGoodsController {
      */
     @PutMapping("/{id}/audit")
     @PreAuthorize("hasAuthority('product-info-management:edit')")
-    public ApiResponse<String> auditGoods(@PathVariable Long id, @RequestBody Map<String, Object> auditData) {
+    public ApiResponse<String> auditGoods(@PathVariable Long id, @RequestBody Map<String, Object> auditData, Authentication authentication) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
         if (!goods.isPresent()) {
             return ApiResponse.failure("商品不存在");
@@ -281,7 +283,21 @@ public class ProdGoodsController {
         
         Integer auditStatus = (Integer) auditData.get("auditStatus");
         String auditRemark = (String) auditData.get("auditRemark");
-        Long auditUserId = Long.valueOf(auditData.get("auditUserId").toString());
+        
+        // 从安全上下文获取当前用户ID，确保安全性
+        Long auditUserId = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof SysUser) {
+                SysUser user = (SysUser) principal;
+                auditUserId = user.getId();
+            }
+        }
+        
+        // 如果无法获取用户ID，返回错误
+        if (auditUserId == null) {
+            return ApiResponse.failure("无法获取当前用户信息");
+        }
         
         prodGoodsService.auditGoods(id, auditStatus, auditRemark, auditUserId);
         return ApiResponse.success("审核完成");

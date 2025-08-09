@@ -140,4 +140,17 @@ public interface ProdCategoryService {
      * @return 分类树列表
      */
     List<ProdCategory> buildCategoryTree();
+
+    /**
+     * 构建管理后台分类树（包括禁用状态）
+     * @return 分类树列表
+     */
+    List<ProdCategory> buildAdminCategoryTree();
+
+    /**
+     * 根据父级ID查询所有子分类（包括禁用状态）
+     * @param parentId 父级ID
+     * @return 子分类列表
+     */
+    List<ProdCategory> findAllByParentId(Long parentId);
 } 

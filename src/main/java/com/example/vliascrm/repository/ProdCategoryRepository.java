@@ -45,14 +45,30 @@ public interface ProdCategoryRepository extends JpaRepository<ProdCategory, Long
      * 查询根分类（一级分类）
      * @return 根分类列表
      */
-    @Query("SELECT c FROM ProdCategory c WHERE c.parentId = 0 AND c.status = 1 AND c.isDeleted = false ORDER BY c.sort ASC")
+    @Query("SELECT c FROM ProdCategory c WHERE (c.parentId = 0 OR c.parentId IS NULL) AND c.status = 1 AND c.isDeleted = false ORDER BY c.sort ASC")
     List<ProdCategory> findRootCategories();
+
+    /**
+     * 查询所有根分类（包括禁用状态，用于管理页面）
+     * @return 根分类列表
+     */
+    @Query("SELECT c FROM ProdCategory c WHERE (c.parentId = 0 OR c.parentId IS NULL) AND c.isDeleted = false ORDER BY c.sort ASC")
+    List<ProdCategory> findAllRootCategories();
+
+    /**
+     * 根据父级ID查询所有子分类（包括禁用状态，用于管理页面）
+     * @param parentId 父级ID
+     * @return 子分类列表
+     */
+    @Query("SELECT c FROM ProdCategory c WHERE c.parentId = ?1 AND c.isDeleted = ?2 ORDER BY c.sort ASC")
+    List<ProdCategory> findByParentIdAndIsDeletedOrderBySortAsc(Long parentId, Boolean isDeleted);
 
     /**
      * 统计父级下的子分类数量
      * @param parentId 父级ID
      * @return 子分类数量
      */
+    @Query("SELECT COUNT(c) FROM ProdCategory c WHERE c.parentId = ?1 AND c.isDeleted = ?2")
     long countByParentIdAndIsDeleted(Long parentId, Boolean isDeleted);
 
     /**
@@ -61,6 +77,8 @@ public interface ProdCategoryRepository extends JpaRepository<ProdCategory, Long
      * @param parentId 父级ID
      * @return 是否存在
      */
+    @Query("SELECT COUNT(c) > 0 FROM ProdCategory c WHERE c.categoryName = ?1 AND " +
+           "((?2 IS NULL AND c.parentId IS NULL) OR c.parentId = ?2) AND c.isDeleted = ?3")
     boolean existsByCategoryNameAndParentIdAndIsDeleted(String categoryName, Long parentId, Boolean isDeleted);
 
     /**

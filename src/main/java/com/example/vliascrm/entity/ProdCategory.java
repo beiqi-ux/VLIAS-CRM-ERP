@@ -24,16 +24,22 @@ public class ProdCategory extends BaseEntity {
     private String categoryName;
 
     /**
-     * 父分类ID，0表示顶级分类
+     * 分类描述
+     */
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    /**
+     * 父分类ID，null表示顶级分类
      */
     @Column(name = "parent_id")
-    private Long parentId = 0L;
+    private Long parentId;
 
     /**
      * 层级 1-一级 2-二级 3-三级
      */
     @Column(name = "level")
-    private Integer level = 1;
+    private Integer level;
 
     /**
      * 图标

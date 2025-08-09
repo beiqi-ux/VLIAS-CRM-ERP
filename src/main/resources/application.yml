@@ -70,5 +70,6 @@ app:
     allowed-headers: "*"
   file:
     upload-dir: uploads
+    base-url: # 文件访问基础URL，生产环境应设置为实际域名
 
  
