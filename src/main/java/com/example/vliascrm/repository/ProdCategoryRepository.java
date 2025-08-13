@@ -56,11 +56,11 @@ public interface ProdCategoryRepository extends JpaRepository<ProdCategory, Long
     List<ProdCategory> findAllRootCategories();
 
     /**
-     * 根据父级ID查询所有子分类（包括禁用状态，用于管理页面）
+     * 根据父级ID和删除状态查询子分类（按排序字段升序）
      * @param parentId 父级ID
+     * @param isDeleted 是否删除
      * @return 子分类列表
      */
-    @Query("SELECT c FROM ProdCategory c WHERE c.parentId = ?1 AND c.isDeleted = ?2 ORDER BY c.sort ASC")
     List<ProdCategory> findByParentIdAndIsDeletedOrderBySortAsc(Long parentId, Boolean isDeleted);
 
     /**

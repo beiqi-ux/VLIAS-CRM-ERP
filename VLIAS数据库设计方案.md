@@ -1,4 +1,4 @@
-    # VLIASCRM系统数据库表设计（完整版）
+        # VLIASCRM系统数据库表设计（完整版）
 
 ## 目录与功能模块说明
 
@@ -6,7 +6,7 @@
 
 1. **系统基础表** - 提供系统用户、角色、权限等基础功能支持
 2. **客户关系管理(CRM)表** - 管理客户信息、跟进记录和销售线索
-3. **商品管理表** - 维护商品信息、分类、品牌和SKU管理
+3. **商品管理表** - 维护商品信息、分类、品牌、规格分类和SKU管理
 4. **库存管理表** - 支持库存记录、出入库、盘点和调拨功能
 5. **订单管理表** - 处理订单创建、支付、物流和售后流程
 6. **采购管理表** - 管理供应商、采购订单和入库业务
@@ -420,6 +420,8 @@ CREATE TABLE crm_public_pool (
 
 ## 三、商品管理表
 
+商品管理模块是电商系统的核心部分，包含商品基础信息、分类体系、品牌管理、规格分类、规格管理、SKU管理、属性管理、图片管理和评价管理等功能。其中规格分类表用于对商品规格进行分类管理，如尺寸、颜色、材质等不同类型的规格。
+
 ### 1. 商品表(prod_goods)
 ```sql
 CREATE TABLE prod_goods (
@@ -507,23 +509,64 @@ CREATE TABLE prod_brand (
 ) COMMENT='商品品牌表';
 ```
 
-### 4. 商品规格表(prod_specification)
+### 4. 规格分类表(prod_specification_category)
 ```sql
-CREATE TABLE prod_specification (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '规格ID',
-    goods_id BIGINT NOT NULL COMMENT '商品ID',
-    spec_name VARCHAR(50) NOT NULL COMMENT '规格名称',
-    spec_values TEXT COMMENT '规格值JSON',
+CREATE TABLE prod_specification_category (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '分类ID',
+    category_code VARCHAR(50) NOT NULL COMMENT '分类编码',
+    category_name VARCHAR(50) NOT NULL COMMENT '分类名称',
+    description VARCHAR(200) COMMENT '分类描述',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1-启用',
     create_time DATETIME NOT NULL COMMENT '创建时间',
     update_time DATETIME COMMENT '更新时间',
-    create_by BIGINT COMMENT '创建人',
-    update_by BIGINT COMMENT '更新人',
+    create_by VARCHAR(255) COMMENT '创建人',
+    update_by VARCHAR(255) COMMENT '更新人',
     is_deleted TINYINT DEFAULT 0 COMMENT '是否删除 0-否 1-是',
-    KEY idx_goods_id (goods_id)
-) COMMENT='商品规格表';
+    UNIQUE KEY uk_category_code (category_code)
+) COMMENT='规格分类表';
 ```
 
-### 5. 商品SKU表(prod_sku)
+### 5. 规格值表(prod_specification_value)
+```sql
+CREATE TABLE prod_specification_value (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '规格值ID',
+    category_id BIGINT NOT NULL COMMENT '规格分类ID',
+    value_code VARCHAR(50) NOT NULL COMMENT '规格值编码',
+    value_name VARCHAR(50) NOT NULL COMMENT '规格值名称',
+    value_desc VARCHAR(200) COMMENT '规格值描述',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    status TINYINT DEFAULT 1 COMMENT '状态 0-禁用 1-启用',
+    create_time DATETIME NOT NULL COMMENT '创建时间',
+    update_time DATETIME COMMENT '更新时间',
+    create_by VARCHAR(255) COMMENT '创建人',
+    update_by VARCHAR(255) COMMENT '更新人',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除 0-否 1-是',
+    KEY idx_category_id (category_id),
+    UNIQUE KEY uk_category_value (category_id, value_code)
+) COMMENT='规格值表';
+```
+
+### 6. 商品规格关联表(prod_goods_specification)
+```sql
+CREATE TABLE prod_goods_specification (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
+    goods_id BIGINT NOT NULL COMMENT '商品ID',
+    category_id BIGINT NOT NULL COMMENT '规格分类ID',
+    value_id BIGINT NOT NULL COMMENT '规格值ID',
+    create_time DATETIME NOT NULL COMMENT '创建时间',
+    update_time DATETIME COMMENT '更新时间',
+    create_by VARCHAR(255) COMMENT '创建人',
+    update_by VARCHAR(255) COMMENT '更新人',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除 0-否 1-是',
+    KEY idx_goods_id (goods_id),
+    KEY idx_category_id (category_id),
+    KEY idx_value_id (value_id),
+    UNIQUE KEY uk_goods_category_value (goods_id, category_id, value_id)
+) COMMENT='商品规格关联表';
+```
+
+### 7. 商品SKU表(prod_sku)
 ```sql
 CREATE TABLE prod_sku (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'SKU ID',
@@ -554,7 +597,7 @@ CREATE TABLE prod_sku (
 ) COMMENT='商品SKU表';
 ```
 
-### 6. 商品属性表(prod_attribute)
+### 8. 商品属性表(prod_attribute)
 ```sql
 CREATE TABLE prod_attribute (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '属性ID',
@@ -571,7 +614,7 @@ CREATE TABLE prod_attribute (
 ) COMMENT='商品属性表';
 ```
 
-### 7. 商品图片表(prod_image)
+### 9. 商品图片表(prod_image)
 ```sql
 CREATE TABLE prod_image (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '图片ID',
@@ -586,7 +629,7 @@ CREATE TABLE prod_image (
 ) COMMENT='商品图片表';
 ```
 
-### 8. 商品评价表(prod_review)
+### 10. 商品评价表(prod_review)
 ```sql
 CREATE TABLE prod_review (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '评价ID',

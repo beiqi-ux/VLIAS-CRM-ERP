@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as apiLogin, getUserInfo, logout as apiLogout } from '@/api/auth'
 import { ElMessage } from 'element-plus'
+import { securityLog } from '@/utils/security'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -43,7 +44,7 @@ export const useUserStore = defineStore('user', () => {
   // 更新用户信息缓存时间戳
   function updateCacheTimestamp() {
     userInfoCache.value.timestamp = Date.now()
-    console.log(`用户信息缓存更新，将在 ${userInfoCache.value.ttl / 1000} 秒后过期`)
+    securityLog('用户store', '缓存更新', { ttl: userInfoCache.value.ttl / 1000 })
   }
   
   // 设置token
@@ -64,7 +65,7 @@ export const useUserStore = defineStore('user', () => {
     // 清除缓存时间戳
     userInfoCache.value.timestamp = 0
     userInfoCache.value.isAutoRefreshing = false
-    console.log('已清除用户信息缓存')
+    securityLog('用户store', '已清除用户信息缓存')
   }
   
   // 设置用户信息
@@ -94,36 +95,36 @@ export const useUserStore = defineStore('user', () => {
     
     // 防止重复验证
     if (isValidatingToken.value) {
-      console.log('正在验证token，跳过重复请求')
+      securityLog('用户store', '跳过重复token验证请求')
       return true
     }
     
     // 如果用户信息缓存仍然有效，直接返回true
     if (isUserInfoCacheValid()) {
-      console.log(`用户信息缓存有效，剩余时间: ${Math.round(getCacheRemainingTime() / 1000)}秒`)
+      securityLog('用户store', '用户信息缓存有效', { remainingTime: Math.round(getCacheRemainingTime() / 1000) })
       return true
     }
     
     isValidatingToken.value = true
     
     try {
-      console.log('开始验证token...')
+      securityLog('用户store', '开始验证token')
       
       // 尝试获取用户信息来验证token
       const response = await getUserInfo()
       if (response && response.success) {
         setUserInfo(response.data)
-        console.log('Token验证成功')
+        securityLog('用户store', 'Token验证成功')
         return true
       } else {
         // token无效，清除本地存储
-        console.log('Token验证失败，清除认证信息')
+        securityLog('用户store', 'Token验证失败，清除认证信息')
         clearToken()
         return false
       }
     } catch (error) {
       // 请求失败，可能是token过期或网络问题
-      console.log('Token验证请求失败:', error.message)
+      securityLog('用户store', 'Token验证请求失败', { error: error.message })
       clearToken()
       return false
     } finally {
@@ -154,7 +155,7 @@ export const useUserStore = defineStore('user', () => {
     // 如果不强制刷新且缓存有效，直接返回缓存
     if (!forceRefresh && isUserInfoCacheValid()) {
       const remainingTime = getCacheRemainingTime()
-      console.log(`使用用户信息缓存，剩余时间: ${Math.round(remainingTime / 1000)}秒`)
+              securityLog('用户store', '使用用户信息缓存', { remainingTime: Math.round(remainingTime / 1000) })
       
       // 如果缓存即将过期（少于5分钟），启动后台刷新
       const shouldAutoRefresh = remainingTime < 5 * 60 * 1000 && !userInfoCache.value.isAutoRefreshing
@@ -166,7 +167,7 @@ export const useUserStore = defineStore('user', () => {
         setTimeout(async () => {
           try {
             await fetchUserInfo(true) // 强制刷新
-            console.log('后台自动刷新用户信息完成')
+            securityLog('用户store', '后台自动刷新用户信息完成')
           } catch (error) {
             console.warn('后台自动刷新失败:', error)
           } finally {
@@ -180,7 +181,7 @@ export const useUserStore = defineStore('user', () => {
     
     // 防止重复请求
     if (isFetchingUserInfo.value) {
-      console.log('正在获取用户信息，等待当前请求完成')
+      securityLog('用户store', '正在获取用户信息，等待当前请求完成')
       // 等待当前请求完成，而不是直接返回缓存
       while (isFetchingUserInfo.value) {
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -192,9 +193,9 @@ export const useUserStore = defineStore('user', () => {
     
     try {
       if (forceRefresh) {
-        console.log('强制刷新用户信息...')
+        securityLog('用户store', '强制刷新用户信息')
       } else {
-        console.log('用户store获取用户信息...')
+        securityLog('用户store', '获取用户信息')
       }
       
       // 仅在非后台刷新时重置权限加载状态
@@ -203,11 +204,11 @@ export const useUserStore = defineStore('user', () => {
       }
       
       const response = await getUserInfo()
-      console.log('用户store getUserInfo API响应:', response)
+      securityLog('用户store', 'getUserInfo API调用', { success: !!response?.success })
       
       if (response && response.success) {
         setUserInfo(response.data)
-        console.log('用户store：用户信息设置成功:', response.data)
+        securityLog('用户store', '用户信息设置成功', { userId: response.data?.userId })
         return response
       } else {
         console.error('用户store：API返回失败:', response)
@@ -219,7 +220,7 @@ export const useUserStore = defineStore('user', () => {
       
       // 如果是401错误，说明token已过期
       if (error.response && error.response.status === 401) {
-        console.log('Token已过期，清除认证信息')
+        securityLog('用户store', 'Token已过期，清除认证信息')
         clearToken()
       }
       
@@ -244,7 +245,7 @@ export const useUserStore = defineStore('user', () => {
   // 新增：设置缓存过期时间
   function setCacheTTL(ttl) {
     userInfoCache.value.ttl = ttl
-    console.log(`用户信息缓存过期时间设置为: ${ttl / 1000}秒`)
+    securityLog('用户store', '缓存过期时间设置', { ttl: ttl / 1000 })
   }
   
   // 新增：获取缓存状态
@@ -261,7 +262,7 @@ export const useUserStore = defineStore('user', () => {
   
   // 新增：强制刷新用户信息（便捷方法）
   async function refreshUserInfo() {
-    console.log('手动刷新用户信息')
+    securityLog('用户store', '手动刷新用户信息')
     return await fetchUserInfo(true)
   }
 

@@ -227,6 +227,56 @@
           />
         </el-form-item>
         <el-form-item
+          label="关联商品"
+          prop="goodsId"
+        >
+          <el-select
+            v-model="form.goodsId"
+            placeholder="请选择商品"
+            clearable
+            style="width: 100%"
+            filterable
+            @change="handleGoodsChange"
+          >
+            <el-option
+              v-for="goods in goodsList"
+              :key="goods.id"
+              :label="goods.goodsName"
+              :value="goods.id"
+            />
+          </el-select>
+        </el-form-item>
+        
+        <!-- 规格属性选择区域 -->
+        <el-form-item 
+          v-if="availableSpecs.length > 0"
+          label="规格属性"
+        >
+          <div class="spec-attrs-container">
+            <div 
+              v-for="spec in availableSpecs" 
+              :key="spec.id"
+              class="spec-group"
+            >
+              <label class="spec-label">{{ spec.specificationName }}:</label>
+              <el-select
+                v-model="selectedSpecAttrs[spec.id]"
+                placeholder="请选择"
+                clearable
+                style="width: 200px; margin-left: 10px;"
+              >
+                <el-option
+                  v-for="value in spec.specificationValues"
+                  :key="value.id"
+                  :label="getSpecValueLabel(value)"
+                  :value="value.id"
+                />
+              </el-select>
+            </div>
+          </div>
+        </el-form-item>
+        
+        <el-form-item
           label="SKU编码"
           prop="skuCode"
         >
@@ -289,6 +339,8 @@ import {
   deleteSku,
   batchDeleteSkus
 } from '@/api/sku'
+import { getGoodsList } from '@/api/goods'
+import { getOptimalSpecifications } from '@/api/specification'
 import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 
@@ -300,6 +352,9 @@ const isEdit = ref(false)
 const selectedRows = ref([])
 const skuList = ref([])
 const formRef = ref()
+const goodsList = ref([]) // 商品列表
+const availableSpecs = ref([]) // 可用规格列表
+const selectedSpecAttrs = ref({}) // 选中的规格属性值
 
 // 搜索表单
 const searchForm = reactive({
@@ -322,7 +377,9 @@ const form = reactive({
   skuCode: '',
   sellingPrice: 0,
   stockQty: 0,
-  status: 1
+  status: 1,
+  goodsId: null, // 新增：关联商品ID
+  selectedSpecAttrs: {} // 新增：已选择的规格属性值ID
 })
 
 // 表单验证规则
@@ -365,6 +422,66 @@ async function fetchSkuList() {
   }
 }
 
+// 获取商品列表
+async function fetchGoodsList() {
+  try {
+    const { data } = await getGoodsList({ pageNum: 1, pageSize: 1000 })
+    goodsList.value = data.content || []
+  } catch (error) {
+    console.error('获取商品列表失败:', error)
+    ElMessage.error('获取商品列表失败')
+  }
+}
+
+// 处理商品选择变化
+async function handleGoodsChange(goodsId) {
+  if (!goodsId) {
+    availableSpecs.value = []
+    selectedSpecAttrs.value = {}
+    return
+  }
+  
+  try {
+    // 获取选中商品的分类ID
+    const selectedGoods = goodsList.value.find(g => g.id === goodsId)
+    if (!selectedGoods || !selectedGoods.categoryId) {
+      ElMessage.warning('该商品没有设置分类，无法获取规格数据')
+      return
+    }
+    
+    // 获取最精准的规格数据：优先商品专属规格，其次分类通用规格
+    const { data: specifications } = await getOptimalSpecifications(goodsId, selectedGoods.categoryId)
+    
+    availableSpecs.value = specifications || []
+    selectedSpecAttrs.value = {} // 重置选中的规格属性
+    
+    // 显示获取到的规格信息
+    const goodsSpecificSpecs = specifications.filter(spec => spec.goodsId === goodsId)
+    const categorySpecs = specifications.filter(spec => !spec.goodsId)
+    
+    if (goodsSpecificSpecs.length > 0) {
+      ElMessage.success(`找到 ${goodsSpecificSpecs.length} 个该商品专属规格，${categorySpecs.length} 个分类通用规格`)
+    } else if (categorySpecs.length > 0) {
+      ElMessage.info(`使用 ${categorySpecs.length} 个分类通用规格`)
+    } else {
+      ElMessage.warning('该商品和分类都没有可用规格')
+    }
+    
+  } catch (error) {
+    console.error('获取规格数据失败:', error)
+    ElMessage.error('获取规格数据失败')
+  }
+}
+
+// 获取规格值标签显示
+function getSpecValueLabel(value) {
+  if (value.colorName) return value.colorName
+  if (value.frameWidth) return `${value.frameWidth}mm`
+  if (value.shapeName) return value.shapeName
+  if (value.materialName) return value.materialName
+  return value.valueCode || '未知'
+}
+
 // 搜索
 function handleSearch() {
   pagination.currentPage = 1
@@ -404,7 +521,9 @@ function handleEdit(row) {
     skuCode: row.skuCode,
     sellingPrice: row.sellingPrice,
     stockQty: row.stockQty,
-    status: row.status
+    status: row.status,
+    goodsId: row.goodsId, // 复制关联商品ID
+    selectedSpecAttrs: row.selectedSpecAttrs || {} // 复制已选择的规格属性值
   })
   dialogVisible.value = true
 }
@@ -527,7 +646,9 @@ function resetForm() {
     skuCode: '',
     sellingPrice: 0,
     stockQty: 0,
-    status: 1
+    status: 1,
+    goodsId: null, // 重置关联商品ID
+    selectedSpecAttrs: {} // 重置已选择的规格属性值
   })
   formRef.value?.clearValidate()
 }
@@ -540,6 +661,7 @@ function handleDialogClose() {
 // 组件挂载时获取数据
 onMounted(() => {
   fetchSkuList()
+  fetchGoodsList()
 })
 </script>
 
@@ -602,5 +724,43 @@ onMounted(() => {
 
 :deep(.el-table .el-table__body-wrapper)::-webkit-scrollbar-corner {
   background: #f1f1f1;
+}
+
+.spec-attrs-container {
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 15px;
+  background-color: #fafafa;
+}
+
+.spec-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.spec-group:last-child {
+  margin-bottom: 0;
+}
+
+.spec-label {
+  font-weight: bold;
+  color: #606266;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-form {
+  margin-bottom: 20px;
+}
+
+.mb-3 {
+  margin-bottom: 15px;
 }
 </style> 

@@ -1,6 +1,7 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "prod_sku")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 public class ProdSku extends BaseEntity {
 
     /**

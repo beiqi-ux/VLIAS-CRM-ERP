@@ -223,6 +223,7 @@ const iconMap = {
 }
 import { getCurrentUserMenuTree, getUserMenuTree, getMenuTree } from '@/api/menu'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import { securityLog } from '@/utils/security'
 
 // 路由
 const router = useRouter()
@@ -261,13 +262,13 @@ function toggleSidebar() {
 // 获取用户菜单
 async function fetchUserMenus() {
   try {
-    console.log('获取当前用户菜单')
-    console.log('用户信息:', userInfo.value)
+    securityLog('LayoutView', '获取当前用户菜单')
+    securityLog('LayoutView', '用户信息加载', { userId: userInfo.value?.userId })
     
     const { data } = await getCurrentUserMenuTree()
-    console.log('获取到的菜单数据:', data)
+    securityLog('LayoutView', '菜单数据获取', { menuCount: data?.length })
     userMenus.value = data || []
-    console.log('设置后的菜单数据:', userMenus.value)
+    securityLog('LayoutView', '菜单数据设置', { menuCount: userMenus.value?.length })
     
     // 如果没有菜单数据，显示提示
     if (!data || data.length === 0) {
@@ -342,33 +343,38 @@ function showUserProfile() {
   router.push('/profile')
 }
 
-// 显示调试权限信息
+// 显示调试权限信息（仅开发环境）
 function showDebugInfo() {
+  // 生产环境禁用调试功能
+  if (import.meta.env.PROD) {
+    ElMessage.warning('调试功能仅在开发环境可用')
+    return
+  }
+  
   const debugInfo = {
     用户ID: userInfo.value.userId || userInfo.value.id,
     用户名: userInfo.value.username,
     真实姓名: userInfo.value.realName,
     角色: userInfo.value.roles,
-    权限列表: userInfo.value.permissions,
     权限数量: userInfo.value.permissions ? userInfo.value.permissions.length : 0,
     菜单数量: userMenus.value ? userMenus.value.length : 0
   }
   
-  console.log('=== 权限调试信息 ===')
-  console.log(debugInfo)
-  console.log('完整用户信息:', userInfo.value)
-  console.log('菜单信息:', userMenus.value)
+  // 使用安全日志记录，自动脱敏
+  securityLog('LayoutView', '权限调试信息', debugInfo)
+  securityLog('LayoutView', '完整用户信息获取', { userId: userInfo.value?.userId })
+  securityLog('LayoutView', '菜单信息获取', { menuCount: userMenus.value?.length })
   
   ElMessageBox.alert(`
     <div style="text-align: left;">
       <p><strong>用户:</strong> ${debugInfo.用户名} (${debugInfo.真实姓名})</p>
       <p><strong>角色:</strong> ${JSON.stringify(debugInfo.角色)}</p>
       <p><strong>权限数量:</strong> ${debugInfo.权限数量}</p>
-      <p><strong>权限列表:</strong> ${debugInfo.权限列表 ? debugInfo.权限列表.slice(0, 5).join(', ') + (debugInfo.权限列表.length > 5 ? '...' : '') : '无'}</p>
       <p><strong>菜单数量:</strong> ${debugInfo.菜单数量}</p>
       <p style="color: #909399; font-size: 12px;">详细信息请查看浏览器控制台</p>
+      <p style="color: #f56565; font-size: 12px;">⚠️ 此功能仅在开发环境可用</p>
     </div>
-  `, '权限调试信息', {
+  `, '权限调试信息 (开发环境)', {
     dangerouslyUseHTMLString: true,
     confirmButtonText: '确定'
   })

@@ -41,9 +41,10 @@ public class ProdGoodsController {
     @GetMapping
     @PreAuthorize("hasAuthority('product-info-management:view')")
     public ApiResponse<Page<ProdGoods>> getGoodsList(
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String goodsName,
+            @RequestParam(required = false) String goodsCode,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Integer status,
@@ -53,11 +54,11 @@ public class ProdGoodsController {
         // saleStatus和status是同一个字段，优先使用saleStatus
         Integer finalStatus = saleStatus != null ? saleStatus : status;
         
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by("createTime").descending());
-        Page<ProdGoods> page = prodGoodsService.findByConditions(
-            pageable, goodsName, categoryId, brandId, finalStatus, auditStatus);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createTime").descending());
+        Page<ProdGoods> pageResult = prodGoodsService.findByConditions(
+            pageable, goodsName, goodsCode, categoryId, brandId, finalStatus, auditStatus);
         
-        return ApiResponse.success(page);
+        return ApiResponse.success(pageResult);
     }
 
     /**

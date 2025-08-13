@@ -4,15 +4,18 @@ import com.example.vliascrm.common.ApiResponse;
 import com.example.vliascrm.entity.ProdCategory;
 import com.example.vliascrm.service.ProdCategoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * 商品分类管理控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/prod/categories")
 @RequiredArgsConstructor
@@ -123,7 +126,89 @@ public class ProdCategoryController {
     @PreAuthorize("hasAuthority('product-category-management:view')")
     public ApiResponse<List<ProdCategory>> getAdminCategoryTree() {
         List<ProdCategory> categoryTree = prodCategoryService.buildAdminCategoryTree();
+        
+        // 调试日志：打印树结构
+        log.info("管理后台分类树根节点数量: {}", categoryTree.size());
+        for (ProdCategory root : categoryTree) {
+            logCategoryTree(root, 0);
+        }
+        
+        // 确保每个节点都有children字段
+        ensureChildrenField(categoryTree);
+        
+        // 调试：检查第一个根节点的children字段
+        if (!categoryTree.isEmpty()) {
+            ProdCategory firstRoot = categoryTree.get(0);
+            log.info("第一个根节点 {} 的children字段: {}, 大小: {}", 
+                    firstRoot.getCategoryName(), 
+                    firstRoot.getChildren() != null ? "存在" : "null",
+                    firstRoot.getChildren() != null ? firstRoot.getChildren().size() : "N/A");
+        }
+        
         return ApiResponse.success(categoryTree);
+    }
+    
+    /**
+     * 确保每个分类节点都有children字段，即使为空
+     */
+    private void ensureChildrenField(List<ProdCategory> categories) {
+        if (categories == null) return;
+        
+        for (ProdCategory category : categories) {
+            if (category.getChildren() == null) {
+                category.setChildren(new ArrayList<>());
+            }
+            ensureChildrenField(category.getChildren());
+        }
+    }
+    
+    /**
+     * 递归打印分类树结构（用于调试）
+     */
+    private void logCategoryTree(ProdCategory category, int level) {
+        String indent = "  ".repeat(level);
+        log.info("{}分类: {} (ID: {}, children数量: {})", 
+                indent, category.getCategoryName(), category.getId(), 
+                category.getChildren() != null ? category.getChildren().size() : "null");
+        
+        if (category.getChildren() != null) {
+            for (ProdCategory child : category.getChildren()) {
+                logCategoryTree(child, level + 1);
+            }
+        }
+    }
+
+    /**
+     * 调试分类树构建
+     * @return 分类树
+     */
+    @GetMapping("/debug-tree")
+    @PreAuthorize("hasAuthority('product-category-management:view')")
+    public ApiResponse<List<ProdCategory>> debugCategoryTree() {
+        // 获取根分类
+        List<ProdCategory> rootCategories = prodCategoryService.findRootCategories();
+        System.out.println("Root categories count: " + rootCategories.size());
+        
+        // 为每个根分类手动构建子树
+        for (ProdCategory root : rootCategories) {
+            System.out.println("Processing root category: " + root.getCategoryName() + " (ID: " + root.getId() + ")");
+            
+            // 查找子分类
+            List<ProdCategory> children = prodCategoryService.findByParentId(root.getId());
+            System.out.println("Found " + children.size() + " children for category " + root.getId());
+            
+            root.setChildren(children);
+            
+            // 为子分类查找孙分类
+            for (ProdCategory child : children) {
+                System.out.println("Processing child category: " + child.getCategoryName() + " (ID: " + child.getId() + ")");
+                List<ProdCategory> grandChildren = prodCategoryService.findByParentId(child.getId());
+                System.out.println("Found " + grandChildren.size() + " grandchildren for category " + child.getId());
+                child.setChildren(grandChildren);
+            }
+        }
+        
+        return ApiResponse.success(rootCategories);
     }
 
     /**

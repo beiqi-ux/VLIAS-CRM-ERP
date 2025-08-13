@@ -204,6 +204,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { Edit } from '@element-plus/icons-vue'
 import { getUserInfo } from '@/api/auth'
+import { securityLog } from '@/utils/security'
 
 // 响应式数据
 const userStore = useUserStore()
@@ -283,7 +284,7 @@ const fetchUserInfo = async (forceRefresh = false) => {
     if (response && response.success) {
       userInfo.value = { ...response.data } // 使用解构赋值确保响应式更新
       isInitialized.value = true
-      console.log('个人中心页面：用户信息设置成功:', userInfo.value)
+      securityLog('个人中心页面', '用户信息设置成功', { userId: userInfo.value?.userId })
       
       // 使用nextTick确保DOM更新
       await nextTick()

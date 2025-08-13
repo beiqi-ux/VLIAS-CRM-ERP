@@ -24,22 +24,22 @@ public class ProdBrandServiceImpl implements ProdBrandService {
 
     @Override
     public Optional<ProdBrand> findById(Long id) {
-        return prodBrandRepository.findById(id);
+        return prodBrandRepository.findByIdAndIsDeleted(id, false);
     }
 
     @Override
     public Optional<ProdBrand> findByBrandName(String brandName) {
-        return prodBrandRepository.findByBrandName(brandName);
+        return prodBrandRepository.findByBrandNameAndIsDeleted(brandName, false);
     }
 
     @Override
     public Page<ProdBrand> findAll(Pageable pageable) {
-        return prodBrandRepository.findAll(pageable);
+        return prodBrandRepository.findByIsDeleted(false, pageable);
     }
 
     @Override
     public List<ProdBrand> findAll() {
-        return prodBrandRepository.findAll();
+        return prodBrandRepository.findByIsDeleted(false);
     }
 
     @Override
@@ -59,7 +59,16 @@ public class ProdBrandServiceImpl implements ProdBrandService {
         if (brand.getId() == null) {
             brand.setCreateTime(LocalDateTime.now());
             brand.setIsDeleted(false);
+            
+            // 确保status字段有值
+            if (brand.getStatus() == null) {
             brand.setStatus(1); // 默认启用状态
+            }
+            
+            // 确保sort字段有值
+            if (brand.getSort() == null) {
+                brand.setSort(0); // 默认排序
+            }
         }
         return prodBrandRepository.save(brand);
     }
@@ -67,6 +76,28 @@ public class ProdBrandServiceImpl implements ProdBrandService {
     @Override
     @Transactional
     public ProdBrand update(ProdBrand brand) {
+        // 获取原有数据
+        Optional<ProdBrand> existingBrandOpt = prodBrandRepository.findByIdAndIsDeleted(brand.getId(), false);
+        if (!existingBrandOpt.isPresent()) {
+            throw new RuntimeException("品牌不存在或已被删除");
+        }
+        
+        ProdBrand existingBrand = existingBrandOpt.get();
+        
+        // 保留原有的关键字段
+        brand.setCreateTime(existingBrand.getCreateTime());
+        brand.setIsDeleted(existingBrand.getIsDeleted());
+        
+        // 确保status字段有值
+        if (brand.getStatus() == null) {
+            brand.setStatus(existingBrand.getStatus() != null ? existingBrand.getStatus() : 1);
+        }
+        
+        // 确保sort字段有值
+        if (brand.getSort() == null) {
+            brand.setSort(existingBrand.getSort() != null ? existingBrand.getSort() : 0);
+        }
+        
         // 设置更新时间
         brand.setUpdateTime(LocalDateTime.now());
         return prodBrandRepository.save(brand);
@@ -95,7 +126,7 @@ public class ProdBrandServiceImpl implements ProdBrandService {
     @Override
     @Transactional
     public void enable(Long id) {
-        Optional<ProdBrand> brandOpt = prodBrandRepository.findById(id);
+        Optional<ProdBrand> brandOpt = prodBrandRepository.findByIdAndIsDeleted(id, false);
         if (brandOpt.isPresent()) {
             ProdBrand brand = brandOpt.get();
             brand.setStatus(1); // 启用状态
@@ -107,7 +138,7 @@ public class ProdBrandServiceImpl implements ProdBrandService {
     @Override
     @Transactional
     public void disable(Long id) {
-        Optional<ProdBrand> brandOpt = prodBrandRepository.findById(id);
+        Optional<ProdBrand> brandOpt = prodBrandRepository.findByIdAndIsDeleted(id, false);
         if (brandOpt.isPresent()) {
             ProdBrand brand = brandOpt.get();
             brand.setStatus(0); // 禁用状态
@@ -118,7 +149,7 @@ public class ProdBrandServiceImpl implements ProdBrandService {
 
     @Override
     public boolean existsByBrandName(String brandName) {
-        return prodBrandRepository.existsByBrandName(brandName);
+        return prodBrandRepository.existsByBrandNameAndIsDeleted(brandName, false);
     }
 
     @Override

@@ -49,6 +49,6 @@ public class ProdBrand extends BaseEntity {
     /**
      * 状态 0-禁用 1-正常
      */
-    @Column(name = "status")
+    @Column(name = "status", nullable = false, columnDefinition = "int default 1")
     private Integer status = 1;
 } 

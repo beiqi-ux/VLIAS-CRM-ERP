@@ -121,6 +121,7 @@ export const MENU_DISPLAY_MAP = {
   'brands': '品牌管理',
   'attributes': '商品属性',
   'specifications': '商品规格',
+
   'skus': 'SKU管理'
 }
 
@@ -141,6 +142,7 @@ export const ROUTE_DISPLAY_MAP = {
   '/brands': '品牌管理',
   '/attributes': '商品属性管理',
   '/specifications': '商品规格管理',
+
   '/skus': 'SKU管理'
 }
 

@@ -117,6 +117,11 @@ public class ProdBrandController {
             return ApiResponse.failure("品牌名称已存在");
         }
         
+        // 验证status字段
+        if (brand.getStatus() != null && brand.getStatus() != 0 && brand.getStatus() != 1) {
+            return ApiResponse.failure("状态值无效，只能是0（禁用）或1（正常）");
+        }
+        
         ProdBrand savedBrand = prodBrandService.save(brand);
         return ApiResponse.success(savedBrand);
     }
@@ -132,7 +137,18 @@ public class ProdBrandController {
     public ApiResponse<ProdBrand> updateBrand(@PathVariable Long id, @RequestBody ProdBrand brand) {
         Optional<ProdBrand> existingBrand = prodBrandService.findById(id);
         if (!existingBrand.isPresent()) {
-            return ApiResponse.failure("品牌不存在");
+            return ApiResponse.failure("品牌不存在或已被删除");
+        }
+        
+        // 检查品牌名称是否与其他品牌重复（排除当前品牌）
+        Optional<ProdBrand> brandWithSameName = prodBrandService.findByBrandName(brand.getBrandName());
+        if (brandWithSameName.isPresent() && !brandWithSameName.get().getId().equals(id)) {
+            return ApiResponse.failure("品牌名称已存在");
+        }
+        
+        // 验证status字段
+        if (brand.getStatus() != null && brand.getStatus() != 0 && brand.getStatus() != 1) {
+            return ApiResponse.failure("状态值无效，只能是0（禁用）或1（正常）");
         }
         
         brand.setId(id);
@@ -150,7 +166,7 @@ public class ProdBrandController {
     public ApiResponse<String> deleteBrand(@PathVariable Long id) {
         Optional<ProdBrand> brand = prodBrandService.findById(id);
         if (!brand.isPresent()) {
-            return ApiResponse.failure("品牌不存在");
+            return ApiResponse.failure("品牌不存在或已被删除");
         }
         
         prodBrandService.deleteById(id);
@@ -177,7 +193,7 @@ public class ProdBrandController {
     public ApiResponse<String> enableBrand(@PathVariable Long id) {
         Optional<ProdBrand> brand = prodBrandService.findById(id);
         if (!brand.isPresent()) {
-            return ApiResponse.failure("品牌不存在");
+            return ApiResponse.failure("品牌不存在或已被删除");
         }
         
         prodBrandService.enable(id);
@@ -193,7 +209,7 @@ public class ProdBrandController {
     public ApiResponse<String> disableBrand(@PathVariable Long id) {
         Optional<ProdBrand> brand = prodBrandService.findById(id);
         if (!brand.isPresent()) {
-            return ApiResponse.failure("品牌不存在");
+            return ApiResponse.failure("品牌不存在或已被删除");
         }
         
         prodBrandService.disable(id);

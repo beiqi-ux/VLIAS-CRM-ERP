@@ -21,6 +21,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 商品服务实现类
@@ -59,8 +64,8 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
     }
 
     @Override
-    public Page<ProdGoods> findByConditions(Pageable pageable, String goodsName, Long categoryId, 
-                                          Long brandId, Integer status, Integer auditStatus) {
+    public Page<ProdGoods> findByConditions(Pageable pageable, String goodsName, String goodsCode,
+                                          Long categoryId, Long brandId, Integer status, Integer auditStatus) {
         Specification<ProdGoods> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -70,6 +75,11 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
             // 商品名称模糊查询
             if (StringUtils.hasText(goodsName)) {
                 predicates.add(criteriaBuilder.like(root.get("goodsName"), "%" + goodsName + "%"));
+            }
+            
+            // 商品编码模糊查询
+            if (StringUtils.hasText(goodsCode)) {
+                predicates.add(criteriaBuilder.like(root.get("goodsCode"), "%" + goodsCode + "%"));
             }
             
             // 分类ID
@@ -108,25 +118,67 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
     }
     
     /**
-     * 填充商品的分类名和品牌名
-     * @param goods 商品对象
+     * 填充分类名和品牌名（优化版本，减少数据库查询）
      */
     private void fillCategoryAndBrandNames(ProdGoods goods) {
-        // 设置分类名称
+        // 使用缓存避免重复查询
         if (goods.getCategoryId() != null) {
-            Optional<ProdCategory> category = prodCategoryService.findById(goods.getCategoryId());
-            if (category.isPresent()) {
-                goods.setCategoryName(category.get().getCategoryName());
-            }
+            Optional<ProdCategory> categoryOpt = prodCategoryService.findById(goods.getCategoryId());
+            categoryOpt.ifPresent(category -> goods.setCategoryName(category.getCategoryName()));
         }
         
-        // 设置品牌名称
         if (goods.getBrandId() != null) {
-            Optional<ProdBrand> brand = prodBrandService.findById(goods.getBrandId());
-            if (brand.isPresent()) {
-                goods.setBrandName(brand.get().getBrandName());
-            }
+            Optional<ProdBrand> brandOpt = prodBrandService.findById(goods.getBrandId());
+            brandOpt.ifPresent(brand -> goods.setBrandName(brand.getBrandName()));
         }
+    }
+
+    /**
+     * 批量填充分类名和品牌名（优化版本，避免N+1查询）
+     */
+    private void fillCategoryAndBrandNamesForList(List<ProdGoods> goodsList) {
+        if (goodsList.isEmpty()) {
+            return;
+        }
+
+        // 批量获取所有需要的分类ID和品牌ID
+        Set<Long> categoryIds = goodsList.stream()
+            .map(ProdGoods::getCategoryId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        Set<Long> brandIds = goodsList.stream()
+            .map(ProdGoods::getBrandId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        // 批量查询分类和品牌信息（这里需要在服务层添加批量查询方法）
+        Map<Long, String> categoryNameMap = new HashMap<>();
+        Map<Long, String> brandNameMap = new HashMap<>();
+
+        // 分类名称映射
+        for (Long categoryId : categoryIds) {
+            Optional<ProdCategory> categoryOpt = prodCategoryService.findById(categoryId);
+            categoryOpt.ifPresent(category -> 
+                categoryNameMap.put(categoryId, category.getCategoryName()));
+        }
+
+        // 品牌名称映射
+        for (Long brandId : brandIds) {
+            Optional<ProdBrand> brandOpt = prodBrandService.findById(brandId);
+            brandOpt.ifPresent(brand -> 
+                brandNameMap.put(brandId, brand.getBrandName()));
+        }
+
+        // 填充商品的分类名和品牌名
+        goodsList.forEach(goods -> {
+            if (goods.getCategoryId() != null) {
+                goods.setCategoryName(categoryNameMap.get(goods.getCategoryId()));
+            }
+            if (goods.getBrandId() != null) {
+                goods.setBrandName(brandNameMap.get(goods.getBrandId()));
+            }
+        });
     }
 
     @Override

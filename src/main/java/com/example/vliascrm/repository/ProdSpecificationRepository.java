@@ -51,4 +51,24 @@ public interface ProdSpecificationRepository extends JpaRepository<ProdSpecifica
            "AND s.isDeleted = false AND (:excludeId IS NULL OR s.id != :excludeId)")
     boolean existsBySpecificationCodeExcludingId(@Param("specificationCode") String specificationCode, 
                                                @Param("excludeId") Long excludeId);
+    
+    /**
+     * 根据分类ID查找规格列表
+     */
+    List<ProdSpecification> findByCategoryIdAndIsDeletedFalseOrderBySortAsc(Long categoryId);
+    
+    /**
+     * 根据商品ID查找规格列表
+     */
+    List<ProdSpecification> findByGoodsIdAndIsDeletedFalseOrderBySortAsc(Long goodsId);
+    
+    /**
+     * 根据商品ID和分类ID查找规格列表（优先级查询）
+     */
+    @Query("SELECT s FROM ProdSpecification s WHERE s.isDeleted = false " +
+           "AND (s.goodsId = :goodsId OR (s.goodsId IS NULL AND s.categoryId = :categoryId)) " +
+           "AND s.status = 1 " +
+           "ORDER BY CASE WHEN s.goodsId IS NOT NULL THEN 1 ELSE 2 END, s.sort ASC")
+    List<ProdSpecification> findByGoodsIdOrCategoryIdPrioritized(@Param("goodsId") Long goodsId, 
+                                                               @Param("categoryId") Long categoryId);
 } 

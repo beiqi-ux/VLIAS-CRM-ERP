@@ -27,11 +27,11 @@ onMounted(async () => {
       
       if (!result) {
         // 如果获取用户信息失败，说明token无效
-        console.log('Token已失效，跳转到登录页')
+        securityLog('App', 'Token已失效，跳转到登录页')
         router.replace('/login')
       }
     } catch (error) {
-      console.log('Token验证失败，跳转到登录页:', error)
+      securityLog('App', 'Token验证失败，跳转到登录页', { error: error.message })
       router.replace('/login')
     }
   } else {

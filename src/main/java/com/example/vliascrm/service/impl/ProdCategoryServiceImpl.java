@@ -3,10 +3,13 @@ package com.example.vliascrm.service.impl;
 import com.example.vliascrm.entity.ProdCategory;
 import com.example.vliascrm.repository.ProdCategoryRepository;
 import com.example.vliascrm.service.ProdCategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.vliascrm.service.CacheService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,24 +18,73 @@ import java.util.Optional;
 /**
  * 商品分类服务实现类
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProdCategoryServiceImpl implements ProdCategoryService {
 
-    @Autowired
-    private ProdCategoryRepository prodCategoryRepository;
+    private final ProdCategoryRepository prodCategoryRepository;
+    private final CacheService cacheService;
+
+    // 缓存键前缀
+    private static final String CATEGORY_CACHE_PREFIX = "category:";
+    private static final String CATEGORY_ALL_CACHE_KEY = "category:all";
+    private static final String CATEGORY_TREE_CACHE_KEY = "category:tree";
+    
+    // 缓存过期时间：10分钟
+    private static final Duration CATEGORY_CACHE_TTL = Duration.ofMinutes(10);
 
     @Override
     public Optional<ProdCategory> findById(Long id) {
-        return prodCategoryRepository.findById(id);
+        String cacheKey = CATEGORY_CACHE_PREFIX + id;
+        
+        // 先从缓存中查询
+        ProdCategory cachedCategory = cacheService.get(cacheKey, ProdCategory.class);
+        if (cachedCategory != null) {
+            log.debug("分类缓存命中: id={}", id);
+            return Optional.of(cachedCategory);
+        }
+        
+        // 缓存未命中，从数据库查询
+        Optional<ProdCategory> categoryOpt = prodCategoryRepository.findById(id);
+        if (categoryOpt.isPresent()) {
+            cacheService.set(cacheKey, categoryOpt.get(), CATEGORY_CACHE_TTL);
+            log.debug("分类信息已缓存: id={}", id);
+        }
+        
+        return categoryOpt;
     }
 
     @Override
     public List<ProdCategory> findAll() {
-        return prodCategoryRepository.findAll();
+        // 先从缓存中查询
+        List<ProdCategory> cachedCategories = cacheService.get(CATEGORY_ALL_CACHE_KEY, 
+            new com.fasterxml.jackson.core.type.TypeReference<List<ProdCategory>>() {});
+        
+        if (cachedCategories != null && !cachedCategories.isEmpty()) {
+            log.debug("分类列表缓存命中，数量: {}", cachedCategories.size());
+            return cachedCategories;
+        }
+        
+        // 缓存未命中，从数据库查询（只查询启用且未删除的分类）
+        List<ProdCategory> categories = prodCategoryRepository.findAll().stream()
+            .filter(category -> !category.getIsDeleted() && category.getStatus() == 1)
+            .sorted((a, b) -> Integer.compare(a.getSort() != null ? a.getSort() : 0, 
+                                             b.getSort() != null ? b.getSort() : 0))
+            .toList();
+        
+        // 缓存结果
+        if (!categories.isEmpty()) {
+            cacheService.set(CATEGORY_ALL_CACHE_KEY, categories, CATEGORY_CACHE_TTL);
+            log.debug("分类列表已缓存，数量: {}", categories.size());
+        }
+        
+        return categories;
     }
 
     @Override
     public List<ProdCategory> findByParentId(Long parentId) {
+        // 根据父级ID查找子分类
         return prodCategoryRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAsc(parentId, 1, false);
     }
 
@@ -68,7 +120,7 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
             
             // 设置层级
             if (category.getParentId() == null || category.getParentId() == 0) {
-                category.setParentId(null); // 保持为null，表示根分类
+                category.setParentId(0L); // 统一使用0表示根分类
                 category.setLevel(1);
             } else {
                 // 根据父分类设置层级
@@ -91,7 +143,7 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
         
         // 重新计算层级（当父分类发生变化时）
         if (category.getParentId() == null || category.getParentId() == 0) {
-            category.setParentId(null); // 保持为null，表示根分类
+            category.setParentId(0L); // 统一使用0表示根分类
             category.setLevel(1);
         } else {
             // 根据父分类设置层级
@@ -236,7 +288,7 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
      * @param category 分类节点
      */
     private void buildCategoryChildren(ProdCategory category) {
-        List<ProdCategory> children = findByParentId(category.getId());
+        List<ProdCategory> children = prodCategoryRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAsc(category.getId(), 1, false);
         category.setChildren(children);
         
         for (ProdCategory child : children) {
@@ -249,8 +301,18 @@ public class ProdCategoryServiceImpl implements ProdCategoryService {
      * @param category 分类节点
      */
     private void buildAdminCategoryChildren(ProdCategory category) {
-        List<ProdCategory> children = findAllByParentId(category.getId());
+        // 管理后台查询所有子分类，包括禁用状态，但排除已删除的
+        List<ProdCategory> children = prodCategoryRepository.findByParentIdAndIsDeletedOrderBySortAsc(category.getId(), false);
+        log.info("为分类 {} (ID: {}) 找到子分类数量: {}", category.getCategoryName(), category.getId(), children.size());
+        
+        if (!children.isEmpty()) {
+            for (ProdCategory child : children) {
+                log.info("子分类: {} (ID: {}, Parent: {})", child.getCategoryName(), child.getId(), child.getParentId());
+            }
+        }
+        
         category.setChildren(children);
+        log.info("设置子分类后，分类 {} 的children大小: {}", category.getCategoryName(), category.getChildren().size());
         
         for (ProdCategory child : children) {
             buildAdminCategoryChildren(child);

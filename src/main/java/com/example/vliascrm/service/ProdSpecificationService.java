@@ -50,4 +50,20 @@ public interface ProdSpecificationService {
      * 检查规格编码是否存在
      */
     boolean existsBySpecificationCode(String specificationCode, Long excludeId);
+    
+    /**
+     * 根据规格分类ID获取规格值列表
+     */
+    List<SpecificationDTO> findByCategoryId(Long categoryId, String subCategory);
+    
+    /**
+     * 根据商品ID获取规格列表
+     */
+    List<SpecificationDTO> findByGoodsId(Long goodsId);
+    
+    /**
+     * 根据商品ID和分类ID获取最精准的规格数据
+     * 优先返回商品专属规格，其次返回分类通用规格
+     */
+    List<SpecificationDTO> findOptimalSpecifications(Long goodsId, Long categoryId);
 } 

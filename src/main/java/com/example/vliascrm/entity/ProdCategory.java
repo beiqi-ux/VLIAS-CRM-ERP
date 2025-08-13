@@ -1,10 +1,14 @@
 package com.example.vliascrm.entity;
 
 import com.example.vliascrm.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,6 +19,7 @@ import java.util.List;
 @Entity
 @Table(name = "prod_category")
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 public class ProdCategory extends BaseEntity {
 
     /**
@@ -69,7 +74,28 @@ public class ProdCategory extends BaseEntity {
      * 子分类列表（非持久化字段）
      */
     @Transient
-    private List<ProdCategory> children;
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    @JsonProperty("children")
+    private List<ProdCategory> children = new ArrayList<>();
+
+    /**
+     * 获取子分类列表，确保不返回null
+     */
+    @JsonProperty("children")
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public List<ProdCategory> getChildren() {
+        if (children == null) {
+            children = new ArrayList<>();
+        }
+        return children;
+    }
+
+    /**
+     * 设置子分类列表
+     */
+    public void setChildren(List<ProdCategory> children) {
+        this.children = children != null ? children : new ArrayList<>();
+    }
 
     /**
      * 父分类名称（非持久化字段）

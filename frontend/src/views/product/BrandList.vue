@@ -469,9 +469,16 @@ const handleAdd = () => {
 
 const handleEdit = (row) => {
   Object.keys(formData).forEach(key => {
-    formData[key] = row[key] || (key === 'sort' ? 0 : 
-      key === 'status' ? (row[key] ?? 1) : 
-        key === 'id' ? row[key] : '')
+    if (key === 'status') {
+      // 特殊处理status字段，因为0是有效值
+      formData[key] = row[key] !== undefined && row[key] !== null ? row[key] : 1
+    } else if (key === 'sort') {
+      formData[key] = row[key] !== undefined && row[key] !== null ? row[key] : 0
+    } else if (key === 'id') {
+      formData[key] = row[key]
+    } else {
+      formData[key] = row[key] || ''
+    }
   })
   dialogVisible.value = true
 }

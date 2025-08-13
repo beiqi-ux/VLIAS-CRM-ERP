@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类树测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="password"] {
+            width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .category-tree {
+            margin-top: 20px;
+        }
+        
+        .tree-node {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .tree-node.level-1 {
+            background: #e3f2fd;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .tree-node.level-2 {
+            background: #f1f8e9;
+            margin-left: 20px;
+            font-size: 15px;
+        }
+        
+        .tree-node.level-3 {
+            background: #fff3e0;
+            margin-left: 40px;
+            font-size: 14px;
+        }
+        
+        .node-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .node-details {
+            flex: 1;
+        }
+        
+        .node-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .node-description {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .node-meta {
+            font-size: 11px;
+            color: #999;
+            text-align: right;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .api-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .json-viewer {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>分类树API测试</h1>
+        
+        <!-- 认证部分 -->
+        <div class="auth-section">
+            <h3>用户认证</h3>
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" value="18845913092">
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" value="qichengxu1234">
+            </div>
+            <button onclick="login()">登录</button>
+            <div id="authStatus"></div>
+        </div>
+        
+        <!-- API控制按钮 -->
+        <div class="api-controls">
+            <button onclick="fetchCategoryTree()" id="treeBtn" disabled>获取分类树</button>
+            <button onclick="fetchAllCategories()" id="allBtn" disabled>获取所有分类</button>
+            <button onclick="fetchRootCategories()" id="rootBtn" disabled>获取根分类</button>
+            <button onclick="clearResults()">清空结果</button>
+        </div>
+        
+        <!-- 结果显示区域 -->
+        <div id="results"></div>
+        
+        <!-- JSON原始数据查看器 -->
+        <div id="jsonViewer" class="json-viewer" style="display: none;"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // 登录函数
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('authStatus');
+            
+            try {
+                statusDiv.innerHTML = '<div class="status">正在登录...</div>';
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.data.token;
+                    statusDiv.innerHTML = `<div class="status success">登录成功！用户: ${data.data.realName}</div>`;
+                    
+                    // 启用API按钮
+                    document.getElementById('treeBtn').disabled = false;
+                    document.getElementById('allBtn').disabled = false;
+                    document.getElementById('rootBtn').disabled = false;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">登录失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">登录错误: ${error.message}</div>`;
+            }
+        }
+        
+        // 通用API请求函数
+        async function apiRequest(url, method = 'GET') {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // 获取分类树
+        async function fetchCategoryTree() {
+            try {
+                showLoading();
+                const data = await apiRequest(`${API_BASE}/prod/categories/tree`);
+                displayCategoryTree(data.data, '分类树结构');
+                showJsonViewer(data);
+            } catch (error) {
+                showError('获取分类树失败: ' + error.message);
+            }
+        }
+        
+        // 获取所有分类
+        async function fetchAllCategories() {
+            try {
+                showLoading();
+                const data = await apiRequest(`${API_BASE}/prod/categories`);
+                displayCategoryList(data.data, '所有分类列表');
+                showJsonViewer(data);
+            } catch (error) {
+                showError('获取所有分类失败: ' + error.message);
+            }
+        }
+        
+        // 获取根分类
+        async function fetchRootCategories() {
+            try {
+                showLoading();
+                const data = await apiRequest(`${API_BASE}/prod/categories/root`);
+                displayCategoryList(data.data, '根分类列表');
+                showJsonViewer(data);
+            } catch (error) {
+                showError('获取根分类失败: ' + error.message);
+            }
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('results').innerHTML = '<div class="loading">正在加载...</div>';
+        }
+        
+        // 显示错误
+        function showError(message) {
+            document.getElementById('results').innerHTML = `<div class="status error">${message}</div>`;
+        }
+        
+        // 显示分类树（递归结构）
+        function displayCategoryTree(categories, title) {
+            let html = `<h3>${title}</h3><div class="category-tree">`;
+            
+            function renderNode(node, level = 1) {
+                const levelClass = `level-${Math.min(level, 3)}`;
+                return `
+                    <div class="tree-node ${levelClass}">
+                        <div class="node-info">
+                            <div class="node-details">
+                                <div class="node-name">${node.categoryName}</div>
+                                <div class="node-description">${node.description || '暂无描述'}</div>
+                            </div>
+                            <div class="node-meta">
+                                ID: ${node.id}<br>
+                                级别: ${node.level}<br>
+                                排序: ${node.sort}<br>
+                                状态: ${node.status === 1 ? '启用' : '禁用'}
+                            </div>
+                        </div>
+                        ${node.children && node.children.length > 0 ? 
+                            node.children.map(child => renderNode(child, level + 1)).join('') : 
+                            ''
+                        }
+                    </div>
+                `;
+            }
+            
+            if (categories && categories.length > 0) {
+                html += categories.map(category => renderNode(category)).join('');
+            } else {
+                html += '<div class="status">暂无分类数据</div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        // 显示分类列表（平铺结构）
+        function displayCategoryList(categories, title) {
+            let html = `<h3>${title}</h3><div class="category-tree">`;
+            
+            if (categories && categories.length > 0) {
+                categories.forEach(category => {
+                    const levelClass = `level-${Math.min(category.level, 3)}`;
+                    html += `
+                        <div class="tree-node ${levelClass}">
+                            <div class="node-info">
+                                <div class="node-details">
+                                    <div class="node-name">${category.categoryName}</div>
+                                    <div class="node-description">${category.description || '暂无描述'}</div>
+                                </div>
+                                <div class="node-meta">
+                                    ID: ${category.id}<br>
+                                    父ID: ${category.parentId}<br>
+                                    级别: ${category.level}<br>
+                                    排序: ${category.sort}<br>
+                                    状态: ${category.status === 1 ? '启用' : '禁用'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div class="status">暂无分类数据</div>';
+            }
+            
+            html += '</div>';
+            document.getElementById('results').innerHTML = html;
+        }
+        
+        // 显示JSON数据
+        function showJsonViewer(data) {
+            const jsonViewer = document.getElementById('jsonViewer');
+            jsonViewer.style.display = 'block';
+            jsonViewer.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // 清空结果
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('jsonViewer').style.display = 'none';
+        }
+        
+        // 页面加载完成后自动登录
+        window.onload = function() {
+            // 可以选择自动登录
+            // login();
+        };
+    </script>
+</body>
+</html> 

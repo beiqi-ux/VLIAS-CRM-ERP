@@ -159,10 +159,13 @@
           show-overflow-tooltip
         />
         <el-table-column
-          prop="createTime"
           label="创建时间"
           width="180"
-        />
+        >
+          <template #default="{ row }">
+            {{ formatDateTime(row.createTime) }}
+          </template>
+        </el-table-column>
         <el-table-column 
           label="操作" 
           width="280" 
@@ -327,6 +330,7 @@ import { hasPermission, PERMISSIONS } from '@/utils/permission'
 const loading = ref(false)
 const submitLoading = ref(false)
 const categoryList = ref([])
+const originalCategoryList = ref([]) // 保存原始数据
 const categoryTreeData = ref([])
 const isExpanded = ref(false)
 
@@ -369,6 +373,8 @@ const loadCategoryList = async () => {
   try {
     const response = await getAdminCategoryTree()
     if (response.success) {
+      // 保存原始数据
+      originalCategoryList.value = JSON.parse(JSON.stringify(response.data))
       categoryList.value = response.data
       // 构建树选择器数据（去除当前编辑项及其子项）
       categoryTreeData.value = buildTreeSelectData(response.data)
@@ -390,8 +396,14 @@ const buildTreeSelectData = (data, excludeId = null) => {
 
 const handleSearch = () => {
   // 实现搜索逻辑
-  const filteredData = filterTreeData(categoryList.value, searchForm)
-  categoryList.value = filteredData
+  if (!searchForm.categoryName && searchForm.status === null && searchForm.isShow === null) {
+    // 如果没有搜索条件，显示所有数据
+    categoryList.value = JSON.parse(JSON.stringify(originalCategoryList.value))
+  } else {
+    // 从原始数据进行过滤
+    const filteredData = filterTreeData(JSON.parse(JSON.stringify(originalCategoryList.value)), searchForm)
+    categoryList.value = filteredData
+  }
 }
 
 const filterTreeData = (data, filters) => {
@@ -408,11 +420,13 @@ const filterTreeData = (data, filters) => {
       match = false
     }
     
-    // 如果有子项匹配，也应该显示父项
-    if (!match && item.children && item.children.length > 0) {
+    // 递归处理子项
+    if (item.children && item.children.length > 0) {
       const filteredChildren = filterTreeData(item.children, filters)
-      if (filteredChildren.length > 0) {
-        item.children = filteredChildren
+      item.children = filteredChildren
+      
+      // 如果当前项不匹配但有子项匹配，则显示当前项
+      if (!match && filteredChildren.length > 0) {
         match = true
       }
     }
@@ -425,7 +439,8 @@ const resetSearch = () => {
   Object.keys(searchForm).forEach(key => {
     searchForm[key] = key.includes('status') || key.includes('Show') ? null : ''
   })
-  loadCategoryList()
+  // 恢复原始数据
+  categoryList.value = JSON.parse(JSON.stringify(originalCategoryList.value))
 }
 
 const handleRefresh = () => {
@@ -439,7 +454,7 @@ const handleExpandAll = () => {
 const handleAdd = () => {
   resetFormData()
   // 更新树选择器数据，确保显示正确的分类名称
-  categoryTreeData.value = buildTreeSelectData(categoryList.value)
+  categoryTreeData.value = buildTreeSelectData(originalCategoryList.value)
   dialogVisible.value = true
 }
 
@@ -447,7 +462,7 @@ const handleAddChild = (row) => {
   resetFormData()
   formData.parentId = row.id
   // 更新树选择器数据，确保显示正确的分类名称
-  categoryTreeData.value = buildTreeSelectData(categoryList.value)
+  categoryTreeData.value = buildTreeSelectData(originalCategoryList.value)
   dialogVisible.value = true
 }
 
@@ -458,7 +473,7 @@ const handleEdit = (row) => {
         key === 'parentId' ? (row[key] || null) : '')
   })
   // 更新树选择器数据，排除当前编辑项
-  categoryTreeData.value = buildTreeSelectData(categoryList.value, row.id)
+  categoryTreeData.value = buildTreeSelectData(originalCategoryList.value, row.id)
   dialogVisible.value = true
 }
 

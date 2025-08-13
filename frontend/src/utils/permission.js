@@ -462,6 +462,22 @@ export const PERMISSIONS = {
       EDIT: 'product-category-management:edit',
       DELETE: 'product-category-management:delete',
       EXPORT: 'product-category-management:export'
+    },
+    // 规格分类管理
+    SPECIFICATION_CATEGORY: {
+      VIEW: 'product-specification-management:view',
+      CREATE: 'product-specification-management:create',
+      EDIT: 'product-specification-management:edit',
+      DELETE: 'product-specification-management:delete',
+      EXPORT: 'product-specification-management:export'
+    },
+    // 规格管理
+    SPECIFICATION: {
+      VIEW: 'product-specification-management:view',
+      CREATE: 'product-specification-management:create',
+      EDIT: 'product-specification-management:edit',
+      DELETE: 'product-specification-management:delete',
+      EXPORT: 'product-specification-management:export'
     }
   }
 } 

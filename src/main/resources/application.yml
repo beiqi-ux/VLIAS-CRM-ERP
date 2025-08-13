@@ -11,7 +11,7 @@ spring:
     password: qichengxu123
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -36,7 +36,8 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
-    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
 
 logging:
   level:

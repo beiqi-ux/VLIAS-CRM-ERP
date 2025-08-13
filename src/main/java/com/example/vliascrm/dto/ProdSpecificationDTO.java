@@ -26,7 +26,7 @@ public class ProdSpecificationDTO {
      * 规格名称
      */
     @NotBlank(message = "规格名称不能为空")
-    private String specName;
+    private String specificationName;
 
     /**
      * 规格值JSON

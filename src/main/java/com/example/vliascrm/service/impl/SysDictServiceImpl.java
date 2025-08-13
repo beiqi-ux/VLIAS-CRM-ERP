@@ -194,7 +194,7 @@ public class SysDictServiceImpl implements SysDictService {
         }
         
         // 清理列表缓存
-        cacheService.deletePattern(DICT_LIST_PREFIX + "*");
+        cacheService.deleteByPattern(DICT_LIST_PREFIX + "*");
         
         log.debug("字典缓存已清理: dictId={}, dictCode={}", dictId, dictCode);
     }

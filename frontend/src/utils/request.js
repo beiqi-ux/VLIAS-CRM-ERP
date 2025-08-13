@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { secureConsole, maskSensitiveData } from '@/utils/security'
 
 // 防止重复跳转登录页的标志
 let isRedirecting = false
@@ -28,7 +29,7 @@ function isDuplicateRequest(config) {
   const shouldSkip = skipDedupeUrls.some(url => config.url && config.url.includes(url))
   
   if (shouldSkip) {
-    console.log('跳过重要接口的去重检查:', config.url)
+    secureConsole.log('跳过重要接口的去重检查:', config.url)
     return false // 重要接口不去重
   }
   
@@ -48,7 +49,7 @@ function isDuplicateRequest(config) {
   if (requestCache.has(requestKey)) {
     const lastRequestTime = requestCache.get(requestKey)
     if (now - lastRequestTime < 500) {
-      console.log('检测到重复请求，已跳过:', config.url)
+      secureConsole.log('检测到重复请求，已跳过:', config.url)
       return true
     }
   }
@@ -87,7 +88,9 @@ request.interceptors.request.use(
     }
     
     // 添加调试日志
-    console.log('发送请求:', config.method.toUpperCase(), config.url, config.params || config.data)
+    // 脱敏处理请求数据
+  const maskedData = maskSensitiveData(config.params || config.data)
+  secureConsole.log('发送请求:', config.method.toUpperCase(), config.url, maskedData)
     
     return config
   },
@@ -110,10 +113,10 @@ function clearAuthInfo() {
       userStore.userInfo = {}
     }).catch(() => {
       // 如果导入失败，忽略错误（在某些环境下可能无法访问）
-      console.log('无法访问用户store，仅清除localStorage')
+      secureConsole.log('无法访问用户store，仅清除localStorage')
     })
   } catch (error) {
-    console.log('清除用户store信息时出错，仅清除localStorage')
+          secureConsole.log('清除用户store信息时出错，仅清除localStorage')
   }
 }
 
@@ -124,7 +127,9 @@ request.interceptors.response.use(
     // 由于去重机制的简化，这里不再需要移除pendingRequests
     
     // 添加调试日志
-    console.log('接收响应:', response.config.url, response.data)
+    // 脱敏处理响应数据
+  const maskedResponse = maskSensitiveData(response.data)
+  secureConsole.log('接收响应:', response.config.url, maskedResponse)
     
     // 直接返回响应数据
     return response.data
@@ -135,7 +140,7 @@ request.interceptors.response.use(
     
     // 如果是取消的请求，直接返回
     if (axios.isCancel(error)) {
-      console.log('请求被取消:', error.message)
+      secureConsole.log('请求被取消:', error.message)
       return Promise.reject(error)
     }
     

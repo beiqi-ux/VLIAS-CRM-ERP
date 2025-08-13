@@ -17,6 +17,9 @@ import formatPlugin from '@/plugins/format'
 import DictSelect from '@/components/DictSelect.vue'
 import DictRadio from '@/components/DictRadio.vue'
 
+// 导入安全保护
+import { initSecurity } from '@/utils/security'
+
 const app = createApp(App)
 const pinia = createPinia()
 
@@ -66,5 +69,8 @@ app.directive('action-permission', {
     }
   }
 })
+
+// 初始化安全保护（生产环境生效）
+initSecurity()
 
 app.mount('#app') 

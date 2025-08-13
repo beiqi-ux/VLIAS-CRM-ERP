@@ -36,14 +36,38 @@ export default defineConfig(({ mode }) => {
       } : undefined
     },
     build: {
+      // 生产环境优化
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          // 移除console语句
+          drop_console: true,
+          drop_debugger: true,
+          // 移除无用代码
+          dead_code: true,
+          // 移除未使用的函数参数
+          unused: true
+        },
+        mangle: {
+          // 混淆变量名
+          toplevel: true
+        }
+      },
       rollupOptions: {
         output: {
           // 为不同类型的文件添加hash，确保缓存更新
           entryFileNames: 'assets/[name].[hash].js',
           chunkFileNames: 'assets/[name].[hash].js',
-          assetFileNames: 'assets/[name].[hash].[ext]'
+          assetFileNames: 'assets/[name].[hash].[ext]',
+          // 代码分割优化
+          manualChunks: {
+            'element-plus': ['element-plus'],
+            'vue-vendor': ['vue', 'vue-router', 'pinia']
+          }
         }
-      }
+      },
+      // 增加chunk大小警告阈值
+      chunkSizeWarningLimit: 1000
     }
   }
 }) 
