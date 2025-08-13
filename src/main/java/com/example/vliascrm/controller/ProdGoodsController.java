@@ -2,8 +2,11 @@ package com.example.vliascrm.controller;
 
 import com.example.vliascrm.common.ApiResponse;
 import com.example.vliascrm.entity.ProdGoods;
+import com.example.vliascrm.entity.ProdGoodsSpecification;
+import com.example.vliascrm.entity.ProdSpecificationValue;
 import com.example.vliascrm.dto.ProdGoodsDto;
 import com.example.vliascrm.service.ProdGoodsService;
+import com.example.vliascrm.service.ProdGoodsSpecificationService;
 import com.example.vliascrm.service.impl.ProdGoodsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +33,7 @@ import com.example.vliascrm.entity.SysUser;
 public class ProdGoodsController {
 
     private final ProdGoodsService prodGoodsService;
+    private final ProdGoodsSpecificationService goodsSpecificationService;
 
     /**
      * 获取商品列表（支持分页）
@@ -219,6 +223,11 @@ public class ProdGoodsController {
             return ApiResponse.failure("商品不存在");
         }
         
+        // 检查商品编码是否被其他商品使用
+        if (goods.getGoodsCode() != null && prodGoodsService.existsByGoodsCodeAndIdNot(goods.getGoodsCode(), id)) {
+            return ApiResponse.failure("商品编码已存在");
+        }
+        
         goods.setId(id);
         ProdGoods updatedGoods = prodGoodsService.update(goods);
         return ApiResponse.success(updatedGoods);
@@ -369,5 +378,82 @@ public class ProdGoodsController {
     public ApiResponse<Long> countByBrand(@PathVariable Long brandId) {
         long count = prodGoodsService.countByBrandId(brandId);
         return ApiResponse.success(count);
+    }
+
+    // ==================== 商品规格绑定接口 ====================
+
+    /**
+     * 获取商品绑定的规格列表
+     * @param goodsId 商品ID
+     * @return 规格关联列表
+     */
+    @GetMapping("/{goodsId}/specifications")
+    @PreAuthorize("hasAuthority('product-info-management:view')")
+    public ApiResponse<List<ProdGoodsSpecification>> getGoodsSpecifications(@PathVariable Long goodsId) {
+        List<ProdGoodsSpecification> specifications = goodsSpecificationService.findGoodsSpecificationDetails(goodsId);
+        return ApiResponse.success(specifications);
+    }
+
+    /**
+     * 获取商品规格映射（按分类分组）
+     * @param goodsId 商品ID
+     * @return 分类ID -> 规格值列表的映射
+     */
+    @GetMapping("/{goodsId}/specification-map")
+    @PreAuthorize("hasAuthority('product-info-management:view')")
+    public ApiResponse<Map<Long, List<ProdSpecificationValue>>> getGoodsSpecificationMap(@PathVariable Long goodsId) {
+        Map<Long, List<ProdSpecificationValue>> specMap = goodsSpecificationService.getGoodsSpecificationMap(goodsId);
+        return ApiResponse.success(specMap);
+    }
+
+    /**
+     * 设置商品规格值
+     * @param goodsId 商品ID
+     * @param specValueIds 规格值ID列表
+     * @return 操作结果
+     */
+    @PostMapping("/{goodsId}/specifications")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
+    public ApiResponse<Void> setGoodsSpecifications(@PathVariable Long goodsId, @RequestBody List<Long> specValueIds) {
+        goodsSpecificationService.setGoodsSpecifications(goodsId, specValueIds);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 添加商品规格值
+     * @param goodsId 商品ID
+     * @param specValueId 规格值ID
+     * @return 操作结果
+     */
+    @PostMapping("/{goodsId}/specifications/{specValueId}")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
+    public ApiResponse<Void> addGoodsSpecification(@PathVariable Long goodsId, @PathVariable Long specValueId) {
+        goodsSpecificationService.addGoodsSpecification(goodsId, specValueId);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 移除商品规格值
+     * @param goodsId 商品ID
+     * @param specValueId 规格值ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/{goodsId}/specifications/{specValueId}")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
+    public ApiResponse<Void> removeGoodsSpecification(@PathVariable Long goodsId, @PathVariable Long specValueId) {
+        goodsSpecificationService.removeGoodsSpecification(goodsId, specValueId);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 移除商品所有规格值
+     * @param goodsId 商品ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/{goodsId}/specifications")
+    @PreAuthorize("hasAuthority('product-info-management:edit')")
+    public ApiResponse<Void> removeAllGoodsSpecifications(@PathVariable Long goodsId) {
+        goodsSpecificationService.removeAllGoodsSpecifications(goodsId);
+        return ApiResponse.success(null);
     }
 } 

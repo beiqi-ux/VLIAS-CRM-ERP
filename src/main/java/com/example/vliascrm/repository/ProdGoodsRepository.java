@@ -30,6 +30,14 @@ public interface ProdGoodsRepository extends JpaRepository<ProdGoods, Long>, Jpa
     boolean existsByGoodsCode(String goodsCode);
 
     /**
+     * 检查除了指定ID外是否存在相同的商品编码
+     * @param goodsCode 商品编码
+     * @param id 要排除的商品ID
+     * @return 是否存在
+     */
+    boolean existsByGoodsCodeAndIdNot(String goodsCode, Long id);
+
+    /**
      * 根据分类ID查询商品列表
      * @param categoryId 分类ID
      * @return 商品列表

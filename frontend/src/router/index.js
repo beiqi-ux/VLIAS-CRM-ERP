@@ -86,6 +86,13 @@ const router = createRouter({
           component: () => import('@/views/product/GoodsList.vue'),
           meta: { title: '商品管理' }
         },
+        // 商品编辑
+        {
+          path: 'goods/edit/:id?',
+          name: 'goods-edit',
+          component: () => import('@/views/product/GoodsEdit.vue'),
+          meta: { title: '商品编辑' }
+        },
         // 分类管理
         {
           path: 'categories',

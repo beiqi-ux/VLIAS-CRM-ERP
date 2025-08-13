@@ -269,4 +269,82 @@ export function countByBrand(brandId) {
     url: `/api/prod/goods/count/brand/${brandId}`,
     method: 'get'
   })
+}
+
+// ==================== 商品规格绑定 ====================
+
+/**
+ * 获取商品绑定的规格列表
+ * @param {Number} goodsId - 商品ID
+ * @returns {Promise}
+ */
+export function getGoodsSpecifications(goodsId) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specifications`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取商品规格映射（按分类分组）
+ * @param {Number} goodsId - 商品ID
+ * @returns {Promise}
+ */
+export function getGoodsSpecificationMap(goodsId) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specification-map`,
+    method: 'get'
+  })
+}
+
+/**
+ * 设置商品规格值
+ * @param {Number} goodsId - 商品ID
+ * @param {Array} specValueIds - 规格值ID列表
+ * @returns {Promise}
+ */
+export function setGoodsSpecifications(goodsId, specValueIds) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specifications`,
+    method: 'post',
+    data: specValueIds
+  })
+}
+
+/**
+ * 添加商品规格值
+ * @param {Number} goodsId - 商品ID
+ * @param {Number} specValueId - 规格值ID
+ * @returns {Promise}
+ */
+export function addGoodsSpecification(goodsId, specValueId) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specifications/${specValueId}`,
+    method: 'post'
+  })
+}
+
+/**
+ * 移除商品规格值
+ * @param {Number} goodsId - 商品ID
+ * @param {Number} specValueId - 规格值ID
+ * @returns {Promise}
+ */
+export function removeGoodsSpecification(goodsId, specValueId) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specifications/${specValueId}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 移除商品所有规格值
+ * @param {Number} goodsId - 商品ID
+ * @returns {Promise}
+ */
+export function removeAllGoodsSpecifications(goodsId) {
+  return request({
+    url: `/api/prod/goods/${goodsId}/specifications`,
+    method: 'delete'
+  })
 } 

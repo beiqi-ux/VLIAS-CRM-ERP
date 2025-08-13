@@ -685,6 +685,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Delete, Picture, Loading } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/format'
@@ -706,6 +707,7 @@ import { getAllBrands } from '@/api/brand'
 
 // 响应式数据
 const loading = ref(false)
+const router = useRouter()
 const submitLoading = ref(false)
 const auditLoading = ref(false)
 const goodsList = ref([])
@@ -897,22 +899,13 @@ const handleCurrentChange = (page) => {
 }
 
 const handleAdd = () => {
-  resetFormData()
-  dialogVisible.value = true
+  // 跳转到新的编辑页面
+  router.push('/goods/edit')
 }
 
 const handleEdit = async (row) => {
-  Object.keys(formData).forEach(key => {
-    formData[key] = row[key] || (key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 : 
-      key === 'saleStatus' || key === 'isRecommended' ? (row[key] ?? 1) : '')
-  })
-  
-  // 先加载商品图片，再显示对话框
-  if (row.id) {
-    await loadProductImages(row.id)
-  }
-  
-  dialogVisible.value = true
+  // 跳转到新的编辑页面
+  router.push(`/goods/edit/${row.id}`)
 }
 
 const handleView = (row) => {
@@ -1165,7 +1158,7 @@ const handleImageUploadError = (error, file, fileList) => {
     const response = JSON.parse(error.message)
     ElMessage.error(response.message || '图片上传失败')
   } catch (e) {
-    ElMessage.error('图片上传失败')
+  ElMessage.error('图片上传失败')
   }
 }
 

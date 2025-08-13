@@ -409,6 +409,11 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
     }
 
     @Override
+    public boolean existsByGoodsCodeAndIdNot(String goodsCode, Long id) {
+        return prodGoodsRepository.existsByGoodsCodeAndIdNot(goodsCode, id);
+    }
+
+    @Override
     public long countByCategoryId(Long categoryId) {
         return prodGoodsRepository.countByCategoryIdAndIsDeleted(categoryId, false);
     }

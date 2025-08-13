@@ -47,11 +47,21 @@ public interface ProdGoodsSpecificationRepository extends JpaRepository<ProdGood
     boolean existsByGoodsIdAndSpecValueId(Long goodsId, Long specValueId);
 
     /**
+     * 检查商品、规格项和规格值的关联关系是否存在
+     * @param goodsId 商品ID
+     * @param specItemId 规格项ID
+     * @param specValueId 规格值ID
+     * @return 是否存在
+     */
+    boolean existsByGoodsIdAndSpecItemIdAndSpecValueId(Long goodsId, Long specItemId, Long specValueId);
+
+    /**
      * 根据商品ID删除所有规格关联
      * @param goodsId 商品ID
      */
     @Modifying
     @Transactional
+    @Query("DELETE FROM ProdGoodsSpecification gs WHERE gs.goodsId = ?1")
     void deleteByGoodsId(Long goodsId);
 
     /**
@@ -60,6 +70,7 @@ public interface ProdGoodsSpecificationRepository extends JpaRepository<ProdGood
      */
     @Modifying
     @Transactional
+    @Query("DELETE FROM ProdGoodsSpecification gs WHERE gs.specValueId = ?1")
     void deleteBySpecValueId(Long specValueId);
 
     /**
@@ -69,6 +80,7 @@ public interface ProdGoodsSpecificationRepository extends JpaRepository<ProdGood
      */
     @Modifying
     @Transactional
+    @Query("DELETE FROM ProdGoodsSpecification gs WHERE gs.goodsId = ?1 AND gs.specValueId = ?2")
     void deleteByGoodsIdAndSpecValueId(Long goodsId, Long specValueId);
 
     /**

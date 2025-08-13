@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @Entity
-@Table(name = "prod_goods_specification")
+@Table(name = "prod_goods_specification_value")
 @JsonIgnoreProperties(value = {"hibernateLazyInitializer", "handler"}, ignoreUnknown = true)
 public class ProdGoodsSpecification {
 
@@ -27,6 +27,12 @@ public class ProdGoodsSpecification {
     private Long goodsId;
 
     /**
+     * 规格项ID
+     */
+    @Column(name = "spec_item_id", nullable = false)
+    private Long specItemId;
+
+    /**
      * 规格值ID
      */
     @Column(name = "spec_value_id", nullable = false)
@@ -35,14 +41,32 @@ public class ProdGoodsSpecification {
     /**
      * 创建时间
      */
-    @Column(name = "create_time", nullable = false)
-    private LocalDateTime createTime = LocalDateTime.now();
+    @Column(name = "created_time")
+    private LocalDateTime createdTime;
+
+    /**
+     * 更新时间
+     */
+    @Column(name = "updated_time")
+    private LocalDateTime updatedTime;
 
     /**
      * 创建人
      */
-    @Column(name = "create_by")
-    private Long createBy;
+    @Column(name = "created_by")
+    private String createdBy;
+
+    /**
+     * 更新人
+     */
+    @Column(name = "updated_by")
+    private String updatedBy;
+
+    /**
+     * 是否删除
+     */
+    @Column(name = "is_deleted")
+    private Integer isDeleted = 0;
 
     /**
      * 商品对象 (关联查询用)

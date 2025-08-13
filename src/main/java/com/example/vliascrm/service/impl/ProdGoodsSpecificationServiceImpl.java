@@ -10,8 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -65,21 +68,65 @@ public class ProdGoodsSpecificationServiceImpl implements ProdGoodsSpecification
     public void setGoodsSpecifications(Long goodsId, List<Long> specValueIds) {
         log.debug("设置商品规格, goodsId: {}, specValueIds: {}", goodsId, specValueIds);
         
-        // 先删除现有关联
-        goodsSpecRepository.deleteByGoodsId(goodsId);
+        // 先删除现有关联，确保事务提交
+        try {
+            goodsSpecRepository.deleteByGoodsId(goodsId);
+            goodsSpecRepository.flush(); // 强制刷新到数据库
+        } catch (Exception e) {
+            log.error("删除商品现有规格关联失败, goodsId: {}", goodsId, e);
+            throw new RuntimeException("删除商品现有规格关联失败");
+        }
         
         // 创建新关联
         if (specValueIds != null && !specValueIds.isEmpty()) {
-            List<ProdGoodsSpecification> goodsSpecs = specValueIds.stream()
-                    .map(specValueId -> {
+            // 查询规格值以获取itemId
+            List<ProdSpecificationValue> specValues = specValueRepository.findByIdInAndIsDeleted(specValueIds, false);
+            Map<Long, Long> specValueToItemMap = specValues.stream()
+                    .collect(Collectors.toMap(ProdSpecificationValue::getId, ProdSpecificationValue::getItemId));
+            
+            // 去重处理 - 确保同一个商品的同一个规格项只有一个规格值
+            Map<Long, Long> itemToValueMap = new HashMap<>();
+            for (Long specValueId : specValueIds) {
+                Long itemId = specValueToItemMap.get(specValueId);
+                if (itemId != null) {
+                    if (itemToValueMap.containsKey(itemId)) {
+                        log.warn("商品{}的规格项{}存在多个规格值，只保留最后一个: {}", goodsId, itemId, specValueId);
+                    }
+                    itemToValueMap.put(itemId, specValueId);
+                }
+            }
+            
+            // 创建规格关联记录
+            List<ProdGoodsSpecification> goodsSpecs = itemToValueMap.entrySet().stream()
+                    .map(entry -> {
+                        Long itemId = entry.getKey();
+                        Long specValueId = entry.getValue();
+                        
+                        // 双重检查是否已存在
+                        if (goodsSpecRepository.existsByGoodsIdAndSpecItemIdAndSpecValueId(goodsId, itemId, specValueId)) {
+                            log.warn("规格关联已存在，跳过: goodsId={}, specItemId={}, specValueId={}", goodsId, itemId, specValueId);
+                            return null;
+                        }
+                        
                         ProdGoodsSpecification goodsSpec = new ProdGoodsSpecification();
                         goodsSpec.setGoodsId(goodsId);
                         goodsSpec.setSpecValueId(specValueId);
+                        goodsSpec.setSpecItemId(itemId);
+                        goodsSpec.setCreatedTime(LocalDateTime.now());
+                        goodsSpec.setUpdatedTime(LocalDateTime.now());
                         return goodsSpec;
                     })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             
-            goodsSpecRepository.saveAll(goodsSpecs);
+            if (!goodsSpecs.isEmpty()) {
+                try {
+                    goodsSpecRepository.saveAll(goodsSpecs);
+                } catch (Exception e) {
+                    log.error("保存商品规格关联失败, goodsId: {}, specs: {}", goodsId, goodsSpecs, e);
+                    throw new RuntimeException("保存商品规格关联失败: " + e.getMessage());
+                }
+            }
         }
     }
 
@@ -87,12 +134,29 @@ public class ProdGoodsSpecificationServiceImpl implements ProdGoodsSpecification
     public void addGoodsSpecification(Long goodsId, Long specValueId) {
         log.debug("添加商品规格, goodsId: {}, specValueId: {}", goodsId, specValueId);
         
-        // 检查是否已存在
-        if (!goodsSpecRepository.existsByGoodsIdAndSpecValueId(goodsId, specValueId)) {
+        // 查询规格值以获取itemId
+        ProdSpecificationValue specValue = specValueRepository.findByIdAndIsDeleted(specValueId, false)
+                .orElseThrow(() -> new RuntimeException("规格值不存在"));
+        
+        Long specItemId = specValue.getItemId();
+        
+        // 检查是否已存在（使用三字段检查）
+        if (!goodsSpecRepository.existsByGoodsIdAndSpecItemIdAndSpecValueId(goodsId, specItemId, specValueId)) {
             ProdGoodsSpecification goodsSpec = new ProdGoodsSpecification();
             goodsSpec.setGoodsId(goodsId);
             goodsSpec.setSpecValueId(specValueId);
-            goodsSpecRepository.save(goodsSpec);
+            goodsSpec.setSpecItemId(specItemId);
+            goodsSpec.setCreatedTime(LocalDateTime.now());
+            goodsSpec.setUpdatedTime(LocalDateTime.now());
+            
+            try {
+                goodsSpecRepository.save(goodsSpec);
+            } catch (Exception e) {
+                log.error("添加商品规格关联失败, goodsId: {}, specValueId: {}, specItemId: {}", goodsId, specValueId, specItemId, e);
+                throw new RuntimeException("添加商品规格关联失败: " + e.getMessage());
+            }
+        } else {
+            log.warn("商品规格关联已存在，跳过添加: goodsId={}, specItemId={}, specValueId={}", goodsId, specItemId, specValueId);
         }
     }
 
@@ -146,6 +210,7 @@ public class ProdGoodsSpecificationServiceImpl implements ProdGoodsSpecification
                         ProdGoodsSpecification targetSpec = new ProdGoodsSpecification();
                         targetSpec.setGoodsId(targetGoodsId);
                         targetSpec.setSpecValueId(sourceSpec.getSpecValueId());
+                        targetSpec.setSpecItemId(sourceSpec.getSpecItemId()); // 复制specItemId
                         return targetSpec;
                     })
                     .collect(Collectors.toList());
