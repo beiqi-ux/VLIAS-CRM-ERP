@@ -4,6 +4,7 @@ import com.example.vliascrm.entity.ProdImage;
 import com.example.vliascrm.repository.ProdImageRepository;
 import com.example.vliascrm.service.ProdImageService;
 import com.example.vliascrm.service.ProdGoodsService;
+import com.example.vliascrm.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,9 @@ import java.util.Optional;
  */
 @Service
 public class ProdImageServiceImpl implements ProdImageService {
+
+    // 商品图片最大数量限制
+    private static final int MAX_IMAGES_PER_GOODS = 5;
 
     @Autowired
     private ProdImageRepository prodImageRepository;
@@ -44,6 +48,12 @@ public class ProdImageServiceImpl implements ProdImageService {
     public ProdImage save(ProdImage image) {
         // 设置创建时间
         if (image.getId() == null) {
+            // 检查图片数量限制
+            long currentCount = countByGoodsId(image.getGoodsId());
+            if (currentCount >= MAX_IMAGES_PER_GOODS) {
+                throw new BusinessException("每个商品最多只能上传" + MAX_IMAGES_PER_GOODS + "张图片");
+            }
+            
             image.setCreateTime(LocalDateTime.now());
             image.setIsDeleted(false);
         }
@@ -116,6 +126,31 @@ public class ProdImageServiceImpl implements ProdImageService {
     @Override
     @Transactional
     public List<ProdImage> saveAll(List<ProdImage> images) {
+        if (images.isEmpty()) {
+            return images;
+        }
+        
+        // 检查所有新增图片的商品ID是否一致
+        Long goodsId = images.get(0).getGoodsId();
+        for (ProdImage image : images) {
+            if (!goodsId.equals(image.getGoodsId())) {
+                throw new BusinessException("批量保存的图片必须属于同一个商品");
+            }
+        }
+        
+        // 统计新增图片数量
+        long newImageCount = images.stream()
+            .filter(image -> image.getId() == null)
+            .count();
+            
+        if (newImageCount > 0) {
+            // 检查图片数量限制
+            long currentCount = countByGoodsId(goodsId);
+            if (currentCount + newImageCount > MAX_IMAGES_PER_GOODS) {
+                throw new BusinessException("每个商品最多只能上传" + MAX_IMAGES_PER_GOODS + "张图片，当前已有" + currentCount + "张，尝试新增" + newImageCount + "张");
+            }
+        }
+        
         for (ProdImage image : images) {
             if (image.getId() == null) {
                 image.setCreateTime(LocalDateTime.now());

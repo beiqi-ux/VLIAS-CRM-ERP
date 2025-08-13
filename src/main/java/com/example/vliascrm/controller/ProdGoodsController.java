@@ -2,12 +2,16 @@ package com.example.vliascrm.controller;
 
 import com.example.vliascrm.common.ApiResponse;
 import com.example.vliascrm.entity.ProdGoods;
+import com.example.vliascrm.dto.ProdGoodsDto;
 import com.example.vliascrm.service.ProdGoodsService;
+import com.example.vliascrm.service.impl.ProdGoodsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,7 +44,7 @@ public class ProdGoodsController {
      */
     @GetMapping
     @PreAuthorize("hasAuthority('product-info-management:view')")
-    public ApiResponse<Page<ProdGoods>> getGoodsList(
+    public ApiResponse<Page<ProdGoodsDto>> getGoodsList(
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String goodsName,
@@ -58,7 +62,15 @@ public class ProdGoodsController {
         Page<ProdGoods> pageResult = prodGoodsService.findByConditions(
             pageable, goodsName, goodsCode, categoryId, brandId, finalStatus, auditStatus);
         
-        return ApiResponse.success(pageResult);
+        // 转换为DTO
+        ProdGoodsServiceImpl serviceImpl = (ProdGoodsServiceImpl) prodGoodsService;
+        List<ProdGoodsDto> dtoList = pageResult.getContent().stream()
+            .map(serviceImpl::convertToDto)
+            .collect(Collectors.toList());
+        
+        Page<ProdGoodsDto> dtoPage = new PageImpl<>(dtoList, pageable, pageResult.getTotalElements());
+        
+        return ApiResponse.success(dtoPage);
     }
 
     /**
@@ -68,10 +80,14 @@ public class ProdGoodsController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('product-info-management:view')")
-    public ApiResponse<ProdGoods> getGoodsById(@PathVariable Long id) {
+    public ApiResponse<ProdGoodsDto> getGoodsById(@PathVariable Long id) {
         Optional<ProdGoods> goods = prodGoodsService.findById(id);
-        return goods.map(ApiResponse::success)
-                  .orElse(ApiResponse.failure("商品不存在"));
+        if (goods.isPresent()) {
+            ProdGoodsServiceImpl serviceImpl = (ProdGoodsServiceImpl) prodGoodsService;
+            ProdGoodsDto dto = serviceImpl.convertToDto(goods.get());
+            return ApiResponse.success(dto);
+        }
+        return ApiResponse.failure("商品不存在");
     }
 
     /**

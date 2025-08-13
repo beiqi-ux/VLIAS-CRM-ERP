@@ -175,10 +175,16 @@
               style="width: 50px; height: 50px; border-radius: 4px;"
               :preview-src-list="row.mainImage ? [getMainImageUrl(row.mainImage)] : []"
               preview-teleported
+              lazy
             >
               <template #error>
                 <div class="image-slot">
                   <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+              <template #placeholder>
+                <div class="image-slot">
+                  <el-icon><Loading /></el-icon>
                 </div>
               </template>
             </el-image>
@@ -551,7 +557,19 @@
                   :preview-src-list="[getImageUrl(image.imageUrl)]"
                   fit="cover"
                   style="width: 100px; height: 100px"
-                />
+                  lazy
+                >
+                  <template #error>
+                    <div class="image-slot" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
+                      <el-icon><Picture /></el-icon>
+                    </div>
+                  </template>
+                  <template #placeholder>
+                    <div class="image-slot" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: #f5f5f5;">
+                      <el-icon><Loading /></el-icon>
+                    </div>
+                  </template>
+                </el-image>
                 <div class="image-actions">
                   <el-button
                     v-if="image.isMain !== 1"
@@ -666,9 +684,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus, Delete, Picture } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Delete, Picture, Loading } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/format'
 import { hasPermission, PERMISSIONS } from '@/utils/permission'
 import {
@@ -792,7 +810,29 @@ const loadGoodsList = async () => {
     const response = await getGoodsList(params)
     if (response.success) {
       const { content, totalElements } = response.data
-      goodsList.value = content
+      
+      // 为每个商品获取主图信息
+      const goodsWithImages = await Promise.all(
+        content.map(async (goods) => {
+          try {
+            const imageResponse = await getImagesByGoodsId(goods.id)
+            console.log(`商品 ${goods.id} 图片响应:`, imageResponse)
+            if (imageResponse.success && imageResponse.data && imageResponse.data.length > 0) {
+              // 查找主图，如果没有主图则取第一张图片
+              const mainImage = imageResponse.data.find(img => img.isMain === 1) || imageResponse.data[0]
+              goods.mainImage = mainImage.imageUrl
+              console.log(`商品 ${goods.id} 设置主图:`, goods.mainImage)
+            } else {
+              console.log(`商品 ${goods.id} 没有图片数据`)
+            }
+          } catch (error) {
+            console.error(`获取商品 ${goods.id} 图片失败:`, error)
+          }
+          return goods
+        })
+      )
+      
+      goodsList.value = goodsWithImages
       pagination.total = totalElements
     }
   } catch (error) {
@@ -861,16 +901,18 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   Object.keys(formData).forEach(key => {
     formData[key] = row[key] || (key.includes('Price') || key.includes('Qty') || key.includes('Stock') || key === 'weight' ? 0 : 
       key === 'saleStatus' || key === 'isRecommended' ? (row[key] ?? 1) : '')
   })
-  dialogVisible.value = true
-  // 加载商品图片
+  
+  // 先加载商品图片，再显示对话框
   if (row.id) {
-    loadProductImages(row.id)
+    await loadProductImages(row.id)
   }
+  
+  dialogVisible.value = true
 }
 
 const handleView = (row) => {
@@ -1020,6 +1062,15 @@ const resetFormData = () => {
   imageFileList.value = []
 }
 
+// 监听对话框状态变化，关闭时清理图片数据
+watch(dialogVisible, (newVal) => {
+  if (!newVal) {
+    // 对话框关闭时重置图片列表
+    imageList.value = []
+    imageFileList.value = []
+  }
+})
+
 // 图片处理方法
 const loadProductImages = async (goodsId) => {
   if (!goodsId) {
@@ -1027,12 +1078,19 @@ const loadProductImages = async (goodsId) => {
     return
   }
   try {
+    console.log('开始加载商品图片, goodsId:', goodsId)
     const response = await getImagesByGoodsId(goodsId)
+    console.log('商品图片API响应:', response)
     if (response.success) {
       imageList.value = response.data || []
+      console.log('设置图片列表:', imageList.value)
+    } else {
+      console.error('获取商品图片失败:', response.message)
+      imageList.value = [] // 失败时重置图片列表
     }
   } catch (error) {
     console.error('加载商品图片失败:', error)
+    imageList.value = [] // 异常时重置图片列表
   }
 }
 
@@ -1045,11 +1103,22 @@ const getImageUrl = (url) => {
 }
 
 const getMainImageUrl = (url) => {
-  if (!url) return '/no-image.png'
+  console.log('处理主图URL:', url)
+  if (!url) {
+    // 返回一个默认的商品图片占位符
+    const defaultImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0yNSAyMEMyNi4zODA3IDIwIDI3LjUgMTguODgwNyAyNy41IDE3LjVDMjcuNSAxNi4xMTkzIDI2LjM4MDcgMTUgMjUgMTVDMjMuNjE5MyAxNSAyMi41IDE2LjExOTMgMjIuNSAxNy41QzIyLjUgMTguODgwNyAyMy42MTkzIDIwIDI1IDIwWiIgZmlsbD0iI0M0QzRDNCIvPgo8cGF0aCBkPSJNMzUgMzVIMTVMMjAgMjVMMjUgMzBMMzAgMjBMMzUgMzVaIiBmaWxsPSIjQzRDNEM0Ii8+Cjwvc3ZnPgo='
+    console.log('返回默认图片')
+    return defaultImage
+  }
   if (url.startsWith('http')) {
+    console.log('完整URL:', url)
     return url
   }
-  return `${import.meta.env.VITE_API_BASE_URL}${url}`
+  // 确保URL以/开头
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`
+  const finalUrl = `${import.meta.env.VITE_API_BASE_URL}${cleanUrl}`
+  console.log('构造的图片URL:', finalUrl)
+  return finalUrl
 }
 
 const beforeImageUpload = (file) => {
@@ -1064,6 +1133,13 @@ const beforeImageUpload = (file) => {
     ElMessage.error('图片大小不能超过 2MB!')
     return false
   }
+  
+  // 检查图片数量限制
+  if (imageList.value.length >= 5) {
+    ElMessage.error('每个商品最多只能上传5张图片!')
+    return false
+  }
+  
   return true
 }
 
@@ -1083,7 +1159,14 @@ const handleImageUploadSuccess = (response, file, fileList) => {
 }
 
 const handleImageUploadError = (error, file, fileList) => {
-  ElMessage.error('图片上传失败')
+  console.error('图片上传错误:', error)
+  // 尝试解析后端返回的错误信息
+  try {
+    const response = JSON.parse(error.message)
+    ElMessage.error(response.message || '图片上传失败')
+  } catch (e) {
+    ElMessage.error('图片上传失败')
+  }
 }
 
 const handleImageRemove = (file, fileList) => {

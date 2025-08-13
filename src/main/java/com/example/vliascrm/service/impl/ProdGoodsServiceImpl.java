@@ -3,6 +3,7 @@ package com.example.vliascrm.service.impl;
 import com.example.vliascrm.entity.ProdGoods;
 import com.example.vliascrm.entity.ProdCategory;
 import com.example.vliascrm.entity.ProdBrand;
+import com.example.vliascrm.dto.ProdGoodsDto;
 import com.example.vliascrm.repository.ProdGoodsRepository;
 import com.example.vliascrm.service.ProdGoodsService;
 import com.example.vliascrm.service.ProdCategoryService;
@@ -107,12 +108,9 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
         
         Page<ProdGoods> page = prodGoodsRepository.findAll(spec, pageable);
         
-        // 填充分类名和品牌名
-        List<ProdGoods> goodsWithNames = new ArrayList<>();
-        for (ProdGoods goods : page.getContent()) {
-            fillCategoryAndBrandNames(goods);
-            goodsWithNames.add(goods);
-        }
+        // 使用批量填充方法，避免N+1查询问题
+        List<ProdGoods> goodsWithNames = new ArrayList<>(page.getContent());
+        fillCategoryAndBrandNamesForList(goodsWithNames);
         
         return new PageImpl<>(goodsWithNames, pageable, page.getTotalElements());
     }
@@ -131,6 +129,82 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
             Optional<ProdBrand> brandOpt = prodBrandService.findById(goods.getBrandId());
             brandOpt.ifPresent(brand -> goods.setBrandName(brand.getBrandName()));
         }
+    }
+    
+    /**
+     * 将商品实体转换为DTO，包含分类和品牌名称
+     */
+    public ProdGoodsDto convertToDto(ProdGoods goods) {
+        if (goods == null) {
+            return null;
+        }
+        
+        ProdGoodsDto dto = new ProdGoodsDto();
+        
+        // 复制基本字段
+        dto.setId(goods.getId());
+        dto.setCreateTime(goods.getCreateTime());
+        dto.setUpdateTime(goods.getUpdateTime());
+        dto.setCreateBy(goods.getCreateBy());
+        dto.setUpdateBy(goods.getUpdateBy());
+        dto.setIsDeleted(goods.getIsDeleted() ? 1 : 0);
+        
+        // 商品信息
+        dto.setGoodsName(goods.getGoodsName());
+        dto.setGoodsCode(goods.getGoodsCode());
+        dto.setCategoryId(goods.getCategoryId());
+        dto.setBrandId(goods.getBrandId());
+        dto.setGoodsType(goods.getGoodsType());
+        dto.setUnit(goods.getUnit());
+        dto.setWeight(goods.getWeight());
+        dto.setVolume(goods.getVolume());
+        
+        // 价格信息
+        dto.setOriginalPrice(goods.getOriginalPrice());
+        dto.setSellingPrice(goods.getSellingPrice());
+        dto.setCostPrice(goods.getCostPrice());
+        dto.setMinPrice(goods.getMinPrice());
+        
+        // 库存信息
+        dto.setStockQty(goods.getStockQty());
+        dto.setWarnStock(goods.getWarnStock());
+        dto.setSaleQty(goods.getSaleQty());
+        
+        // 状态信息
+        dto.setStatus(goods.getStatus());
+        dto.setIsRecommended(goods.getIsRecommended());
+        dto.setIsHot(goods.getIsHot());
+        dto.setIsNew(goods.getIsNew());
+        
+        // 其他信息
+        dto.setKeywords(goods.getKeywords());
+        dto.setTags(goods.getTags());
+        dto.setMainImage(goods.getMainImage());
+        dto.setVideoUrl(goods.getVideoUrl());
+        dto.setBrief(goods.getBrief());
+        dto.setDescription(goods.getDescription());
+        dto.setRemark(goods.getRemark());
+        dto.setSort(goods.getSort());
+        
+        // 审核信息
+        dto.setAuditStatus(goods.getAuditStatus());
+        dto.setAuditTime(goods.getAuditTime());
+        dto.setAuditUserId(goods.getAuditUserId());
+        dto.setAuditRemark(goods.getAuditRemark());
+        
+        // 填充分类名称
+        if (goods.getCategoryId() != null) {
+            Optional<ProdCategory> categoryOpt = prodCategoryService.findById(goods.getCategoryId());
+            categoryOpt.ifPresent(category -> dto.setCategoryName(category.getCategoryName()));
+        }
+        
+        // 填充品牌名称
+        if (goods.getBrandId() != null) {
+            Optional<ProdBrand> brandOpt = prodBrandService.findById(goods.getBrandId());
+            brandOpt.ifPresent(brand -> dto.setBrandName(brand.getBrandName()));
+        }
+        
+        return dto;
     }
 
     /**
@@ -183,42 +257,58 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
 
     @Override
     public List<ProdGoods> findByCategoryId(Long categoryId) {
-        return prodGoodsRepository.findByCategoryIdAndStatusAndIsDeleted(categoryId, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByCategoryIdAndStatusAndIsDeleted(categoryId, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findByBrandId(Long brandId) {
-        return prodGoodsRepository.findByBrandIdAndStatusAndIsDeleted(brandId, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByBrandIdAndStatusAndIsDeleted(brandId, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findByGoodsNameContaining(String goodsName) {
-        return prodGoodsRepository.findByGoodsNameContainingAndStatusAndIsDeleted(goodsName, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByGoodsNameContainingAndStatusAndIsDeleted(goodsName, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findRecommendedGoods() {
-        return prodGoodsRepository.findByIsRecommendedAndStatusAndIsDeletedOrderBySortAsc(1, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByIsRecommendedAndStatusAndIsDeletedOrderBySortAsc(1, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findHotGoods() {
-        return prodGoodsRepository.findByIsHotAndStatusAndIsDeletedOrderBySaleQtyDesc(1, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByIsHotAndStatusAndIsDeletedOrderBySaleQtyDesc(1, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findNewGoods() {
-        return prodGoodsRepository.findByIsNewAndStatusAndIsDeletedOrderByCreateTimeDesc(1, 1, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByIsNewAndStatusAndIsDeletedOrderByCreateTimeDesc(1, 1, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findLowStockGoods() {
-        return prodGoodsRepository.findLowStockGoods();
+        List<ProdGoods> goodsList = prodGoodsRepository.findLowStockGoods();
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
     public List<ProdGoods> findByAuditStatus(Integer auditStatus) {
-        return prodGoodsRepository.findByAuditStatusAndIsDeleted(auditStatus, false);
+        List<ProdGoods> goodsList = prodGoodsRepository.findByAuditStatusAndIsDeleted(auditStatus, false);
+        fillCategoryAndBrandNamesForList(goodsList);
+        return goodsList;
     }
 
     @Override
@@ -339,4 +429,4 @@ public class ProdGoodsServiceImpl implements ProdGoodsService {
             prodGoodsRepository.save(goods);
         }
     }
-} 
+}
