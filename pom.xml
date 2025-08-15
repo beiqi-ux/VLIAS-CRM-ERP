@@ -10,9 +10,9 @@
     </parent>
     <groupId>com.example</groupId>
     <artifactId>VLIASCRM</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <name>VLIASCRM</name>
-    <description>VLIASCRM</description>
+    <description>VLIAS CRM-ERP v1.0.1 - 完整眼镜店进销存管理系统</description>
     
     <properties>
         <java.version>17</java.version>
