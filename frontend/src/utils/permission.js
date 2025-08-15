@@ -485,6 +485,17 @@ export const PERMISSIONS = {
   
   // 采购管理模块
   PURCHASE: {
+    // 供应商商品管理
+    SUPPLIER_GOODS: {
+      VIEW: 'supplier-goods-management:view',
+      CREATE: 'supplier-goods-management:create',
+      EDIT: 'supplier-goods-management:update',
+      DELETE: 'supplier-goods-management:delete',
+      EXPORT: 'supplier-goods-management:export',
+      IMPORT: 'supplier-goods-management:import',
+      COMPARE: 'supplier-goods-management:compare',
+      VIEW_HISTORY: 'supplier-goods-management:view-history'
+    },
     // 采购入库管理
     RECEIPT: {
       LIST: 'pur-receipt-management:list',

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +63,9 @@ public class ProdGoodsController {
         // saleStatus和status是同一个字段，优先使用saleStatus
         Integer finalStatus = saleStatus != null ? saleStatus : status;
         
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createTime").descending());
+        // 前端传递的page从1开始，Spring Boot的page从0开始，需要减1
+        int adjustedPage = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by("createTime").descending());
         Page<ProdGoods> pageResult = prodGoodsService.findByConditions(
             pageable, goodsName, goodsCode, categoryId, brandId, finalStatus, auditStatus);
         
@@ -184,12 +187,54 @@ public class ProdGoodsController {
     /**
      * 搜索商品
      * @param goodsName 商品名称
-     * @return 商品列表
+     * @param keyword 关键词（兼容参数）
+     * @param page 页码
+     * @param size 每页大小
+     * @return 商品列表或分页结果
      */
     @GetMapping("/search")
-    public ApiResponse<List<ProdGoods>> searchGoods(@RequestParam String goodsName) {
-        List<ProdGoods> goodsList = prodGoodsService.findByGoodsNameContaining(goodsName);
-        return ApiResponse.success(goodsList);
+    public ApiResponse<?> searchGoods(
+            @RequestParam(required = false) String goodsName,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        
+        // 优先使用goodsName，如果没有则使用keyword
+        String searchTerm = goodsName != null ? goodsName : keyword;
+        
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            // 如果有分页参数，返回分页格式的空结果
+            if (page != null && size != null) {
+                int adjustedPage = Math.max(0, page - 1);
+                Pageable pageable = PageRequest.of(adjustedPage, size);
+                Page<ProdGoodsDto> emptyPage = new PageImpl<>(new ArrayList<>(), pageable, 0);
+                return ApiResponse.success(emptyPage);
+            } else {
+                return ApiResponse.success(new ArrayList<>());
+            }
+        }
+        
+        // 如果有分页参数，返回分页结果
+        if (page != null && size != null) {
+            // 前端传递的page从1开始，Spring Boot的page从0开始，需要减1
+            int adjustedPage = Math.max(0, page - 1);
+            Pageable pageable = PageRequest.of(adjustedPage, size, Sort.by("createTime").descending());
+            Page<ProdGoods> pageResult = prodGoodsService.findByConditions(
+                pageable, searchTerm, null, null, null, null, null);
+            
+            // 转换为DTO
+            ProdGoodsServiceImpl serviceImpl = (ProdGoodsServiceImpl) prodGoodsService;
+            List<ProdGoodsDto> dtoList = pageResult.getContent().stream()
+                .map(serviceImpl::convertToDto)
+                .collect(Collectors.toList());
+            
+            Page<ProdGoodsDto> dtoPage = new PageImpl<>(dtoList, pageable, pageResult.getTotalElements());
+            return ApiResponse.success(dtoPage);
+        } else {
+            // 没有分页参数，返回列表
+            List<ProdGoods> goodsList = prodGoodsService.findByGoodsNameContaining(searchTerm);
+            return ApiResponse.success(goodsList);
+        }
     }
 
     /**

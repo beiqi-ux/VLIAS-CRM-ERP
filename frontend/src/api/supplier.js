@@ -95,6 +95,35 @@ export const supplierApi = {
       url: '/api/purchase/suppliers/stats',
       method: 'get'
     })
+  },
+
+  // 添加常用方法别名，保持API一致性
+  list: function(params) {
+    return this.getSupplierPage(params)
+  },
+  
+  getPage: function(params) {
+    return this.getSupplierPage(params)
+  },
+  
+  getById: function(id) {
+    return this.getSupplierById(id)
+  },
+  
+  create: function(data) {
+    return this.createSupplier(data)
+  },
+  
+  update: function(id, data) {
+    return this.updateSupplier(id, data)
+  },
+  
+  delete: function(id) {
+    return this.deleteSupplier(id)
+  },
+  
+  getAll: function() {
+    return this.getAllActiveSuppliers()
   }
 }
 

@@ -55,20 +55,33 @@ app.directive('permission', {
   }
 })
 
+// 安全移除元素的辅助函数
+function safeRemoveElement(el) {
+  try {
+    if (el && el.parentNode && el.parentNode.contains && el.parentNode.contains(el)) {
+      // 标记元素已被权限控制，防止重复处理
+      if (!el.__permission_removed) {
+        el.__permission_removed = true
+        el.parentNode.removeChild(el)
+      }
+    }
+  } catch (error) {
+    console.warn('权限指令移除元素时发生错误:', error)
+  }
+}
+
 // 操作权限指令（用于按钮功能控制，严格检查）
 app.directive('action-permission', {
   mounted(el, binding) {
     const permission = binding.value
     if (permission && !hasActionPermission(permission)) {
-      // 移除元素而不是隐藏，确保操作完全不可用
-      el.parentNode && el.parentNode.removeChild(el)
+      safeRemoveElement(el)
     }
   },
   updated(el, binding) {
     const permission = binding.value
     if (permission && !hasActionPermission(permission)) {
-      // 如果权限检查失败，移除元素
-      el.parentNode && el.parentNode.removeChild(el)
+      safeRemoveElement(el)
     }
   }
 })
@@ -78,15 +91,13 @@ app.directive('hasPermission', {
   mounted(el, binding) {
     const permission = binding.value
     if (permission && !hasActionPermission(permission)) {
-      // 移除元素而不是隐藏，确保操作完全不可用
-      el.parentNode && el.parentNode.removeChild(el)
+      safeRemoveElement(el)
     }
   },
   updated(el, binding) {
     const permission = binding.value
     if (permission && !hasActionPermission(permission)) {
-      // 如果权限检查失败，移除元素
-      el.parentNode && el.parentNode.removeChild(el)
+      safeRemoveElement(el)
     }
   }
 })

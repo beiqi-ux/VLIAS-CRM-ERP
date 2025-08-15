@@ -521,9 +521,10 @@
     </el-dialog>
 
     <!-- 选择商品对话框 -->
-    <GoodsSelector
-      v-model:visible="goodsSelectorVisible"
+    <SupplierGoodsSelector
+      v-model="goodsSelectorVisible"
       :multiple="true"
+      :supplier-id="form.supplierId"
       @confirm="handleGoodsSelected"
     />
   </div>
@@ -538,7 +539,7 @@ import { purReceiptApi } from '@/api/purchase/purReceipt'
 import { purchaseOrderApi } from '@/api/purchaseOrder'
 import { supplierApi } from '@/api/supplier'
 import { warehouseApi } from '@/api/warehouse'
-import GoodsSelector from '@/components/GoodsSelector/index.vue'
+import SupplierGoodsSelector from '@/components/GoodsSelector/SupplierGoodsSelector.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -629,8 +630,8 @@ onMounted(() => {
 const loadBaseData = async () => {
   try {
     // 加载供应商选项
-    const supplierRes = await supplierApi.getList()
-    supplierOptions.value = supplierRes.data || []
+    const supplierRes = await supplierApi.getAllActiveSuppliers()
+    supplierOptions.value = supplierRes.success ? supplierRes.data : []
     
     // 加载仓库选项
     const warehouseRes = await warehouseApi.getList()
@@ -746,25 +747,29 @@ const handleAddItem = () => {
 }
 
 const handleGoodsSelected = (selectedGoods) => {
-  selectedGoods.forEach(goods => {
+  selectedGoods.forEach(supplierGoods => {
     form.items.push({
       id: null,
-      goodsId: goods.id,
-      skuId: goods.skuId,
-      goodsName: goods.goodsName,
-      skuName: goods.skuName,
-      goodsSpec: goods.goodsSpec,
-      goodsUnit: goods.goodsUnit,
-      goodsCode: goods.goodsCode,
-      skuCode: goods.skuCode,
+      goodsId: supplierGoods.goodsId, // 使用商品ID，不是供应商商品ID
+      skuId: supplierGoods.skuId,
+      goodsName: supplierGoods.goodsName,
+      skuName: supplierGoods.skuName,
+      goodsSpec: supplierGoods.specification || '',
+      goodsUnit: supplierGoods.unit || '',
+      goodsCode: supplierGoods.goodsCode,
+      skuCode: supplierGoods.skuCode,
       batchNumber: '',
       productionDate: null,
       expiryDate: null,
-      purchasePrice: 0,
-      quantity: 1,
+      purchasePrice: supplierGoods.purchasePrice || 0,
+      quantity: supplierGoods.minOrderQty || 1,
       totalAmount: 0,
       locationId: null,
-      remark: ''
+      remark: '',
+      // 保存供应商商品相关信息
+      supplierGoodsId: supplierGoods.id,
+      supplierGoodsCode: supplierGoods.supplierGoodsCode,
+      supplierGoodsName: supplierGoods.supplierGoodsName
     })
   })
 }

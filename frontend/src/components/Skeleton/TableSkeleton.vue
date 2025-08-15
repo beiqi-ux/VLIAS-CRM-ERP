@@ -1,5 +1,5 @@
 <template>
-  <div class="table-skeleton">
+  <div v-if="loading" class="table-skeleton">
     <!-- 搜索区域骨架 -->
     <div
       v-if="showSearch"
@@ -150,10 +150,20 @@
       </div>
     </div>
   </div>
+  
+  <!-- 实际内容 -->
+  <div v-else>
+    <slot></slot>
+  </div>
 </template>
 
 <script setup>
 const props = defineProps({
+  // 加载状态
+  loading: {
+    type: Boolean,
+    default: true
+  },
   // 表格行数
   rows: {
     type: Number,

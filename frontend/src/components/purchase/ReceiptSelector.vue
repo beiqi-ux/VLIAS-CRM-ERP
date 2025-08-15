@@ -271,8 +271,8 @@ export default {
     // 加载供应商
     async loadSuppliers() {
       try {
-        const response = await supplierApi.getAll()
-        this.supplierList = response.data
+        const response = await supplierApi.getAllActiveSuppliers()
+        this.supplierList = response.success ? response.data : []
       } catch (error) {
         console.error('加载供应商失败', error)
       }

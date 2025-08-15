@@ -319,10 +319,11 @@
       </el-form>
     </el-card>
 
-    <!-- 商品选择器 -->
-    <GoodsSelector
+    <!-- 供应商商品选择器 -->
+    <SupplierGoodsSelector
       v-model="goodsSelectorVisible"
       :multiple="false"
+      :supplier-id="form.supplierId"
       :selected="[]"
       @confirm="handleGoodsSelected"
     />
@@ -336,7 +337,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { purchaseOrderApi } from '@/api/purchaseOrder'
 import { supplierApi } from '@/api/supplier'
-import GoodsSelector from '@/components/GoodsSelector/index.vue'
+import SupplierGoodsSelector from '@/components/GoodsSelector/SupplierGoodsSelector.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -385,9 +386,9 @@ const totalQuantity = computed(() => {
 // 加载供应商选项
 const loadSuppliers = async () => {
   try {
-    const response = await supplierApi.getAllSuppliers()
-    if (response.data.success) {
-      supplierOptions.value = response.data.data
+    const response = await supplierApi.getAllActiveSuppliers()
+    if (response.success) {
+      supplierOptions.value = response.data
     }
   } catch (error) {
     console.error('加载供应商失败:', error)
@@ -464,17 +465,28 @@ const handleSelectGoods = (index) => {
 // 商品选择确认
 const handleGoodsSelected = (selectedGoods) => {
   if (selectedGoods.length > 0 && currentItemIndex.value >= 0) {
-    const goods = selectedGoods[0]
+    const supplierGoods = selectedGoods[0]
     const item = form.items[currentItemIndex.value]
     
     Object.assign(item, {
-      goodsId: goods.id,
-      goodsCode: goods.goodsCode,
-      goodsName: goods.goodsName,
-      specification: goods.specification || '',
-      unit: goods.unit || '',
-      unitPrice: goods.purchasePrice || 0
+      goodsId: supplierGoods.goodsId, // 使用商品ID，不是供应商商品ID
+      goodsCode: supplierGoods.goodsCode,
+      goodsName: supplierGoods.goodsName,
+      specification: supplierGoods.specification || '',
+      unit: supplierGoods.unit || '',
+      unitPrice: supplierGoods.purchasePrice || 0,
+      // 保存供应商商品相关信息
+      supplierGoodsId: supplierGoods.id,
+      supplierGoodsCode: supplierGoods.supplierGoodsCode,
+      supplierGoodsName: supplierGoods.supplierGoodsName,
+      minOrderQty: supplierGoods.minOrderQty,
+      leadTime: supplierGoods.leadTime
     })
+
+    // 如果有最小起订量，设置默认数量
+    if (supplierGoods.minOrderQty && supplierGoods.minOrderQty > 0) {
+      item.quantity = Math.max(item.quantity || 1, supplierGoods.minOrderQty)
+    }
 
     // 重新计算小计
     handlePriceChange(currentItemIndex.value)

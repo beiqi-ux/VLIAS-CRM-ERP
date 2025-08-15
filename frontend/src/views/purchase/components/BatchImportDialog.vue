@@ -484,8 +484,3 @@ const resetData = () => {
   border-color: #409eff;
 }
 </style> 
-
-:deep(.el-upload-dragger:hover) {
-  border-color: #409eff;
-}
-</style> 

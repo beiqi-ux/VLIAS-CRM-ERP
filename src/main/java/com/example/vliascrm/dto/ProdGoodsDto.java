@@ -62,12 +62,25 @@ public class ProdGoodsDto {
     private Long auditUserId;
     private String auditRemark;
     
-    // 兼容性字段
+    // 兼容性字段 - 提供前端期望的字段名
     public String getContent() {
         return this.description;
     }
     
     public Integer getSaleStatus() {
         return this.status;
+    }
+    
+    // 前端商品选择器期望的字段名
+    public BigDecimal getSalePrice() {
+        return this.sellingPrice;
+    }
+    
+    public Integer getStock() {
+        return this.stockQty;
+    }
+    
+    public Integer getMinStock() {
+        return this.warnStock;
     }
 } 

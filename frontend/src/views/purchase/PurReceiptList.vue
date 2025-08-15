@@ -741,8 +741,8 @@ onMounted(() => {
 const loadBaseData = async () => {
   try {
     // 加载供应商选项
-    const supplierRes = await supplierApi.getList()
-    supplierOptions.value = supplierRes.data || []
+    const supplierRes = await supplierApi.getAllActiveSuppliers()
+    supplierOptions.value = supplierRes.success ? supplierRes.data : []
     
     // 加载仓库选项
     const warehouseRes = await warehouseApi.getList()

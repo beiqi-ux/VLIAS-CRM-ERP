@@ -359,6 +359,15 @@ export const goodsApi = {
     })
   },
 
+  // 搜索商品
+  search(params) {
+    return request({
+      url: '/api/prod/goods/search',
+      method: 'get',
+      params
+    })
+  },
+
   // 其他常用方法的别名
   getList: getGoodsList,
   getById: getGoodsById,

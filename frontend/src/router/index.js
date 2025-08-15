@@ -135,6 +135,17 @@ const router = createRouter({
           component: () => import('@/views/purchase/SupplierList.vue'),
           meta: { title: '供应商管理' }
         },
+        // 供应商商品管理
+        {
+          path: 'purchase/supplier-goods',
+          name: 'supplier-goods',
+          component: () => import('@/views/purchase/SupplierGoodsList.vue'),
+          meta: { 
+            title: '供应商商品管理',
+            requiresAuth: true,
+            permission: 'supplier-goods-management:view'
+          }
+        },
         // 采购订单管理
         {
           path: 'purchase/order',

@@ -636,9 +636,9 @@ const loadData = async () => {
 // 加载供应商选项
 const loadSuppliers = async () => {
   try {
-    const response = await supplierApi.getAllSuppliers()
-    if (response.data.success) {
-      supplierOptions.value = response.data.data
+    const response = await supplierApi.getAllActiveSuppliers()
+    if (response.success) {
+      supplierOptions.value = response.data
     }
   } catch (error) {
     console.error('加载供应商失败:', error)
