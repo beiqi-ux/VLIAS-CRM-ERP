@@ -1,0 +1,419 @@
+package com.example.vliascrm.service.impl;
+
+import com.example.vliascrm.dto.MenuDTO;
+import com.example.vliascrm.entity.SysMenu;
+import com.example.vliascrm.entity.SysPermission;
+import com.example.vliascrm.exception.BusinessException;
+import com.example.vliascrm.exception.ResourceNotFoundException;
+import com.example.vliascrm.repository.SysMenuRepository;
+import com.example.vliascrm.repository.SysPermissionRepository;
+import com.example.vliascrm.service.SysMenuService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Arrays;
+
+/**
+ * 菜单服务实现类
+ */
+@Service
+@RequiredArgsConstructor
+public class SysMenuServiceImpl implements SysMenuService {
+
+    private final SysMenuRepository menuRepository;
+    private final SysPermissionRepository permissionRepository;
+    
+    // 核心菜单编码，不允许删除和禁用
+    private static final Set<String> CORE_MENU_CODES = new HashSet<>(Arrays.asList(
+        "system",           // 系统管理
+        "system:user",      // 用户管理
+        "system:role",      // 角色管理
+        "system:permission",// 权限管理
+        "system:menu",      // 菜单管理
+        "profile"           // 个人中心
+    ));
+
+    @Override
+    @Transactional
+    public SysMenu createMenu(MenuDTO menuDTO) {
+        // 检查菜单编码是否存在
+        if (menuRepository.existsByMenuCode(menuDTO.getMenuCode())) {
+            throw new BusinessException("菜单编码已存在");
+        }
+
+        // 检查权限编码是否存在（如果提供了权限编码）
+        if (menuDTO.getPermissionCode() != null && 
+            permissionRepository.existsByPermissionCodeAndIsDeleted(menuDTO.getPermissionCode(), false)) {
+            throw new BusinessException("权限编码已存在");
+        }
+
+        SysMenu menu = new SysMenu();
+        BeanUtils.copyProperties(menuDTO, menu);
+        menu.setCreateTime(LocalDateTime.now());
+        menu.setUpdateTime(LocalDateTime.now());
+        menu.setIsDeleted(false);
+
+        return menuRepository.save(menu);
+    }
+
+    @Override
+    @Transactional
+    public SysMenu updateMenu(Long id, MenuDTO menuDTO) {
+        SysMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+
+        // 检查是否为核心菜单
+        if (isCoreMenu(menu.getMenuCode())) {
+            // 核心菜单不允许禁用
+            if (menuDTO.getStatus() != null && menuDTO.getStatus() == 0) {
+                throw new BusinessException("系统核心菜单不允许禁用");
+            }
+            // 核心菜单不允许修改菜单编码
+            if (!menu.getMenuCode().equals(menuDTO.getMenuCode())) {
+                throw new BusinessException("系统核心菜单不允许修改编码");
+            }
+        }
+
+        // 如果修改了菜单编码，需要检查是否存在
+        if (!menu.getMenuCode().equals(menuDTO.getMenuCode()) &&
+                menuRepository.existsByMenuCode(menuDTO.getMenuCode())) {
+            throw new BusinessException("菜单编码已存在");
+        }
+
+        BeanUtils.copyProperties(menuDTO, menu, "id", "createTime", "createBy", "isDeleted");
+        menu.setUpdateTime(LocalDateTime.now());
+
+        return menuRepository.save(menu);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMenu(Long id) {
+        SysMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+
+        // 检查是否为核心菜单
+        if (isCoreMenu(menu.getMenuCode())) {
+            throw new BusinessException("系统核心菜单不允许删除");
+        }
+
+        // 检查是否有子菜单
+        List<SysMenu> children = menuRepository.findByParentIdAndStatusAndIsDeletedOrderBySortAsc(id, 1, false);
+        if (!children.isEmpty()) {
+            throw new BusinessException("请先删除子菜单");
+        }
+
+        // 逻辑删除菜单
+        menu.setIsDeleted(true);
+        menu.setUpdateTime(LocalDateTime.now());
+        menuRepository.save(menu);
+    }
+
+    /**
+     * 判断是否为核心菜单
+     * @param menuCode 菜单编码
+     * @return 是否为核心菜单
+     */
+    private boolean isCoreMenu(String menuCode) {
+        return CORE_MENU_CODES.contains(menuCode);
+    }
+
+    @Override
+    public SysMenu getMenuById(Long id) {
+        return menuRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+    }
+
+    @Override
+    public List<SysMenu> getAllMenus() {
+        return menuRepository.findAll();
+    }
+
+    @Override
+    public List<MenuDTO> getMenuTree() {
+        // 获取所有未删除且启用的菜单（用于用户侧显示）
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
+                .sorted((m1, m2) -> {
+                    // 先按父级ID排序，再按sort排序
+                    int parentCompare = Long.compare(
+                        m1.getParentId() != null ? m1.getParentId() : 0L,
+                        m2.getParentId() != null ? m2.getParentId() : 0L
+                    );
+                    if (parentCompare != 0) return parentCompare;
+                    return Integer.compare(
+                        m1.getSort() != null ? m1.getSort() : 0,
+                        m2.getSort() != null ? m2.getSort() : 0
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 转换为DTO
+        List<MenuDTO> dtoList = allMenus.stream().map(m -> {
+            MenuDTO dto = new MenuDTO();
+            BeanUtils.copyProperties(m, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 构建树形结构
+        Map<Long, List<MenuDTO>> parentMap = dtoList.stream()
+                .collect(Collectors.groupingBy(MenuDTO::getParentId));
+
+        // 对每个层级的菜单按sort排序
+        parentMap.values().forEach(children -> 
+            children.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0))
+        );
+
+        // 获取顶级菜单并排序
+        List<MenuDTO> rootMenus = parentMap.getOrDefault(0L, new ArrayList<>());
+        rootMenus.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0));
+
+        // 递归设置子菜单
+        rootMenus.forEach(root -> setChildren(root, parentMap));
+
+        return rootMenus;
+    }
+
+    @Override
+    public List<MenuDTO> getAdminMenuTree() {
+        // 获取所有未删除的菜单（用于管理员菜单管理，包括禁用的菜单）
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()))
+                .sorted((m1, m2) -> {
+                    // 先按父级ID排序，再按sort排序
+                    int parentCompare = Long.compare(
+                        m1.getParentId() != null ? m1.getParentId() : 0L,
+                        m2.getParentId() != null ? m2.getParentId() : 0L
+                    );
+                    if (parentCompare != 0) return parentCompare;
+                    return Integer.compare(
+                        m1.getSort() != null ? m1.getSort() : 0,
+                        m2.getSort() != null ? m2.getSort() : 0
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 转换为DTO
+        List<MenuDTO> dtoList = allMenus.stream().map(m -> {
+            MenuDTO dto = new MenuDTO();
+            BeanUtils.copyProperties(m, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 构建树形结构
+        Map<Long, List<MenuDTO>> parentMap = dtoList.stream()
+                .collect(Collectors.groupingBy(MenuDTO::getParentId));
+
+        // 对每个层级的菜单按sort排序
+        parentMap.values().forEach(children -> 
+            children.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0))
+        );
+
+        // 获取顶级菜单并排序
+        List<MenuDTO> rootMenus = parentMap.getOrDefault(0L, new ArrayList<>());
+        rootMenus.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0));
+
+        // 递归设置子菜单
+        rootMenus.forEach(root -> setChildren(root, parentMap));
+
+        return rootMenus;
+    }
+
+    private void setChildren(MenuDTO parent, Map<Long, List<MenuDTO>> parentMap) {
+        List<MenuDTO> children = parentMap.getOrDefault(parent.getId(), new ArrayList<>());
+        parent.setChildren(children);
+        children.forEach(child -> setChildren(child, parentMap));
+    }
+
+    @Override
+    public List<SysMenu> getMenusByRoleId(Long roleId) {
+        return menuRepository.findMenusByRoleId(roleId);
+    }
+
+    @Override
+    public List<SysMenu> getMenusByUserId(Long userId) {
+        return menuRepository.findMenusByUserId(userId);
+    }
+
+    @Override
+    public List<MenuDTO> getUserMenuTree(Long userId) {
+        // 获取用户的菜单列表
+        List<SysMenu> userMenus = menuRepository.findMenusByUserId(userId);
+        
+        // 获取所有菜单，用于构建完整的树形结构
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
+                .collect(Collectors.toList());
+        
+        // 获取用户有权限的菜单ID集合
+        Set<Long> userMenuIds = userMenus.stream()
+                .map(SysMenu::getId)
+                .collect(Collectors.toSet());
+        
+        // 构建菜单ID到菜单对象的映射
+        Map<Long, SysMenu> menuMap = allMenus.stream()
+                .collect(Collectors.toMap(SysMenu::getId, menu -> menu));
+        
+        // 递归获取所有父级菜单ID
+        Set<Long> allVisibleMenuIds = new HashSet<>(userMenuIds);
+        for (Long menuId : userMenuIds) {
+            addParentMenuIds(menuId, menuMap, allVisibleMenuIds);
+        }
+        
+        // 过滤出用户可见的菜单并排序
+        List<SysMenu> visibleMenus = allMenus.stream()
+                .filter(menu -> allVisibleMenuIds.contains(menu.getId()))
+                .sorted((m1, m2) -> {
+                    // 先按父级ID排序，再按sort排序
+                    int parentCompare = Long.compare(
+                        m1.getParentId() != null ? m1.getParentId() : 0L,
+                        m2.getParentId() != null ? m2.getParentId() : 0L
+                    );
+                    if (parentCompare != 0) return parentCompare;
+                    return Integer.compare(
+                        m1.getSort() != null ? m1.getSort() : 0,
+                        m2.getSort() != null ? m2.getSort() : 0
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 转换为DTO
+        List<MenuDTO> dtoList = visibleMenus.stream().map(m -> {
+            MenuDTO dto = new MenuDTO();
+            BeanUtils.copyProperties(m, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 构建树形结构
+        Map<Long, List<MenuDTO>> parentMap = dtoList.stream()
+                .collect(Collectors.groupingBy(MenuDTO::getParentId));
+
+        // 对每个层级的菜单按sort排序
+        parentMap.values().forEach(children -> 
+            children.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0))
+        );
+
+        // 获取顶级菜单并排序
+        List<MenuDTO> rootMenus = parentMap.getOrDefault(0L, new ArrayList<>());
+        rootMenus.sort(Comparator.comparing(m -> m.getSort() != null ? m.getSort() : 0));
+
+        // 递归设置子菜单
+        rootMenus.forEach(root -> setChildren(root, parentMap));
+
+        return rootMenus;
+    }
+    
+    /**
+     * 递归添加父级菜单ID
+     */
+    private void addParentMenuIds(Long menuId, Map<Long, SysMenu> menuMap, Set<Long> visibleMenuIds) {
+        SysMenu menu = menuMap.get(menuId);
+        if (menu != null && menu.getParentId() != null && menu.getParentId() > 0) {
+            visibleMenuIds.add(menu.getParentId());
+            addParentMenuIds(menu.getParentId(), menuMap, visibleMenuIds);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void toggleMenuStatus(Long id) {
+        SysMenu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+
+        // 检查是否为核心菜单，核心菜单不允许禁用
+        if (isCoreMenu(menu.getMenuCode()) && menu.getStatus() == 1) {
+            throw new BusinessException("系统核心菜单不允许禁用");
+        }
+
+        // 切换状态
+        menu.setStatus(menu.getStatus() == 1 ? 0 : 1);
+        menu.setUpdateTime(LocalDateTime.now());
+        menuRepository.save(menu);
+    }
+
+    @Override
+    @Transactional
+    public int batchGenerateMenuPermissions() {
+        // 获取所有启用的菜单
+        List<SysMenu> allMenus = menuRepository.findAll().stream()
+                .filter(m -> !Boolean.TRUE.equals(m.getIsDeleted()) && m.getStatus() == 1)
+                .collect(Collectors.toList());
+        
+        int totalGenerated = 0;
+        for (SysMenu menu : allMenus) {
+            totalGenerated += regenerateMenuPermissions(menu.getId());
+        }
+        return totalGenerated;
+    }
+
+    @Override
+    @Transactional
+    public int regenerateMenuPermissions(Long menuId) {
+        SysMenu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new ResourceNotFoundException("菜单不存在"));
+        
+        // 使用菜单中填写的权限编码
+        String permissionCode = menu.getPermissionCode();
+        
+        // 如果菜单没有设置权限编码，则不生成权限
+        if (permissionCode == null || permissionCode.trim().isEmpty()) {
+            return 0;
+        }
+        
+        // 检查权限是否已存在
+        if (permissionRepository.existsByPermissionCodeAndIsDeleted(permissionCode, false)) {
+            return 0; // 权限已存在，不重复生成
+        }
+        
+        // 创建权限记录
+        SysPermission permission = new SysPermission();
+        permission.setPermissionName(menu.getMenuName() + "-权限");
+        permission.setPermissionCode(permissionCode);
+        
+        // 根据菜单类型设置对应的权限类型和层级
+        Integer permissionType = menu.getMenuType(); // 菜单类型直接对应权限类型
+        permission.setPermissionType(permissionType);
+        permission.setLevelDepth(permissionType);
+        
+        // 设置父权限ID
+        if (menu.getParentId() == 0) {
+            permission.setParentId(0L);
+        } else {
+            // 查找父菜单对应的权限作为父权限
+            SysMenu parentMenu = menuRepository.findById(menu.getParentId()).orElse(null);
+            if (parentMenu != null && parentMenu.getPermissionCode() != null) {
+                Optional<SysPermission> parentPermission = permissionRepository
+                    .findByPermissionCodeAndIsDeleted(parentMenu.getPermissionCode(), false);
+                if (parentPermission.isPresent()) {
+                    permission.setParentId(parentPermission.get().getId());
+                } else {
+                    permission.setParentId(0L);
+                }
+            } else {
+                permission.setParentId(0L);
+            }
+        }
+        
+        permission.setMenuId(menu.getId());
+        permission.setDescription("访问" + menu.getMenuName() + "菜单的权限");
+        permission.setStatus(1);
+        permission.setIsDeleted(false);
+        permission.setCreateTime(LocalDateTime.now());
+        permission.setUpdateTime(LocalDateTime.now());
+        
+        permissionRepository.save(permission);
+        return 1;
+    }
+
+} 
