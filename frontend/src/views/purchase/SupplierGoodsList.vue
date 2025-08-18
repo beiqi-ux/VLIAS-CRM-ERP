@@ -151,8 +151,8 @@
         <el-table-column label="商品信息" width="160">
           <template #default="{ row }">
             <div>
-              <div class="text-primary">{{ row.goodsName || '-' }}</div>
-              <div class="text-muted text-sm">SKU: {{ row.goodsCode || '-' }}</div>
+              <div class="text-primary">{{ row.supplierGoodsName || '-' }}</div>
+              <div class="text-muted text-sm">编码: {{ row.supplierGoodsCode || '-' }}</div>
             </div>
           </template>
         </el-table-column>
@@ -198,16 +198,8 @@
           <template #default="{ row }">
             <div class="time-cell">
               <el-icon><Clock /></el-icon>
-              <span>{{ formatDateTime(row.updatedAt) }}</span>
+              <span>{{ formatDateTime(row.updateTime) }}</span>
             </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-              {{ row.status === 1 ? '启用' : '禁用' }}
-            </el-tag>
           </template>
         </el-table-column>
 
@@ -350,7 +342,7 @@ const searchGoods = async (query) => {
   goodsSearchLoading.value = true
   try {
     const response = await supplierGoodsApi.search({
-      goodsName: query,  // 修改：使用goodsName而不是keyword
+      supplierGoodsName: query,  // 使用supplierGoodsName搜索
       supplierId: null   // 不限制供应商
     })
     // 提取商品信息，避免重复
@@ -360,8 +352,8 @@ const searchGoods = async (query) => {
         if (!uniqueGoods.has(item.goodsId)) {
           uniqueGoods.set(item.goodsId, {
             id: item.goodsId,
-            name: item.goodsName,
-            sku: item.skuCode || item.goodsCode
+            name: item.supplierGoodsName,
+            sku: item.supplierGoodsCode
           })
         }
       })

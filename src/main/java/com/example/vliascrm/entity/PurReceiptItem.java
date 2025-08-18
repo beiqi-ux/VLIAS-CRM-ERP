@@ -111,8 +111,8 @@ public class PurReceiptItem {
     /**
      * 入库数量
      */
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+    @Column(name = "quantity", nullable = false, precision = 10, scale = 3)
+    private BigDecimal quantity;
 
     /**
      * 总金额
@@ -150,7 +150,7 @@ public class PurReceiptItem {
         updateTime = LocalDateTime.now();
         // 计算总金额
         if (purchasePrice != null && quantity != null) {
-            totalAmount = purchasePrice.multiply(BigDecimal.valueOf(quantity));
+            totalAmount = purchasePrice.multiply(quantity);
         }
     }
 
@@ -159,7 +159,7 @@ public class PurReceiptItem {
         updateTime = LocalDateTime.now();
         // 重新计算总金额
         if (purchasePrice != null && quantity != null) {
-            totalAmount = purchasePrice.multiply(BigDecimal.valueOf(quantity));
+            totalAmount = purchasePrice.multiply(quantity);
         }
     }
 } 

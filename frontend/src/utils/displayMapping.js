@@ -35,6 +35,13 @@ export const PERMISSION_DISPLAY_MAP = {
   'specification-management': '规格管理',
   'sku-management': 'SKU管理',
   
+  // 库存管理模块权限映射
+  'warehouse-management': '仓库管理',
+  'warehouse-location-management': '库位管理',
+  'inventory-query-management': '库存查询管理',
+  'inventory-stocktaking-management': '库存盘点管理',
+  'inventory-transfer-management': '库存调拨管理',
+  
   // 三级权限（操作）
   'org-management:view': '查看组织',
   'org-management:create': '新增组织',
@@ -93,6 +100,34 @@ export const PERMISSION_DISPLAY_MAP = {
   'sku-management:edit': '编辑SKU',
   'sku-management:delete': '删除SKU',
   
+  // 库存管理模块操作权限
+  'warehouse-management:view': '查看仓库',
+  'warehouse-management:create': '新增仓库',
+  'warehouse-management:edit': '编辑仓库',
+  'warehouse-management:delete': '删除仓库',
+  'warehouse-management:export': '导出仓库',
+  'warehouse-location-management:view': '查看库位',
+  'warehouse-location-management:create': '新增库位',
+  'warehouse-location-management:edit': '编辑库位',
+  'warehouse-location-management:delete': '删除库位',
+  'warehouse-location-management:change-status': '修改库位状态',
+  'warehouse-location-management:export': '导出库位',
+  'inventory-query-management:view': '查看库存',
+  'inventory-query-management:export': '导出库存',
+  'inventory-stocktaking-management:view': '查看盘点',
+  'inventory-stocktaking-management:create': '新增盘点',
+  'inventory-stocktaking-management:edit': '编辑盘点',
+  'inventory-stocktaking-management:delete': '删除盘点',
+  'inventory-stocktaking-management:execute': '执行盘点',
+  'inventory-stocktaking-management:confirm': '确认盘点',
+  'inventory-stocktaking-management:export': '导出盘点',
+  'inventory-transfer-management:view': '查看调拨',
+  'inventory-transfer-management:create': '新增调拨',
+  'inventory-transfer-management:edit': '编辑调拨',
+  'inventory-transfer-management:delete': '删除调拨',
+  'inventory-transfer-management:confirm': '确认调拨',
+  'inventory-transfer-management:export': '导出调拨',
+  
   // 采购入库管理权限
   'pur-receipt-management': '采购入库管理',
   'pur-receipt-management:list': '查看入库单列表',
@@ -108,7 +143,19 @@ export const PERMISSION_DISPLAY_MAP = {
   'pur-receipt-management:import': '导入入库数据',
   'pur-receipt-management:print': '打印入库单',
   'pur-receipt-management:copy': '复制入库单',
-  'pur-receipt-management:statistics': '入库统计'
+  'pur-receipt-management:statistics': '入库统计',
+
+  // 供应商对账管理权限
+  'reconciliation-management': '供应商对账管理',
+  'reconciliation-management:view': '查看对账单',
+  'reconciliation-management:add': '新增对账单',
+  'reconciliation-management:edit': '编辑对账单',
+  'reconciliation-management:delete': '删除对账单',
+  'reconciliation-management:confirm': '确认对账单',
+  'reconciliation-management:settle': '结算对账单',
+  'reconciliation-management:auto-generate': '自动生成对账单',
+  'reconciliation-management:export': '导出对账数据',
+  'reconciliation-management:print': '打印对账单'
 }
 
 // 菜单编码到中文名称的映射
@@ -163,7 +210,8 @@ export const ROUTE_DISPLAY_MAP = {
   '/specifications': '商品规格管理',
   '/skus': 'SKU管理',
   '/suppliers': '供应商管理',
-  '/purchase/return': '采购退货管理'
+  '/purchase/return': '采购退货管理',
+  '/purchase/reconciliation': '供应商对账管理'
 }
 
 // 操作类型到中文名称的映射
@@ -179,7 +227,11 @@ export const ACTION_DISPLAY_MAP = {
   'reject': '拒绝',
   'reset-password': '重置密码',
   'assign-permission': '分配权限',
-  'change-status': '状态变更'
+  'change-status': '状态变更',
+  'confirm': '确认',
+  'settle': '结算',
+  'auto-generate': '自动生成',
+  'print': '打印'
 }
 
 /**

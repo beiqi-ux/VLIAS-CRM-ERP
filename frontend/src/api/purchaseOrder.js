@@ -67,16 +67,16 @@ export const purchaseOrderApi = {
   submit(id) {
     return request({
       url: `/api/purchase-orders/${id}/submit`,
-      method: 'put'
+      method: 'post'
     })
   },
 
   // 审核采购订单
-  audit(id, data) {
+  audit(id, approved, auditRemark) {
     return request({
       url: `/api/purchase-orders/${id}/audit`,
-      method: 'put',
-      data
+      method: 'post',
+      params: { approved, auditRemark }
     })
   },
 
@@ -84,8 +84,8 @@ export const purchaseOrderApi = {
   cancel(id, reason) {
     return request({
       url: `/api/purchase-orders/${id}/cancel`,
-      method: 'put',
-      data: { reason }
+      method: 'post',
+      params: { reason }
     })
   },
 
@@ -119,13 +119,13 @@ export const purchaseOrderApi = {
   // 获取订单状态选项
   getStatusOptions() {
     return [
-      { value: 'DRAFT', label: '草稿' },
-      { value: 'PENDING_AUDIT', label: '待审核' },
-      { value: 'AUDITED', label: '已审核' },
-      { value: 'ORDERED', label: '已下单' },
-      { value: 'PARTIAL_RECEIVED', label: '部分入库' },
-      { value: 'COMPLETED', label: '已完成' },
-      { value: 'CANCELLED', label: '已取消' }
+      { value: 1, label: '草稿' },
+      { value: 2, label: '待审核' },
+      { value: 3, label: '已审核' },
+      { value: 4, label: '已下单' },
+      { value: 5, label: '部分入库' },
+      { value: 6, label: '已完成' },
+      { value: 7, label: '已取消' }
     ]
   },
 
@@ -182,9 +182,27 @@ export const purchaseOrderApi = {
   // 获取需要跟进的订单
   getOrdersNeedFollow(params) {
     return request({
-      url: '/api/purchase-orders/need-follow',
+      url: '/api/purchase-orders/follow',
       method: 'get',
       params
+    })
+  },
+
+  // 更新支付状态
+  updatePaymentStatus(id, data) {
+    return request({
+      url: `/api/purchase-orders/${id}/payment-status`,
+      method: 'put',
+      data
+    })
+  },
+
+  // 更新入库状态
+  updateReceiptStatus(id, data) {
+    return request({
+      url: `/api/purchase-orders/${id}/receipt-status`,
+      method: 'put',
+      data
     })
   }
 }

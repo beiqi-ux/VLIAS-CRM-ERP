@@ -79,6 +79,7 @@ public interface SysMenuRepository extends JpaRepository<SysMenu, Long> {
            "        (menu.permissionCode = 'product-specification-management:list' AND p.permissionCode = 'product-specification-management') OR " +
            "        (menu.permissionCode = 'product-attribute-management:list' AND p.permissionCode = 'product-attribute-management') OR " +
            "        (menu.permissionCode = 'product-sku-management:list' AND p.permissionCode = 'product-sku-management') OR " +
+           "        (menu.permissionCode = 'reconciliation-management' AND p.permissionCode = 'reconciliation-management') OR " +
            "        (menu.permissionCode = 'profile' AND p.permissionCode = 'profile-info-management')" +
            "    ) " +
            "    JOIN SysRolePermission rp ON p.id = rp.permissionId " +

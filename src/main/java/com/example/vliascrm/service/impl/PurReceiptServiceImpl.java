@@ -127,8 +127,8 @@ public class PurReceiptServiceImpl implements PurReceiptService {
         PurOrder order = orderOpt.get();
 
         // 检查订单状态
-        if (order.getOrderStatus() < PurOrder.STATUS_AUDITED) {
-            throw new RuntimeException("只有已审核的订单才能创建入库单");
+        if (order.getOrderStatus() < PurOrder.STATUS_ORDERED) {
+            throw new RuntimeException("只有已下单的订单才能创建入库单");
         }
 
         // 生成入库单号
@@ -166,8 +166,8 @@ public class PurReceiptServiceImpl implements PurReceiptService {
             itemDto.setGoodsSpec(orderItem.getSpecification());
             itemDto.setGoodsUnit(orderItem.getUnit());
             itemDto.setPurchasePrice(orderItem.getUnitPrice());
-            itemDto.setQuantity(orderItem.getQuantity().intValue());
-            itemDto.setTotalAmount(orderItem.getUnitPrice().multiply(orderItem.getQuantity()));
+            itemDto.setQuantity(orderItem.getQuantity() != null ? BigDecimal.valueOf(orderItem.getQuantity()) : BigDecimal.ZERO);
+            itemDto.setTotalAmount(orderItem.getUnitPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity() != null ? orderItem.getQuantity() : 0)));
 
             receiptItems.add(itemDto);
         }

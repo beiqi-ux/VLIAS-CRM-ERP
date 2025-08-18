@@ -264,4 +264,44 @@ public class PurOrderController {
             return Result.error("复制失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 更新采购订单支付状态
+     */
+    @PutMapping("/{id}/payment-status")
+    @PreAuthorize("hasAuthority('purchase-order-management:update')")
+    public Result<Void> updatePaymentStatus(@PathVariable Long id, 
+                                           @RequestBody Map<String, Object> paymentData) {
+        try {
+            Integer payStatus = (Integer) paymentData.get("payStatus");
+            Double paidAmount = paymentData.get("paidAmount") != null ? 
+                ((Number) paymentData.get("paidAmount")).doubleValue() : null;
+            String remark = (String) paymentData.get("remark");
+            
+            purOrderService.updatePaymentStatus(id, payStatus, paidAmount, remark);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("更新支付状态失败", e);
+            return Result.error("更新失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新采购订单入库状态
+     */
+    @PutMapping("/{id}/receipt-status")
+    @PreAuthorize("hasAuthority('purchase-order-management:update')")
+    public Result<Void> updateReceiptStatus(@PathVariable Long id, 
+                                          @RequestBody Map<String, Object> receiptData) {
+        try {
+            Integer receiptStatus = (Integer) receiptData.get("receiptStatus");
+            String remark = (String) receiptData.get("remark");
+            
+            purOrderService.updateReceiptStatus(id, receiptStatus, remark);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("更新入库状态失败", e);
+            return Result.error("更新失败：" + e.getMessage());
+        }
+    }
 } 

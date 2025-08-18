@@ -123,6 +123,7 @@
                 v-model="form.warehouseId"
                 placeholder="请选择仓库"
                 style="width: 100%"
+                @change="handleWarehouseChange"
               >
                 <el-option
                   v-for="warehouse in warehouseOptions"
@@ -539,6 +540,7 @@ import { purReceiptApi } from '@/api/purchase/purReceipt'
 import { purchaseOrderApi } from '@/api/purchaseOrder'
 import { supplierApi } from '@/api/supplier'
 import { warehouseApi } from '@/api/warehouse'
+import { locationApi } from '@/api/location'
 import SupplierGoodsSelector from '@/components/GoodsSelector/SupplierGoodsSelector.vue'
 
 const route = useRoute()
@@ -640,8 +642,9 @@ const loadBaseData = async () => {
     // 加载入库类型选项
     receiptTypeOptions.value = purReceiptApi.getReceiptTypeOptions()
     
-    // TODO: 加载库位选项
-    locationOptions.value = []
+    // 加载库位选项
+    const locationRes = await locationApi.getActive()
+    locationOptions.value = locationRes.data || []
   } catch (error) {
     console.error('加载基础数据失败:', error)
   }
@@ -671,6 +674,28 @@ const handleSupplierChange = (supplierId) => {
   form.orderId = null
   form.orderNo = ''
   form.items = []
+}
+
+const handleWarehouseChange = async (warehouseId) => {
+  try {
+    if (warehouseId) {
+      // 根据选择的仓库加载对应的库位
+      const locationRes = await locationApi.getByWarehouseId(warehouseId)
+      locationOptions.value = locationRes.data || []
+    } else {
+      // 如果没有选择仓库，加载所有启用的库位
+      const locationRes = await locationApi.getActive()
+      locationOptions.value = locationRes.data || []
+    }
+    
+    // 清空所有商品行的库位选择
+    form.items.forEach(item => {
+      item.locationId = null
+    })
+  } catch (error) {
+    console.error('加载库位失败:', error)
+    ElMessage.error('加载库位失败')
+  }
 }
 
 const selectPurchaseOrder = () => {
@@ -816,7 +841,7 @@ const handleSave = async () => {
     
     if (!isEdit.value) {
       // 新增后跳转到编辑页面
-      router.replace(`/purchase/receipt/edit/${response.data.id}`)
+      router.replace(`/purchase/receipt/edit/${response.id}`)
     }
   } catch (error) {
     console.error('保存失败:', error)
@@ -935,6 +960,25 @@ const getOrderStatusName = (status) => {
 
 .dialog-footer {
   text-align: right;
+}
+
+.total-row {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  text-align: right;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.total-amount {
+  color: #f56c6c;
+  font-size: 18px;
+}
+
+.search-form .el-form-item {
+  margin-bottom: 0;
 }
 </style> 
  

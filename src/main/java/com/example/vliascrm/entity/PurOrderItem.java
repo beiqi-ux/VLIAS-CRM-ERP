@@ -30,6 +30,12 @@ public class PurOrderItem {
     private Long orderId;
 
     /**
+     * 采购单号
+     */
+    @Column(name = "order_no")
+    private String orderNo;
+
+    /**
      * 商品ID
      */
     @Column(name = "goods_id")
@@ -42,46 +48,64 @@ public class PurOrderItem {
     private String goodsCode;
 
     /**
+     * SKU ID
+     */
+    @Column(name = "sku_id")
+    private Long skuId;
+
+    /**
      * 商品名称
      */
     @Column(name = "goods_name")
     private String goodsName;
 
     /**
+     * SKU名称
+     */
+    @Column(name = "sku_name")
+    private String skuName;
+
+    /**
      * 规格型号
      */
-    @Column(name = "specification")
+    @Column(name = "goods_spec")
     private String specification;
 
     /**
      * 单位
      */
-    @Column(name = "unit")
+    @Column(name = "goods_unit")
     private String unit;
 
     /**
      * 采购数量
      */
     @Column(name = "quantity")
-    private BigDecimal quantity;
+    private Integer quantity;
 
     /**
      * 采购单价
      */
-    @Column(name = "unit_price")
+    @Column(name = "purchase_price")
     private BigDecimal unitPrice;
 
     /**
      * 小计金额
      */
-    @Column(name = "total_price")
+    @Column(name = "total_amount")
     private BigDecimal totalPrice;
 
     /**
      * 已入库数量
      */
-    @Column(name = "received_quantity")
-    private BigDecimal receivedQuantity;
+    @Column(name = "received_qty")
+    private Integer receivedQuantity;
+
+    /**
+     * 剩余数量
+     */
+    @Column(name = "remain_qty")
+    private Integer remainQuantity;
 
     /**
      * 备注
@@ -118,19 +142,5 @@ public class PurOrderItem {
      */
     @Column(name = "is_deleted")
     private Integer isDeleted;
+}
 
-    @PrePersist
-    protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
-        if (isDeleted == null) {
-            isDeleted = 0;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updateTime = LocalDateTime.now();
-    }
-} 
- 

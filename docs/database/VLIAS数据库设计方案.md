@@ -1138,7 +1138,7 @@ CREATE TABLE pur_supplier_goods (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'ID',
     supplier_id BIGINT NOT NULL COMMENT '供应商ID',
     goods_id BIGINT NOT NULL COMMENT '商品ID',
-    sku_id BIGINT COMMENT 'SKU ID',
+    sku_id BIGINT COMMENT 'SKU ID', 
     supplier_goods_code VARCHAR(50) COMMENT '供应商商品编码',
     supplier_goods_name VARCHAR(100) COMMENT '供应商商品名称',
     purchase_price DECIMAL(10,2) NOT NULL COMMENT '采购价',

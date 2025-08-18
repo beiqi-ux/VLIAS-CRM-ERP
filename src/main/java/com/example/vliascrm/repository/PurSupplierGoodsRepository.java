@@ -58,26 +58,23 @@ public interface PurSupplierGoodsRepository extends JpaRepository<PurSupplierGoo
     Optional<PurSupplierGoods> findBySupplierIdAndGoodsId(Long supplierId, Long goodsId);
 
     /**
-     * 分页查询供应商商品（带联表查询）
+     * 分页查询供应商商品（只查询供应商商品表）
      * @param pageable 分页参数
      * @return 分页结果
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
            "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-           "sg.goodsId, g.goodsName, g.goodsCode, " +
-           "sg.skuId, sku.skuName, sg.supplierGoodsCode, sg.supplierGoodsName, " +
+           "sg.supplierGoodsCode, sg.supplierGoodsName, " +
            "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
            "sg.createTime, sg.updateTime) " +
            "FROM PurSupplierGoods sg " +
            "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-           "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-           "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
            "WHERE sg.isDeleted = 0 " +
            "ORDER BY sg.createTime DESC")
     Page<com.example.vliascrm.dto.PurSupplierGoodsDto> findPageWithDetails(Pageable pageable);
 
     /**
-     * 条件查询供应商商品（带联表查询）
+     * 条件查询供应商商品（只查询供应商商品表）
      * @param supplierId 供应商ID
      * @param goodsId 商品ID
      * @param pageable 分页参数
@@ -85,14 +82,11 @@ public interface PurSupplierGoodsRepository extends JpaRepository<PurSupplierGoo
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
            "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-           "sg.goodsId, g.goodsName, g.goodsCode, " +
-           "sg.skuId, sku.skuName, sg.supplierGoodsCode, sg.supplierGoodsName, " +
+           "sg.supplierGoodsCode, sg.supplierGoodsName, " +
            "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
            "sg.createTime, sg.updateTime) " +
            "FROM PurSupplierGoods sg " +
            "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-           "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-           "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
            "WHERE (:supplierId IS NULL OR sg.supplierId = :supplierId) " +
            "AND (:goodsId IS NULL OR sg.goodsId = :goodsId) " +
            "AND sg.isDeleted = 0 " +
@@ -111,45 +105,39 @@ public interface PurSupplierGoodsRepository extends JpaRepository<PurSupplierGoo
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
            "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-           "sg.goodsId, g.goodsName, g.goodsCode, " +
-           "sg.skuId, sku.skuName, sg.supplierGoodsCode, sg.supplierGoodsName, " +
+           "sg.supplierGoodsCode, sg.supplierGoodsName, " +
            "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
            "sg.createTime, sg.updateTime) " +
            "FROM PurSupplierGoods sg " +
            "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-           "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-           "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
            "WHERE sg.goodsId = :goodsId AND sg.isDeleted = 0 " +
            "ORDER BY sg.purchasePrice ASC")
     List<com.example.vliascrm.dto.PurSupplierGoodsDto> findSuppliersByGoodsIdForCompare(@Param("goodsId") Long goodsId);
 
     /**
-     * 条件查询供应商商品（带联表查询和商品名称模糊搜索）
+     * 条件查询供应商商品（带商品名称模糊搜索）
      * @param supplierId 供应商ID
      * @param goodsId 商品ID
-     * @param goodsName 商品名称（模糊查询）
+     * @param supplierGoodsName 供应商商品名称（模糊查询）
      * @param pageable 分页参数
      * @return 分页结果
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
            "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-           "sg.goodsId, g.goodsName, g.goodsCode, " +
-           "sg.skuId, sku.skuName, sg.supplierGoodsCode, sg.supplierGoodsName, " +
+           "sg.supplierGoodsCode, sg.supplierGoodsName, " +
            "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
            "sg.createTime, sg.updateTime) " +
            "FROM PurSupplierGoods sg " +
            "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-           "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-           "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
            "WHERE (:supplierId IS NULL OR sg.supplierId = :supplierId) " +
            "AND (:goodsId IS NULL OR sg.goodsId = :goodsId) " +
-           "AND (:goodsName IS NULL OR g.goodsName LIKE %:goodsName% OR sg.supplierGoodsName LIKE %:goodsName%) " +
+           "AND (:supplierGoodsName IS NULL OR sg.supplierGoodsName LIKE %:supplierGoodsName%) " +
            "AND sg.isDeleted = 0 " +
            "ORDER BY sg.createTime DESC")
     Page<com.example.vliascrm.dto.PurSupplierGoodsDto> findPageWithDetailsByConditionsAndName(
             @Param("supplierId") Long supplierId,
             @Param("goodsId") Long goodsId,
-            @Param("goodsName") String goodsName,
+            @Param("supplierGoodsName") String supplierGoodsName,
             Pageable pageable);
 
     /**
@@ -167,84 +155,73 @@ public interface PurSupplierGoodsRepository extends JpaRepository<PurSupplierGoo
     long countByGoodsId(Long goodsId);
 
     /**
-     * 根据商品名称搜索供应商商品
-     * @param goodsName 商品名称
+     * 根据供应商商品名称搜索供应商商品
+     * @param supplierGoodsName 供应商商品名称
      * @param supplierId 供应商ID（可选）
      * @return 供应商商品列表
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
            "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-           "sg.goodsId, g.goodsName, g.goodsCode, " +
-           "sg.skuId, sku.skuName, sg.supplierGoodsCode, sg.supplierGoodsName, " +
+           "sg.supplierGoodsCode, sg.supplierGoodsName, " +
            "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
            "sg.createTime, sg.updateTime) " +
            "FROM PurSupplierGoods sg " +
            "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-           "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-           "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
-           "WHERE (g.goodsName LIKE %:goodsName% OR sg.supplierGoodsName LIKE %:goodsName%) " +
+           "WHERE sg.supplierGoodsName LIKE %:supplierGoodsName% " +
            "AND (:supplierId IS NULL OR sg.supplierId = :supplierId) " +
            "AND sg.isDeleted = 0 " +
            "ORDER BY sg.createTime DESC")
     List<com.example.vliascrm.dto.PurSupplierGoodsDto> findSupplierGoodsByGoodsName(
-            @Param("goodsName") String goodsName,
+            @Param("supplierGoodsName") String supplierGoodsName,
             @Param("supplierId") Long supplierId);
 
     /**
      * 查询供应商商品关联信息（带详细信息）
      * @param supplierId 供应商ID（可选）
      * @param goodsId 商品ID（可选）
-     * @param goodsName 商品名称（可选）
+     * @param supplierGoodsName 供应商商品名称（可选）
      * @param pageable 分页参数
      * @return 分页结果
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
             "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-            "sg.goodsId, g.goodsName, g.goodsCode, " +
-            "sg.skuId, sku.skuName, " +
             "sg.supplierGoodsCode, sg.supplierGoodsName, " +
             "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
             "sg.createTime, sg.updateTime) " +
             "FROM PurSupplierGoods sg " +
             "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-            "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-            "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
             "WHERE sg.isDeleted = 0 " +
             "AND (:supplierId IS NULL OR sg.supplierId = :supplierId) " +
             "AND (:goodsId IS NULL OR sg.goodsId = :goodsId) " +
-            "AND (:goodsName IS NULL OR g.goodsName LIKE %:goodsName%) " +
+            "AND (:supplierGoodsName IS NULL OR sg.supplierGoodsName LIKE %:supplierGoodsName%) " +
             "ORDER BY sg.createTime DESC")
     Page<com.example.vliascrm.dto.PurSupplierGoodsDto> findAllWithDetailsByConditions(
             @Param("supplierId") Long supplierId,
             @Param("goodsId") Long goodsId,
-            @Param("goodsName") String goodsName,
+            @Param("supplierGoodsName") String supplierGoodsName,
             Pageable pageable);
 
     /**
      * 导出查询所有供应商商品（不分页）
      * @param supplierId 供应商ID（可选）
      * @param goodsId 商品ID（可选）
-     * @param goodsName 商品名称（可选）
+     * @param supplierGoodsName 供应商商品名称（可选）
      * @return 供应商商品列表
      */
     @Query("SELECT new com.example.vliascrm.dto.PurSupplierGoodsDto(" +
             "sg.id, sg.supplierId, s.supplierName, s.supplierCode, " +
-            "sg.goodsId, g.goodsName, g.goodsCode, " +
-            "sg.skuId, sku.skuName, " +
             "sg.supplierGoodsCode, sg.supplierGoodsName, " +
             "sg.purchasePrice, sg.minPurchaseQty, sg.deliveryDay, " +
             "sg.createTime, sg.updateTime) " +
             "FROM PurSupplierGoods sg " +
             "LEFT JOIN PurSupplier s ON sg.supplierId = s.id " +
-            "LEFT JOIN ProdGoods g ON sg.goodsId = g.id " +
-            "LEFT JOIN ProdSku sku ON sg.skuId = sku.id " +
             "WHERE sg.isDeleted = 0 " +
             "AND (:supplierId IS NULL OR sg.supplierId = :supplierId) " +
             "AND (:goodsId IS NULL OR sg.goodsId = :goodsId) " +
-            "AND (:goodsName IS NULL OR g.goodsName LIKE %:goodsName%) " +
+            "AND (:supplierGoodsName IS NULL OR sg.supplierGoodsName LIKE %:supplierGoodsName%) " +
             "ORDER BY sg.createTime DESC")
     List<com.example.vliascrm.dto.PurSupplierGoodsDto> findAllWithDetailsByConditionsForExport(
             @Param("supplierId") Long supplierId,
             @Param("goodsId") Long goodsId,
-            @Param("goodsName") String goodsName);
+            @Param("supplierGoodsName") String supplierGoodsName);
 } 

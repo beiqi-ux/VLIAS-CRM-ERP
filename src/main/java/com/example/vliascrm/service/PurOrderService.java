@@ -9,7 +9,9 @@ import com.example.vliascrm.entity.SysUser;
 import com.example.vliascrm.repository.PurOrderRepository;
 import com.example.vliascrm.repository.PurOrderItemRepository;
 import com.example.vliascrm.repository.PurSupplierRepository;
+import com.example.vliascrm.repository.PurSupplierGoodsRepository;
 import com.example.vliascrm.repository.SysUserRepository;
+import com.example.vliascrm.entity.PurSupplierGoods;
 import com.example.vliascrm.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class PurOrderService {
     private final PurOrderRepository purOrderRepository;
     private final PurOrderItemRepository purOrderItemRepository;
     private final PurSupplierRepository supplierRepository;
+    private final PurSupplierGoodsRepository purSupplierGoodsRepository;
     private final SysUserRepository userRepository;
 
     /**
@@ -226,7 +229,7 @@ public class PurOrderService {
         purOrder.setAuditRemark(auditRemark);
 
         if (approved) {
-            purOrder.setOrderStatus(PurOrder.STATUS_AUDITED);
+            purOrder.setOrderStatus(PurOrder.STATUS_AUDITED);  // 审核通过变为已审核状态
         } else {
             purOrder.setOrderStatus(PurOrder.STATUS_DRAFT);
         }
@@ -310,15 +313,30 @@ public class PurOrderService {
      * 保存订单明细
      */
     private void saveOrderItems(Long orderId, List<PurOrderItemDto> itemDtos) {
+        // 获取订单信息，特别是订单号
+        Optional<PurOrder> orderOptional = purOrderRepository.findById(orderId);
+        if (!orderOptional.isPresent()) {
+            throw new RuntimeException("订单不存在");
+        }
+        String orderNo = orderOptional.get().getOrderNo();
+        
         for (PurOrderItemDto itemDto : itemDtos) {
             PurOrderItem item = new PurOrderItem();
             item.setOrderId(orderId);
-            item.setGoodsId(itemDto.getGoodsId());
+            item.setOrderNo(orderNo); // 设置订单号
+            
+            // 如果goodsId为空，但有supplierGoodsId，则通过供应商商品获取goodsId
+            Long goodsId = itemDto.getGoodsId();
+            if (goodsId == null && itemDto.getSupplierGoodsId() != null) {
+                goodsId = getGoodsIdBySupplierGoods(itemDto.getSupplierGoodsId());
+            }
+            
+            item.setGoodsId(goodsId);
             item.setGoodsCode(itemDto.getGoodsCode());
             item.setGoodsName(itemDto.getGoodsName());
             item.setSpecification(itemDto.getSpecification());
             item.setUnit(itemDto.getUnit());
-            item.setQuantity(itemDto.getQuantity());
+            item.setQuantity(itemDto.getQuantity() != null ? itemDto.getQuantity().intValue() : 0);
             item.setUnitPrice(itemDto.getUnitPrice());
             item.setTotalPrice(itemDto.getTotalPrice());
             item.setRemark(itemDto.getRemark());
@@ -354,6 +372,14 @@ public class PurOrderService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String suffix = String.valueOf(System.currentTimeMillis() % 1000);
         return prefix + timestamp + suffix;
+    }
+
+    /**
+     * 通过供应商商品ID获取商品ID
+     */
+    private Long getGoodsIdBySupplierGoods(Long supplierGoodsId) {
+        Optional<PurSupplierGoods> supplierGoods = purSupplierGoodsRepository.findById(supplierGoodsId);
+        return supplierGoods.map(PurSupplierGoods::getGoodsId).orElse(null);
     }
 
     /**
@@ -417,12 +443,14 @@ public class PurOrderService {
         dto.setItemCount(itemDtos.size());
 
         // 计算统计信息
-        dto.setTotalQuantity(items.stream()
-                .map(PurOrderItem::getQuantity)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-        dto.setReceivedQuantity(items.stream()
-                .map(item -> item.getReceivedQuantity() != null ? item.getReceivedQuantity() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal totalQty = items.stream()
+                .map(item -> item.getQuantity() != null ? BigDecimal.valueOf(item.getQuantity()) : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal receivedQty = items.stream()
+                .map(item -> item.getReceivedQuantity() != null ? BigDecimal.valueOf(item.getReceivedQuantity()) : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.setTotalQuantity(totalQty);
+        dto.setReceivedQuantity(receivedQty);
         dto.setPendingQuantity(dto.getTotalQuantity().subtract(dto.getReceivedQuantity()));
 
         return dto;
@@ -440,10 +468,10 @@ public class PurOrderService {
         dto.setGoodsName(item.getGoodsName());
         dto.setSpecification(item.getSpecification());
         dto.setUnit(item.getUnit());
-        dto.setQuantity(item.getQuantity());
+        dto.setQuantity(item.getQuantity() != null ? BigDecimal.valueOf(item.getQuantity()) : BigDecimal.ZERO);
         dto.setUnitPrice(item.getUnitPrice());
         dto.setTotalPrice(item.getTotalPrice());
-        dto.setReceivedQuantity(item.getReceivedQuantity());
+        dto.setReceivedQuantity(item.getReceivedQuantity() != null ? BigDecimal.valueOf(item.getReceivedQuantity()) : BigDecimal.ZERO);
         dto.setRemark(item.getRemark());
         dto.setCreateTime(item.getCreateTime());
         dto.setUpdateTime(item.getUpdateTime());
@@ -451,5 +479,110 @@ public class PurOrderService {
         dto.setUpdateBy(item.getUpdateBy());
 
         return dto;
+    }
+
+    /**
+     * 更新采购订单支付状态
+     */
+    @Transactional
+    public void updatePaymentStatus(Long id, Integer payStatus, Double paidAmount, String remark) {
+        Optional<PurOrder> optional = purOrderRepository.findById(id);
+        if (!optional.isPresent() || optional.get().getIsDeleted() == 1) {
+            throw new RuntimeException("采购订单不存在");
+        }
+
+        PurOrder purOrder = optional.get();
+
+        // 检查订单状态是否允许修改支付状态
+        if (purOrder.getOrderStatus() == PurOrder.STATUS_CANCELLED) {
+            throw new RuntimeException("已取消的订单不能修改支付状态");
+        }
+
+        // 验证支付状态
+        if (payStatus != null && (payStatus < 0 || payStatus > 2)) {
+            throw new RuntimeException("无效的支付状态");
+        }
+
+        // 验证已付金额
+        if (paidAmount != null) {
+            BigDecimal paidAmountBd = BigDecimal.valueOf(paidAmount);
+            BigDecimal totalAmount = purOrder.getTotalAmount() != null ? purOrder.getTotalAmount() : BigDecimal.ZERO;
+            
+            if (paidAmountBd.compareTo(BigDecimal.ZERO) < 0) {
+                throw new RuntimeException("已付金额不能为负数");
+            }
+            
+            if (paidAmountBd.compareTo(totalAmount) > 0) {
+                throw new RuntimeException("已付金额不能超过订单总金额");
+            }
+            
+            purOrder.setPaidAmount(paidAmountBd);
+            
+            // 根据已付金额自动计算支付状态
+            if (paidAmountBd.compareTo(BigDecimal.ZERO) == 0) {
+                purOrder.setPayStatus(PurOrder.PAY_STATUS_UNPAID);
+            } else if (paidAmountBd.compareTo(totalAmount) == 0) {
+                purOrder.setPayStatus(PurOrder.PAY_STATUS_PAID);
+            } else {
+                purOrder.setPayStatus(PurOrder.PAY_STATUS_PARTIAL);
+            }
+        } else if (payStatus != null) {
+            purOrder.setPayStatus(payStatus);
+        }
+
+        // 根据支付状态更新订单状态
+        if (purOrder.getPayStatus() == PurOrder.PAY_STATUS_PAID) {
+            // 已支付 -> 订单状态更新为已下单（如果当前状态小于已下单）
+            if (purOrder.getOrderStatus() < PurOrder.STATUS_ORDERED) {
+                purOrder.setOrderStatus(PurOrder.STATUS_ORDERED);
+            }
+        }
+
+        purOrder.setUpdateBy(SecurityUtils.getCurrentUserId());
+        purOrderRepository.save(purOrder);
+    }
+
+    /**
+     * 更新采购订单入库状态
+     */
+    @Transactional
+    public void updateReceiptStatus(Long id, Integer receiptStatus, String remark) {
+        Optional<PurOrder> optional = purOrderRepository.findById(id);
+        if (!optional.isPresent() || optional.get().getIsDeleted() == 1) {
+            throw new RuntimeException("采购订单不存在");
+        }
+
+        PurOrder purOrder = optional.get();
+
+        // 检查订单状态是否允许修改入库状态
+        if (purOrder.getOrderStatus() == PurOrder.STATUS_CANCELLED) {
+            throw new RuntimeException("已取消的订单不能修改入库状态");
+        }
+
+        // 只有已下单或之后的状态才能修改入库状态
+        if (purOrder.getOrderStatus() < PurOrder.STATUS_ORDERED) {
+            throw new RuntimeException("订单未下单，不能修改入库状态");
+        }
+
+        // 验证入库状态
+        if (receiptStatus != null && (receiptStatus < 0 || receiptStatus > 2)) {
+            throw new RuntimeException("无效的入库状态");
+        }
+
+        if (receiptStatus != null) {
+            purOrder.setReceiptStatus(receiptStatus);
+            
+            // 根据入库状态更新订单状态
+            if (receiptStatus == PurOrder.RECEIPT_STATUS_RECEIVED) {
+                // 已入库 -> 订单完成
+                purOrder.setOrderStatus(PurOrder.STATUS_COMPLETED);
+            } else if (receiptStatus == PurOrder.RECEIPT_STATUS_PARTIAL) {
+                // 部分入库 -> 部分入库状态
+                purOrder.setOrderStatus(PurOrder.STATUS_PARTIAL_RECEIPT);
+            }
+        }
+
+        purOrder.setUpdateBy(SecurityUtils.getCurrentUserId());
+        purOrderRepository.save(purOrder);
     }
 } 

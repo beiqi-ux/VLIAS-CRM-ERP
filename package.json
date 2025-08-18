@@ -1,0 +1,17 @@
+{
+  "name": "vliascrm-api-test",
+  "version": "1.0.0",
+  "description": "API测试脚本，用于验证前后端数据传输匹配性",
+  "main": "test_reconciliation_api.js",
+  "scripts": {
+    "test": "node test_reconciliation_api.js",
+    "test:reconciliation": "node test_reconciliation_api.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "keywords": ["api", "test", "reconciliation", "crm"],
+  "author": "VLIAS CRM Team",
+  "license": "MIT"
+} 

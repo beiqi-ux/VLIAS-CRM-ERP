@@ -4,8 +4,12 @@ import com.example.vliascrm.dto.PurReturnDto;
 import com.example.vliascrm.dto.PurReturnItemDto;
 import com.example.vliascrm.entity.PurReturn;
 import com.example.vliascrm.entity.PurReturnItem;
+import com.example.vliascrm.entity.PurSupplier;
+import com.example.vliascrm.entity.InvWarehouse;
 import com.example.vliascrm.repository.PurReturnRepository;
 import com.example.vliascrm.repository.PurReturnItemRepository;
+import com.example.vliascrm.repository.PurSupplierRepository;
+import com.example.vliascrm.repository.InvWarehouseRepository;
 import com.example.vliascrm.service.PurReturnService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +39,8 @@ public class PurReturnServiceImpl implements PurReturnService {
 
     private final PurReturnRepository purReturnRepository;
     private final PurReturnItemRepository purReturnItemRepository;
+    private final PurSupplierRepository purSupplierRepository;
+    private final InvWarehouseRepository invWarehouseRepository;
 
     @Override
     public Page<PurReturnDto> getPurReturnPage(String returnNo, String receiptNo, Long supplierId, 
@@ -92,7 +98,7 @@ public class PurReturnServiceImpl implements PurReturnService {
         // 保存明细
         if (purReturnDto.getItems() != null && !purReturnDto.getItems().isEmpty()) {
             BigDecimal totalAmount = BigDecimal.ZERO;
-            int totalQuantity = 0;
+            BigDecimal totalQuantity = BigDecimal.ZERO;
             
             for (PurReturnItemDto itemDto : purReturnDto.getItems()) {
                 PurReturnItem item = new PurReturnItem();
@@ -103,7 +109,7 @@ public class PurReturnServiceImpl implements PurReturnService {
                 purReturnItemRepository.save(item);
                 
                 totalAmount = totalAmount.add(item.getTotalAmount());
-                totalQuantity += item.getQuantity();
+                totalQuantity = totalQuantity.add(item.getQuantity());
             }
             
             // 更新主表金额
@@ -363,7 +369,22 @@ public class PurReturnServiceImpl implements PurReturnService {
         dto.setReturnStatusName(getStatusName(purReturn.getReturnStatus()));
         dto.setReasonTypeName(getReasonTypeName(purReturn.getReasonType()));
         
-        // TODO: 设置关联名称（供应商、仓库、用户等）
+        // 设置供应商名称
+        if (purReturn.getSupplierId() != null) {
+            purSupplierRepository.findById(purReturn.getSupplierId())
+                    .ifPresent(supplier -> dto.setSupplierName(supplier.getSupplierName()));
+        }
+        
+        // 设置仓库名称
+        if (purReturn.getWarehouseId() != null) {
+            invWarehouseRepository.findById(purReturn.getWarehouseId())
+                    .ifPresent(warehouse -> dto.setWarehouseName(warehouse.getWarehouseName()));
+        }
+        
+        // 设置退货日期（前端显示用）
+        dto.setReturnDate(purReturn.getReturnTime());
+        
+        // TODO: 设置用户名称等其他关联信息
         
         return dto;
     }
@@ -406,4 +427,6 @@ public class PurReturnServiceImpl implements PurReturnService {
         return 1L;
     }
 } 
+ 
+
  

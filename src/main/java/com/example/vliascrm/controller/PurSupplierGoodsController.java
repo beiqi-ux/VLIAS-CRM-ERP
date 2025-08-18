@@ -45,7 +45,7 @@ public class PurSupplierGoodsController {
     public ApiResponse<Page<PurSupplierGoodsDto>> getSupplierGoodsPage(
             @Parameter(description = "供应商ID") @RequestParam(required = false) Long supplierId,
             @Parameter(description = "商品ID") @RequestParam(required = false) Long goodsId,
-            @Parameter(description = "商品名称") @RequestParam(required = false) String goodsName,
+            @Parameter(description = "供应商商品名称") @RequestParam(required = false) String supplierGoodsName,
             @Parameter(description = "排序字段") @RequestParam(required = false) String sortBy,
             @Parameter(description = "排序方向") @RequestParam(required = false) String sortDirection,
             @Parameter(description = "页码") @RequestParam(defaultValue = "0") int page,
@@ -61,7 +61,7 @@ public class PurSupplierGoodsController {
         
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PurSupplierGoodsDto> result = supplierGoodsService.getSupplierGoodsPage(
-            supplierId, goodsId, goodsName, pageable);
+            supplierId, goodsId, supplierGoodsName, pageable);
         
         return ApiResponse.success(result);
     }
@@ -251,10 +251,10 @@ public class PurSupplierGoodsController {
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('supplier-goods-management:view')")
     public ApiResponse<List<PurSupplierGoodsDto>> searchSupplierGoods(
-            @Parameter(description = "商品名称") @RequestParam String goodsName,
+            @Parameter(description = "供应商商品名称") @RequestParam String supplierGoodsName,
             @Parameter(description = "供应商ID（可选）") @RequestParam(required = false) Long supplierId) {
         
-        List<PurSupplierGoodsDto> result = supplierGoodsService.searchSupplierGoods(goodsName, supplierId);
+        List<PurSupplierGoodsDto> result = supplierGoodsService.searchSupplierGoods(supplierGoodsName, supplierId);
         return ApiResponse.success(result);
     }
 
@@ -268,10 +268,10 @@ public class PurSupplierGoodsController {
     public void exportSupplierGoods(
             @Parameter(description = "供应商ID") @RequestParam(required = false) Long supplierId,
             @Parameter(description = "商品ID") @RequestParam(required = false) Long goodsId,
-            @Parameter(description = "商品名称") @RequestParam(required = false) String goodsName,
+            @Parameter(description = "供应商商品名称") @RequestParam(required = false) String supplierGoodsName,
             HttpServletResponse response) throws IOException {
         
-        supplierGoodsService.exportSupplierGoods(supplierId, goodsId, goodsName, response);
+        supplierGoodsService.exportSupplierGoods(supplierId, goodsId, supplierGoodsName, response);
     }
 
     /**

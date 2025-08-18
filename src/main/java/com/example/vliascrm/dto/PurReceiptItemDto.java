@@ -102,7 +102,7 @@ public class PurReceiptItemDto {
     /**
      * 入库数量
      */
-    private Integer quantity;
+    private BigDecimal quantity;
 
     /**
      * 总金额
@@ -135,17 +135,17 @@ public class PurReceiptItemDto {
     private LocalDateTime updateTime;
 
     /**
-     * 订单中的采购数量（用于对比）
+     * 订单中采购数量
      */
-    private Integer orderQuantity;
+    private BigDecimal orderQuantity;
 
     /**
      * 订单中已入库数量
      */
-    private Integer receivedQuantity;
+    private BigDecimal receivedQuantity;
 
     /**
      * 订单中待入库数量
      */
-    private Integer remainQuantity;
+    private BigDecimal pendingQuantity;
 } 

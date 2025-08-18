@@ -361,6 +361,17 @@
         >
           审核驳回
         </el-button>
+
+        <!-- 编辑支付状态按钮 -->
+        <el-button 
+          v-if="orderData.orderStatus >= 3"
+          v-hasPermission="'purchase-order-management:update'"
+          type="warning"
+          @click="handleEditPaymentStatus"
+        >
+          编辑支付状态
+        </el-button>
+
         <el-button 
           v-hasPermission="'purchase-order-management:create'" 
           type="info"
@@ -416,6 +427,71 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 编辑支付状态对话框 -->
+    <el-dialog
+      v-model="paymentStatusVisible"
+      title="编辑支付状态"
+      width="500px"
+    >
+      <el-form
+        ref="paymentFormRef"
+        :model="paymentForm"
+        :rules="paymentRules"
+        label-width="100px"
+      >
+        <el-form-item label="支付状态" prop="payStatus">
+          <el-select
+            v-model="paymentForm.payStatus"
+            placeholder="请选择支付状态"
+            style="width: 100%"
+          >
+            <el-option label="未支付" :value="0" />
+            <el-option label="部分支付" :value="1" />
+            <el-option label="已支付" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item 
+          v-if="paymentForm.payStatus === 1 || paymentForm.payStatus === 2"
+          label="已付金额" 
+          prop="paidAmount"
+        >
+          <el-input-number
+            v-model="paymentForm.paidAmount"
+            :min="0"
+            :max="orderData.totalAmount"
+            :precision="2"
+            style="width: 100%"
+            placeholder="请输入已付金额"
+          />
+          <div class="form-hint">
+            订单总金额：¥{{ formatAmount(orderData.totalAmount) }}
+          </div>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="paymentForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入备注信息"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="paymentStatusVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="paymentLoading"
+            @click="confirmUpdatePaymentStatus"
+          >确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+
+
+
   </div>
 </template>
 
@@ -431,13 +507,63 @@ const route = useRoute()
 // 响应式数据
 const loading = ref(false)
 const auditVisible = ref(false)
+const paymentStatusVisible = ref(false)
+const paymentLoading = ref(false)
+
 const orderData = ref({})
+
+// 表单引用
+const paymentFormRef = ref()
 
 // 审核表单
 const auditForm = reactive({
   approved: true,
   auditRemark: ''
 })
+
+// 支付状态表单
+const paymentForm = reactive({
+  payStatus: 0,
+  paidAmount: 0,
+  remark: ''
+})
+
+// 表单验证规则
+const paymentRules = {
+  payStatus: [
+    { required: true, message: '请选择支付状态', trigger: 'change' }
+  ],
+  paidAmount: [
+    { 
+      required: true, 
+      message: '请输入已付金额', 
+      trigger: 'blur',
+      validator: (rule, value, callback) => {
+        if (paymentForm.payStatus === 0) {
+          callback() // 未支付状态不需要验证金额
+          return
+        }
+        if (value === undefined || value === null || value === '') {
+          callback(new Error('请输入已付金额'))
+          return
+        }
+        if (value < 0) {
+          callback(new Error('已付金额不能为负数'))
+          return
+        }
+        if (paymentForm.payStatus === 2 && value !== orderData.value.totalAmount) {
+          callback(new Error('已支付状态下，已付金额应等于订单总金额'))
+          return
+        }
+        if (paymentForm.payStatus === 1 && value >= orderData.value.totalAmount) {
+          callback(new Error('部分支付状态下，已付金额应小于订单总金额'))
+          return
+        }
+        callback()
+      }
+    }
+  ]
+}
 
 // 计算属性
 const canEdit = computed(() => {
@@ -467,10 +593,10 @@ const loadOrderData = async () => {
   try {
     loading.value = true
     const response = await purchaseOrderApi.getPurchaseOrderById(route.params.id)
-    if (response.data.success) {
-      orderData.value = response.data.data
+    if (response.code === 200) {
+      orderData.value = response.data
     } else {
-      ElMessage.error(response.data.message || '加载订单数据失败')
+      ElMessage.error(response.message || '加载订单数据失败')
       handleBack()
     }
   } catch (error) {
@@ -523,6 +649,44 @@ const confirmAudit = async () => {
   } catch (error) {
     console.error('审核失败:', error)
     ElMessage.error('审核失败')
+  }
+}
+
+// 编辑支付状态
+const handleEditPaymentStatus = () => {
+  paymentForm.payStatus = orderData.value.payStatus || 0
+  paymentForm.paidAmount = orderData.value.paidAmount || 0
+  paymentForm.remark = ''
+  paymentStatusVisible.value = true
+}
+
+// 确认更新支付状态
+const confirmUpdatePaymentStatus = async () => {
+  try {
+    await paymentFormRef.value.validate()
+    
+    paymentLoading.value = true
+    
+    const response = await purchaseOrderApi.updatePaymentStatus(orderData.value.id, {
+      payStatus: paymentForm.payStatus,
+      paidAmount: paymentForm.paidAmount,
+      remark: paymentForm.remark
+    })
+    
+    if (response.code === 200) {
+      ElMessage.success('支付状态更新成功')
+      paymentStatusVisible.value = false
+      loadOrderData()
+    } else {
+      ElMessage.error(response.message || '更新失败')
+    }
+  } catch (error) {
+    if (error !== false) { // 不是表单验证失败
+      console.error('更新支付状态失败:', error)
+      ElMessage.error('更新失败')
+    }
+  } finally {
+    paymentLoading.value = false
   }
 }
 
@@ -587,13 +751,19 @@ const handleBack = () => {
   router.push('/purchase/order')
 }
 
+
+
+
+
 // 工具函数
 const formatAmount = (amount) => {
   return amount ? amount.toFixed(2) : '0.00'
 }
 
 const formatQuantity = (quantity) => {
-  return quantity ? quantity.toString() : '0'
+  if (!quantity) return '0'
+  // 如果是整数，不显示小数点；如果是小数，保留3位小数
+  return Number(quantity) % 1 === 0 ? quantity.toString() : Number(quantity).toFixed(3)
 }
 
 const formatDate = (dateString) => {
@@ -845,6 +1015,12 @@ onMounted(() => {
   margin: 0 5px;
 }
 
+.form-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
 :deep(.el-card__header) {
   background: #f8f9fa;
   border-bottom: 1px solid #ebeef5;
@@ -876,5 +1052,11 @@ onMounted(() => {
 
 .dialog-footer {
   text-align: right;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 </style> 

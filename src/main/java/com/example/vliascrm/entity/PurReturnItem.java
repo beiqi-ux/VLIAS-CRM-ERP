@@ -98,8 +98,8 @@ public class PurReturnItem {
     /**
      * 退货数量
      */
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
+    @Column(name = "quantity", nullable = false, precision = 10, scale = 3)
+    private BigDecimal quantity;
 
     /**
      * 总金额
@@ -130,7 +130,7 @@ public class PurReturnItem {
         createTime = LocalDateTime.now();
         updateTime = LocalDateTime.now();
         if (totalAmount == null && purchasePrice != null && quantity != null) {
-            totalAmount = purchasePrice.multiply(BigDecimal.valueOf(quantity));
+            totalAmount = purchasePrice.multiply(quantity);
         }
     }
 
@@ -138,7 +138,7 @@ public class PurReturnItem {
     protected void onUpdate() {
         updateTime = LocalDateTime.now();
         if (totalAmount == null && purchasePrice != null && quantity != null) {
-            totalAmount = purchasePrice.multiply(BigDecimal.valueOf(quantity));
+            totalAmount = purchasePrice.multiply(quantity);
         }
     }
 } 

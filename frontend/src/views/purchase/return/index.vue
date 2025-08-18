@@ -93,7 +93,7 @@
                 <el-option
                   v-for="supplier in supplierList"
                   :key="supplier.id"
-                  :label="supplier.name"
+                  :label="supplier.supplierName"
                   :value="supplier.id"
                 />
               </el-select>
@@ -119,7 +119,7 @@
                 <el-option
                   v-for="warehouse in warehouseList"
                   :key="warehouse.id"
-                  :label="warehouse.name"
+                  :label="warehouse.warehouseName"
                   :value="warehouse.id"
                 />
               </el-select>
@@ -679,7 +679,7 @@ export default {
     // 加载仓库
     async loadWarehouses() {
       try {
-        const response = await warehouseApi.getAll()
+        const response = await warehouseApi.getList()
         this.warehouseList = response.data
       } catch (error) {
         console.error('加载仓库失败', error)

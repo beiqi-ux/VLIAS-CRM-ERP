@@ -175,15 +175,20 @@
               align="center"
             />
             <el-table-column
-              label="商品信息"
-              min-width="200"
+              label="商品编码"
+              width="130"
+            >
+              <template #default="{ row }">
+                {{ row.goodsCode || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="商品名称"
+              min-width="180"
             >
               <template #default="{ row, $index }">
                 <div class="goods-info">
-                  <div class="goods-main">
-                    <span class="goods-name">{{ row.goodsName || '请选择商品' }}</span>
-                    <span class="goods-code">{{ row.goodsCode }}</span>
-                  </div>
+                  <span class="goods-name">{{ row.goodsName || '请选择商品' }}</span>
                   <el-button
                     type="primary"
                     link
@@ -195,22 +200,7 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column
-              label="规格"
-              width="120"
-            >
-              <template #default="{ row }">
-                {{ row.specification || '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column
-              label="单位"
-              width="80"
-            >
-              <template #default="{ row }">
-                {{ row.unit || '-' }}
-              </template>
-            </el-table-column>
+
             <el-table-column
               label="采购数量"
               width="120"
@@ -219,7 +209,7 @@
                 <el-input-number
                   v-model="row.quantity"
                   :min="0"
-                  :precision="2"
+                  :precision="3"
                   controls-position="right"
                   style="width: 100%"
                   @change="handleQuantityChange($index)"
@@ -378,9 +368,11 @@ const rules = {
 
 // 计算属性
 const totalQuantity = computed(() => {
-  return form.items.reduce((total, item) => {
-    return total + (item.quantity || 0)
+  const total = form.items.reduce((sum, item) => {
+    return sum + (Number(item.quantity) || 0)
   }, 0)
+  // 如果是整数，不显示小数点；如果是小数，保留3位小数
+  return total % 1 === 0 ? total.toString() : total.toFixed(3)
 })
 
 // 加载供应商选项
@@ -401,8 +393,8 @@ const loadOrderData = async () => {
 
   try {
     const response = await purchaseOrderApi.getPurchaseOrderById(route.params.id)
-    if (response.data.success) {
-      const data = response.data.data
+    if (response.code === 200) {
+      const data = response.data
       Object.assign(form, {
         id: data.id,
         orderNo: data.orderNo,
@@ -416,7 +408,7 @@ const loadOrderData = async () => {
         items: data.items || []
       })
     } else {
-      ElMessage.error(response.data.message || '加载订单数据失败')
+      ElMessage.error(response.message || '加载订单数据失败')
       handleBack()
     }
   } catch (error) {
@@ -469,9 +461,10 @@ const handleGoodsSelected = (selectedGoods) => {
     const item = form.items[currentItemIndex.value]
     
     Object.assign(item, {
-      goodsId: supplierGoods.goodsId, // 使用商品ID，不是供应商商品ID
-      goodsCode: supplierGoods.goodsCode,
-      goodsName: supplierGoods.goodsName,
+      // 使用供应商商品信息作为主要信息
+      goodsId: supplierGoods.goodsId,  // 设置商品ID
+      goodsCode: supplierGoods.supplierGoodsCode,
+      goodsName: supplierGoods.supplierGoodsName,
       specification: supplierGoods.specification || '',
       unit: supplierGoods.unit || '',
       unitPrice: supplierGoods.purchasePrice || 0,
@@ -479,13 +472,13 @@ const handleGoodsSelected = (selectedGoods) => {
       supplierGoodsId: supplierGoods.id,
       supplierGoodsCode: supplierGoods.supplierGoodsCode,
       supplierGoodsName: supplierGoods.supplierGoodsName,
-      minOrderQty: supplierGoods.minOrderQty,
-      leadTime: supplierGoods.leadTime
+      minOrderQty: supplierGoods.minPurchaseQty,
+      leadTime: supplierGoods.deliveryDay
     })
 
     // 如果有最小起订量，设置默认数量
-    if (supplierGoods.minOrderQty && supplierGoods.minOrderQty > 0) {
-      item.quantity = Math.max(item.quantity || 1, supplierGoods.minOrderQty)
+    if (supplierGoods.minPurchaseQty && supplierGoods.minPurchaseQty > 0) {
+      item.quantity = Math.max(item.quantity || 1, supplierGoods.minPurchaseQty)
     }
 
     // 重新计算小计
@@ -528,7 +521,7 @@ const validateForm = async () => {
 
     for (let i = 0; i < form.items.length; i++) {
       const item = form.items[i]
-      if (!item.goodsId) {
+      if (!item.supplierGoodsId) {
         ElMessage.error(`第 ${i + 1} 行商品信息不完整`)
         return false
       }
@@ -553,13 +546,20 @@ const handleSaveDraft = async () => {
   if (!await validateForm()) return
 
   try {
+    let response
     if (isEdit.value) {
-      await purchaseOrderApi.updatePurchaseOrder(form.id, form)
-      ElMessage.success('保存成功')
+      response = await purchaseOrderApi.updatePurchaseOrder(form.id, form)
     } else {
-      await purchaseOrderApi.createPurchaseOrder(form)
-      ElMessage.success('保存成功')
+      response = await purchaseOrderApi.createPurchaseOrder(form)
+    }
+    
+    if (response.success) {
+      ElMessage.success(response.message || '保存成功')
+      if (!isEdit.value) {
       handleBack()
+      }
+    } else {
+      ElMessage.error(response.message || '保存失败')
     }
   } catch (error) {
     console.error('保存失败:', error)
@@ -579,8 +579,8 @@ const handleSaveAndSubmit = async () => {
       await purchaseOrderApi.updatePurchaseOrder(form.id, form)
     } else {
       const response = await purchaseOrderApi.createPurchaseOrder(form)
-      if (response.data.success) {
-        orderId = response.data.data.id
+      if (response.code === 200) {
+        orderId = response.data.id
       }
     }
 

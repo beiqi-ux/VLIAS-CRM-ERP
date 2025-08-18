@@ -528,6 +528,64 @@ export const PERMISSIONS = {
       PRINT: 'pur-return-management:print',
       COPY: 'pur-return-management:copy',
       STATISTICS: 'pur-return-management:statistics'
+    },
+    // 供应商对账管理
+    RECONCILIATION: {
+      VIEW: 'reconciliation-management:view',
+      CREATE: 'reconciliation-management:add',
+      EDIT: 'reconciliation-management:edit',
+      DELETE: 'reconciliation-management:delete',
+      CONFIRM: 'reconciliation-management:confirm',
+      SETTLE: 'reconciliation-management:settle',
+      AUTO_GENERATE: 'reconciliation-management:auto-generate',
+      EXPORT: 'reconciliation-management:export',
+      PRINT: 'reconciliation-management:print'
+    }
+  },
+  
+  // 库存管理模块
+  INVENTORY: {
+    // 仓库管理
+    WAREHOUSE: {
+      VIEW: 'warehouse-management:view',
+      CREATE: 'warehouse-management:create',
+      EDIT: 'warehouse-management:edit',
+      DELETE: 'warehouse-management:delete',
+      CHANGE_STATUS: 'warehouse-management:change-status',
+      EXPORT: 'warehouse-management:export'
+    },
+    // 库位管理
+    LOCATION: {
+      VIEW: 'warehouse-location-management:view',
+      CREATE: 'warehouse-location-management:create',
+      EDIT: 'warehouse-location-management:edit',
+      DELETE: 'warehouse-location-management:delete',
+      CHANGE_STATUS: 'warehouse-location-management:change-status',
+      EXPORT: 'warehouse-location-management:export'
+    },
+    // 库存查询
+    QUERY: {
+      VIEW: 'inventory-query-management:view',
+      EXPORT: 'inventory-query-management:export'
+    },
+    // 库存盘点
+    STOCKTAKING: {
+      VIEW: 'inventory-stocktaking-management:view',
+      CREATE: 'inventory-stocktaking-management:create',
+      EDIT: 'inventory-stocktaking-management:edit',
+      DELETE: 'inventory-stocktaking-management:delete',
+      EXECUTE: 'inventory-stocktaking-management:execute',
+      CONFIRM: 'inventory-stocktaking-management:confirm',
+      EXPORT: 'inventory-stocktaking-management:export'
+    },
+    // 库存调拨
+    TRANSFER: {
+      VIEW: 'inventory-transfer-management:view',
+      CREATE: 'inventory-transfer-management:create',
+      EDIT: 'inventory-transfer-management:edit',
+      DELETE: 'inventory-transfer-management:delete',
+      CONFIRM: 'inventory-transfer-management:confirm',
+      EXPORT: 'inventory-transfer-management:export'
     }
   }
 } 

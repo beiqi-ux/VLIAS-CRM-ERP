@@ -20,11 +20,11 @@ public interface PurSupplierGoodsService {
      * 分页查询供应商商品列表
      * @param supplierId 供应商ID
      * @param goodsId 商品ID
-     * @param goodsName 商品名称
+     * @param supplierGoodsName 供应商商品名称
      * @param pageable 分页参数
      * @return 供应商商品分页数据
      */
-    Page<PurSupplierGoodsDto> getSupplierGoodsPage(Long supplierId, Long goodsId, String goodsName, Pageable pageable);
+    Page<PurSupplierGoodsDto> getSupplierGoodsPage(Long supplierId, Long goodsId, String supplierGoodsName, Pageable pageable);
 
     /**
      * 根据ID查询供应商商品详情
@@ -115,21 +115,21 @@ public interface PurSupplierGoodsService {
 
     /**
      * 搜索供应商商品
-     * @param goodsName 商品名称
+     * @param supplierGoodsName 供应商商品名称
      * @param supplierId 供应商ID（可选）
      * @return 供应商商品列表
      */
-    List<PurSupplierGoodsDto> searchSupplierGoods(String goodsName, Long supplierId);
+    List<PurSupplierGoodsDto> searchSupplierGoods(String supplierGoodsName, Long supplierId);
 
     /**
      * 导出供应商商品信息到Excel
      * @param supplierId 供应商ID
      * @param goodsId 商品ID
-     * @param goodsName 商品名称
+     * @param supplierGoodsName 供应商商品名称
      * @param response HTTP响应
      * @throws IOException IO异常
      */
-    void exportSupplierGoods(Long supplierId, Long goodsId, String goodsName, HttpServletResponse response) throws IOException;
+    void exportSupplierGoods(Long supplierId, Long goodsId, String supplierGoodsName, HttpServletResponse response) throws IOException;
 
     /**
      * 导入供应商商品信息

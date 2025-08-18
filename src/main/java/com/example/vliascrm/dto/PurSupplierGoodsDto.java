@@ -35,31 +35,6 @@ public class PurSupplierGoodsDto {
     private String supplierCode;
 
     /**
-     * 商品ID
-     */
-    private Long goodsId;
-
-    /**
-     * 商品名称
-     */
-    private String goodsName;
-
-    /**
-     * 商品编码
-     */
-    private String goodsCode;
-
-    /**
-     * SKU ID
-     */
-    private Long skuId;
-
-    /**
-     * SKU名称
-     */
-    private String skuName;
-
-    /**
      * 供应商商品编码
      */
     private String supplierGoodsCode;
@@ -104,17 +79,19 @@ public class PurSupplierGoodsDto {
      */
     private Long updateBy;
 
+    // 保留这些字段用于兼容性，但实际不使用
+    private Long goodsId;
+    private String goodsName;
+    private String goodsCode;
+    private Long skuId;
+    private String skuName;
+
     /**
-     * 用于JPQL查询的构造函数，按照Repository查询语句的参数顺序
+     * 用于JPQL查询的构造函数（简化版本）
      * @param id 主键ID
      * @param supplierId 供应商ID
      * @param supplierName 供应商名称
      * @param supplierCode 供应商编码
-     * @param goodsId 商品ID
-     * @param goodsName 商品名称
-     * @param goodsCode 商品编码
-     * @param skuId SKU ID
-     * @param skuName SKU名称
      * @param supplierGoodsCode 供应商商品编码
      * @param supplierGoodsName 供应商商品名称
      * @param purchasePrice 采购价格
@@ -124,19 +101,13 @@ public class PurSupplierGoodsDto {
      * @param updateTime 更新时间
      */
     public PurSupplierGoodsDto(Long id, Long supplierId, String supplierName, String supplierCode,
-                              Long goodsId, String goodsName, String goodsCode,
-                              Long skuId, String skuName, String supplierGoodsCode, String supplierGoodsName,
+                              String supplierGoodsCode, String supplierGoodsName,
                               BigDecimal purchasePrice, Integer minPurchaseQty, Integer deliveryDay,
                               LocalDateTime createTime, LocalDateTime updateTime) {
         this.id = id;
         this.supplierId = supplierId;
         this.supplierName = supplierName;
         this.supplierCode = supplierCode;
-        this.goodsId = goodsId;
-        this.goodsName = goodsName;
-        this.goodsCode = goodsCode;
-        this.skuId = skuId;
-        this.skuName = skuName;
         this.supplierGoodsCode = supplierGoodsCode;
         this.supplierGoodsName = supplierGoodsName;
         this.purchasePrice = purchasePrice;

@@ -29,6 +29,11 @@ public class PurOrderItemDto {
     private Long goodsId;
 
     /**
+     * 供应商商品ID
+     */
+    private Long supplierGoodsId;
+
+    /**
      * 商品编码
      */
     private String goodsCode;

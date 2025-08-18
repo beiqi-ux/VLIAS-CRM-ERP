@@ -71,6 +71,12 @@ public class PurReturnDto {
     private LocalDate returnTime;
 
     /**
+     * 退货日期（前端显示用）
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate returnDate;
+
+    /**
      * 退货总金额
      */
     private BigDecimal totalAmount;
@@ -163,4 +169,6 @@ public class PurReturnDto {
      */
     private Integer totalQuantity;
 } 
+ 
+
  

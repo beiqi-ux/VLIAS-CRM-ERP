@@ -355,9 +355,24 @@
                       复制订单
                     </el-dropdown-item>
                     <el-dropdown-item 
+                      v-if="row.orderStatus >= 3"
+                      v-hasPermission="'purchase-order-management:update'"
+                      command="editPayStatus"
+                    >
+                      编辑支付状态
+                    </el-dropdown-item>
+                    <el-dropdown-item 
+                      v-if="row.orderStatus >= 3"
+                      v-hasPermission="'purchase-order-management:update'"
+                      command="editReceiptStatus"
+                    >
+                      编辑入库状态
+                    </el-dropdown-item>
+                    <el-dropdown-item 
                       v-if="canCancel(row.orderStatus)"
                       v-hasPermission="'purchase-order-management:update'"
                       command="cancel"
+                      divided
                     >
                       取消订单
                     </el-dropdown-item>
@@ -365,7 +380,6 @@
                       v-if="row.orderStatus === 1"
                       v-hasPermission="'purchase-order-management:delete'"
                       command="delete"
-                      divided
                     >
                       删除订单
                     </el-dropdown-item>
@@ -544,6 +558,128 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 编辑支付状态对话框 -->
+    <el-dialog
+      v-model="payStatusVisible"
+      title="编辑支付状态"
+      width="500px"
+    >
+      <el-form
+        :model="payStatusForm"
+        label-width="100px"
+      >
+        <el-form-item label="订单号">
+          <el-input
+            v-model="payStatusForm.orderNo"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item label="当前支付状态">
+          <el-tag :type="getPayStatusTagType(payStatusForm.currentStatus)">
+            {{ getPayStatusText(payStatusForm.currentStatus) }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="新支付状态" required>
+          <el-select
+            v-model="payStatusForm.newStatus"
+            placeholder="请选择支付状态"
+            style="width: 100%"
+          >
+            <el-option
+              :value="0"
+              label="未支付"
+            />
+            <el-option
+              :value="1"
+              label="部分支付"
+            />
+            <el-option
+              :value="2"
+              label="已支付"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="payStatusForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入修改原因或备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="payStatusVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="confirmUpdatePayStatus"
+          >确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑入库状态对话框 -->
+    <el-dialog
+      v-model="receiptStatusVisible"
+      title="编辑入库状态"
+      width="500px"
+    >
+      <el-form
+        :model="receiptStatusForm"
+        label-width="100px"
+      >
+        <el-form-item label="订单号">
+          <el-input
+            v-model="receiptStatusForm.orderNo"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item label="当前入库状态">
+          <el-tag :type="getReceiptStatusTagType(receiptStatusForm.currentStatus)">
+            {{ getReceiptStatusText(receiptStatusForm.currentStatus) }}
+          </el-tag>
+        </el-form-item>
+        <el-form-item label="新入库状态" required>
+          <el-select
+            v-model="receiptStatusForm.newStatus"
+            placeholder="请选择入库状态"
+            style="width: 100%"
+          >
+            <el-option
+              :value="0"
+              label="未入库"
+            />
+            <el-option
+              :value="1"
+              label="部分入库"
+            />
+            <el-option
+              :value="2"
+              label="已入库"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="receiptStatusForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入修改原因或备注"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="receiptStatusVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="confirmUpdateReceiptStatus"
+          >确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -593,6 +729,26 @@ const auditForm = reactive({
   auditRemark: ''
 })
 
+// 编辑支付状态相关
+const payStatusVisible = ref(false)
+const payStatusForm = reactive({
+  id: null,
+  orderNo: '',
+  currentStatus: 0,
+  newStatus: 0,
+  remark: ''
+})
+
+// 编辑入库状态相关
+const receiptStatusVisible = ref(false)
+const receiptStatusForm = reactive({
+  id: null,
+  orderNo: '',
+  currentStatus: 0,
+  newStatus: 0,
+  remark: ''
+})
+
 // 加载数据
 const loadData = async () => {
   try {
@@ -619,11 +775,11 @@ const loadData = async () => {
     })
 
     const response = await purchaseOrderApi.getPurchaseOrderPage(params)
-    if (response.data.success) {
-      tableData.value = response.data.data.content
-      pagination.total = response.data.data.totalElements
+    if (response.code === 200) {
+      tableData.value = response.data.content
+      pagination.total = response.data.totalElements
     } else {
-      ElMessage.error(response.data.message || '查询失败')
+      ElMessage.error(response.message || '查询失败')
     }
   } catch (error) {
     console.error('加载数据失败:', error)
@@ -724,11 +880,80 @@ const confirmAudit = async () => {
   }
 }
 
+// 编辑支付状态
+const handleEditPayStatus = (row) => {
+  payStatusForm.id = row.id
+  payStatusForm.orderNo = row.orderNo
+  payStatusForm.currentStatus = row.payStatus
+  payStatusForm.newStatus = row.payStatus
+  payStatusForm.remark = ''
+  payStatusVisible.value = true
+}
+
+// 确认更新支付状态
+const confirmUpdatePayStatus = async () => {
+  if (payStatusForm.newStatus === payStatusForm.currentStatus) {
+    ElMessage.warning('请选择不同的支付状态')
+    return
+  }
+
+  try {
+    await purchaseOrderApi.updatePaymentStatus(payStatusForm.id, {
+      payStatus: payStatusForm.newStatus,
+      paidAmount: null, // 手动修改时不指定具体金额
+      remark: payStatusForm.remark
+    })
+    ElMessage.success('支付状态更新成功')
+    payStatusVisible.value = false
+    loadData()
+  } catch (error) {
+    console.error('更新支付状态失败:', error)
+    ElMessage.error('更新支付状态失败')
+  }
+}
+
+// 编辑入库状态
+const handleEditReceiptStatus = (row) => {
+  receiptStatusForm.id = row.id
+  receiptStatusForm.orderNo = row.orderNo
+  receiptStatusForm.currentStatus = row.receiptStatus
+  receiptStatusForm.newStatus = row.receiptStatus
+  receiptStatusForm.remark = ''
+  receiptStatusVisible.value = true
+}
+
+// 确认更新入库状态
+const confirmUpdateReceiptStatus = async () => {
+  if (receiptStatusForm.newStatus === receiptStatusForm.currentStatus) {
+    ElMessage.warning('请选择不同的入库状态')
+    return
+  }
+
+  try {
+    await purchaseOrderApi.updateReceiptStatus(receiptStatusForm.id, {
+      receiptStatus: receiptStatusForm.newStatus,
+      remark: receiptStatusForm.remark
+    })
+    ElMessage.success('入库状态更新成功')
+    receiptStatusVisible.value = false
+    loadData()
+  } catch (error) {
+    console.error('更新入库状态失败:', error)
+    ElMessage.error('更新入库状态失败')
+  }
+}
+
 // 下拉菜单命令处理
 const handleDropdownCommand = async (command, row) => {
   switch (command) {
   case 'copy':
     await handleCopy(row)
+    break
+  case 'editPayStatus':
+    handleEditPayStatus(row)
+    break
+  case 'editReceiptStatus':
+    handleEditReceiptStatus(row)
     break
   case 'cancel':
     await handleCancel(row)
@@ -820,8 +1045,8 @@ const handleExport = () => {
 const loadStatistics = async () => {
   try {
     const response = await purchaseOrderApi.getPurchaseOrderStatistics()
-    if (response.data.success) {
-      statistics.value = response.data.data
+    if (response.code === 200) {
+      statistics.value = response.data
       statisticsVisible.value = true
     }
   } catch (error) {
@@ -834,8 +1059,8 @@ const loadStatistics = async () => {
 const loadFollowOrders = async () => {
   try {
     const response = await purchaseOrderApi.getOrdersNeedFollow()
-    if (response.data.success) {
-      followOrders.value = response.data.data
+    if (response.code === 200) {
+      followOrders.value = response.data
       followVisible.value = true
     }
   } catch (error) {

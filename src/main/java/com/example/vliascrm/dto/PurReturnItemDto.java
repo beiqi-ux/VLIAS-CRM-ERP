@@ -80,7 +80,7 @@ public class PurReturnItemDto {
     /**
      * 退货数量
      */
-    private Integer quantity;
+    private BigDecimal quantity;
 
     /**
      * 总金额
@@ -127,11 +127,11 @@ public class PurReturnItemDto {
     /**
      * 可退数量（基于入库数量）
      */
-    private Integer availableQuantity;
+    private BigDecimal availableQuantity;
 
     /**
      * 已退数量
      */
-    private Integer returnedQuantity;
+    private BigDecimal returnedQuantity;
 } 
  

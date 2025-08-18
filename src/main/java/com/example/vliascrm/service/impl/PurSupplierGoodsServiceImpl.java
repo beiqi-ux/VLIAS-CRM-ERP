@@ -2,8 +2,10 @@ package com.example.vliascrm.service.impl;
 
 import com.example.vliascrm.dto.PurSupplierGoodsDto;
 import com.example.vliascrm.dto.SupplierPriceCompareDto;
+import com.example.vliascrm.entity.PurSupplier;
 import com.example.vliascrm.entity.PurSupplierGoods;
 import com.example.vliascrm.repository.PurSupplierGoodsRepository;
+import com.example.vliascrm.repository.PurSupplierRepository;
 import com.example.vliascrm.service.PurSupplierGoodsService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.persistence.criteria.Predicate;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,10 +36,67 @@ public class PurSupplierGoodsServiceImpl implements PurSupplierGoodsService {
 
     @Autowired
     private PurSupplierGoodsRepository supplierGoodsRepository;
+    
+    @Autowired
+    private PurSupplierRepository supplierRepository;
 
     @Override
-    public Page<PurSupplierGoodsDto> getSupplierGoodsPage(Long supplierId, Long goodsId, String goodsName, Pageable pageable) {
-        return supplierGoodsRepository.findAllWithDetailsByConditions(supplierId, goodsId, goodsName, pageable);
+    public Page<PurSupplierGoodsDto> getSupplierGoodsPage(Long supplierId, Long goodsId, String supplierGoodsName, Pageable pageable) {
+        // 使用 Specification 进行查询，返回完整实体
+        Page<PurSupplierGoods> entityPage = supplierGoodsRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 基本条件：未删除
+            predicates.add(criteriaBuilder.equal(root.get("isDeleted"), 0));
+            
+            // 供应商ID过滤
+            if (supplierId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("supplierId"), supplierId));
+            }
+            
+            // 商品ID过滤
+            if (goodsId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("goodsId"), goodsId));
+            }
+            
+            // 供应商商品名称模糊查询
+            if (supplierGoodsName != null && !supplierGoodsName.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(root.get("supplierGoodsName"), "%" + supplierGoodsName + "%"));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        }, pageable);
+        
+        // 获取所有供应商ID
+        Set<Long> supplierIds = entityPage.getContent().stream()
+                .map(PurSupplierGoods::getSupplierId)
+                .collect(Collectors.toSet());
+        
+        // 批量查询供应商信息
+        Map<Long, PurSupplier> supplierMap = new HashMap<>();
+        if (!supplierIds.isEmpty()) {
+            List<PurSupplier> suppliers = supplierRepository.findAllById(supplierIds)
+                    .stream()
+                    .filter(supplier -> supplier.getIsDeleted() == 0)
+                    .collect(Collectors.toList());
+            supplierMap = suppliers.stream().collect(Collectors.toMap(PurSupplier::getId, supplier -> supplier));
+        }
+        
+        // 转换为 DTO 并填充供应商信息
+        final Map<Long, PurSupplier> finalSupplierMap = supplierMap;
+        return entityPage.map(entity -> {
+            PurSupplierGoodsDto dto = new PurSupplierGoodsDto();
+            BeanUtils.copyProperties(entity, dto);
+            
+            // 填充供应商信息
+            PurSupplier supplier = finalSupplierMap.get(entity.getSupplierId());
+            if (supplier != null) {
+                dto.setSupplierName(supplier.getSupplierName());
+                dto.setSupplierCode(supplier.getSupplierCode());
+            }
+            
+            return dto;
+        });
     }
 
     @Override
@@ -187,15 +247,15 @@ public class PurSupplierGoodsServiceImpl implements PurSupplierGoodsService {
     }
 
     @Override
-    public List<PurSupplierGoodsDto> searchSupplierGoods(String goodsName, Long supplierId) {
-        return supplierGoodsRepository.findSupplierGoodsByGoodsName(goodsName, supplierId);
+    public List<PurSupplierGoodsDto> searchSupplierGoods(String supplierGoodsName, Long supplierId) {
+        return supplierGoodsRepository.findSupplierGoodsByGoodsName(supplierGoodsName, supplierId);
     }
 
     @Override
-    public void exportSupplierGoods(Long supplierId, Long goodsId, String goodsName, HttpServletResponse response) throws IOException {
+    public void exportSupplierGoods(Long supplierId, Long goodsId, String supplierGoodsName, HttpServletResponse response) throws IOException {
         // 获取数据
         List<PurSupplierGoodsDto> dataList = supplierGoodsRepository.findAllWithDetailsByConditionsForExport(
-                supplierId, goodsId, goodsName);
+                supplierId, goodsId, supplierGoodsName);
         
         // 设置响应头
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -211,7 +271,7 @@ public class PurSupplierGoodsServiceImpl implements PurSupplierGoodsService {
             
             // 创建标题行
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"供应商名称", "商品名称", "商品编码", "SKU名称", "供应商商品编码", "供应商商品名称", 
+            String[] headers = {"供应商名称", "供应商商品编码", "供应商商品名称", 
                                "采购价格", "最小采购量", "供货周期(天)", "创建时间"};
             
             for (int i = 0; i < headers.length; i++) {
@@ -225,15 +285,12 @@ public class PurSupplierGoodsServiceImpl implements PurSupplierGoodsService {
                 Row row = sheet.createRow(rowIndex++);
                 
                 row.createCell(0).setCellValue(item.getSupplierName() != null ? item.getSupplierName() : "");
-                row.createCell(1).setCellValue(item.getGoodsName() != null ? item.getGoodsName() : "");
-                row.createCell(2).setCellValue(item.getGoodsCode() != null ? item.getGoodsCode() : "");
-                row.createCell(3).setCellValue(item.getSkuName() != null ? item.getSkuName() : "");
-                row.createCell(4).setCellValue(item.getSupplierGoodsCode() != null ? item.getSupplierGoodsCode() : "");
-                row.createCell(5).setCellValue(item.getSupplierGoodsName() != null ? item.getSupplierGoodsName() : "");
-                row.createCell(6).setCellValue(item.getPurchasePrice() != null ? item.getPurchasePrice().doubleValue() : 0.0);
-                row.createCell(7).setCellValue(item.getMinPurchaseQty() != null ? item.getMinPurchaseQty() : 0);
-                row.createCell(8).setCellValue(item.getDeliveryDay() != null ? item.getDeliveryDay() : 0);
-                row.createCell(9).setCellValue(item.getCreateTime() != null ? item.getCreateTime().toString() : "");
+                row.createCell(1).setCellValue(item.getSupplierGoodsCode() != null ? item.getSupplierGoodsCode() : "");
+                row.createCell(2).setCellValue(item.getSupplierGoodsName() != null ? item.getSupplierGoodsName() : "");
+                row.createCell(3).setCellValue(item.getPurchasePrice() != null ? item.getPurchasePrice().doubleValue() : 0.0);
+                row.createCell(4).setCellValue(item.getMinPurchaseQty() != null ? item.getMinPurchaseQty() : 0);
+                row.createCell(5).setCellValue(item.getDeliveryDay() != null ? item.getDeliveryDay() : 0);
+                row.createCell(6).setCellValue(item.getCreateTime() != null ? item.getCreateTime().toString() : "");
             }
             
             // 自动调整列宽
@@ -297,7 +354,7 @@ public class PurSupplierGoodsServiceImpl implements PurSupplierGoodsService {
         Sheet sheet = workbook.createSheet("供应商商品导入模板");
 
         // 创建标题行
-        String[] headers = {"供应商ID", "商品ID", "SKU ID", "供应商商品编码", 
+        String[] headers = {"供应商ID", "供应商商品编码", 
                            "供应商商品名称", "采购价格", "最小采购量", "交货天数", "状态(1启用0禁用)"};
         
         Row headerRow = sheet.createRow(0);

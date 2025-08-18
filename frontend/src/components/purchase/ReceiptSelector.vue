@@ -27,7 +27,7 @@
           <el-option
             v-for="supplier in supplierList"
             :key="supplier.id"
-            :label="supplier.name"
+            :label="supplier.supplierName"
             :value="supplier.id"
           />
         </el-select>

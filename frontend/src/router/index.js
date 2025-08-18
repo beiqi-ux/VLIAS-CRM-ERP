@@ -210,7 +210,7 @@ const router = createRouter({
           meta: { 
             title: '采购退货管理',
             requiresAuth: true,
-            permission: 'PURCHASE.RETURN.LIST'
+            permission: 'pur-return-management:list'
           }
         },
         // 新增采购退货单
@@ -221,7 +221,7 @@ const router = createRouter({
           meta: { 
             title: '新建退货单',
             requiresAuth: true,
-            permission: 'PURCHASE.RETURN.CREATE'
+            permission: 'pur-return-management:create'
           }
         },
         // 编辑采购退货单
@@ -232,7 +232,7 @@ const router = createRouter({
           meta: { 
             title: '编辑退货单',
             requiresAuth: true,
-            permission: 'PURCHASE.RETURN.EDIT'
+            permission: 'pur-return-management:edit'
           }
         },
         // 查看采购退货单
@@ -243,7 +243,7 @@ const router = createRouter({
           meta: { 
             title: '查看退货单',
             requiresAuth: true,
-            permission: 'PURCHASE.RETURN.VIEW'
+            permission: 'pur-return-management:view'
           }
         },
         // 新增采购退货单
@@ -266,6 +266,70 @@ const router = createRouter({
           name: 'purchase-return-view',
           component: () => import('@/views/purchase/return/form.vue'),
           meta: { title: '采购退货单详情' }
+        },
+        // 供应商对账管理
+        {
+          path: 'purchase/reconciliation',
+          name: 'purchase-reconciliation',
+          component: () => import('@/views/purchase/reconciliation/index.vue'),
+          meta: { 
+            title: '供应商对账管理',
+            requiresAuth: true,
+            permission: 'reconciliation-management:view'
+          }
+        },
+        // 新增对账单
+        {
+          path: 'purchase/reconciliation/create',
+          name: 'purchase-reconciliation-create',
+          component: () => import('@/views/purchase/reconciliation/form.vue'),
+          meta: { 
+            title: '新增对账单',
+            requiresAuth: true,
+            permission: 'reconciliation-management:add'
+          }
+        },
+        // 编辑对账单
+        {
+          path: 'purchase/reconciliation/edit/:id',
+          name: 'purchase-reconciliation-edit',
+          component: () => import('@/views/purchase/reconciliation/form.vue'),
+          meta: { 
+            title: '编辑对账单',
+            requiresAuth: true,
+            permission: 'reconciliation-management:edit'
+          }
+        },
+        // 查看对账单详情
+        {
+          path: 'purchase/reconciliation/view/:id',
+          name: 'purchase-reconciliation-view',
+          component: () => import('@/views/purchase/reconciliation/form.vue'),
+          meta: { 
+            title: '对账单详情',
+            requiresAuth: true,
+            permission: 'reconciliation-management:view'
+          }
+        },
+        // 仓库管理
+        {
+          path: 'warehouse/management',
+          name: 'warehouse-management',
+          component: () => import('@/views/warehouse/WarehouseManagement.vue'),
+          meta: { 
+            title: '仓库管理',
+            permission: 'warehouse-management:view'
+          }
+        },
+        // 库位管理
+        {
+          path: 'warehouse/location',
+          name: 'warehouse-location-management',
+          component: () => import('@/views/warehouse/LocationManagement.vue'),
+          meta: { 
+            title: '库位管理',
+            permission: 'warehouse-location-management:view'
+          }
         },
         // 个人中心
         {
@@ -307,3 +371,5 @@ router.beforeEach(async (to, from, next) => {
 })
 
 export default router 
+
+
